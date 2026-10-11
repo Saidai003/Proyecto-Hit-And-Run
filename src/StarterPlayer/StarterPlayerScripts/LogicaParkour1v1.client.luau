@@ -16,7 +16,6 @@ local VELOCIDAD_NARROWED_WALK = 6.5
 local VELOCIDAD_SALTO_VENTANA = 9
 
 local MULTIPLICADOR_CARRERA = 1.35
-local UMBRAL_DIRECCION_CARRERA = 0.7
 
 local ALTURA_SALTO_VENTANA = 0.8
 
@@ -231,21 +230,10 @@ local function crearCFrameOrientado(posicion, direccion)
 	return CFrame.lookAt(posicion, posicion + direccion)
 end
 
-local function estaCorriendoHaciaPunto(punto)
-	local direccionMovimiento = humanoide.MoveDirection
-
-	if direccionMovimiento.Magnitude <= 0 then
-		return false
-	end
-
-	local direccionAlPunto = (punto.Position - rootPart.Position).Unit
-
-	return direccionMovimiento:Dot(direccionAlPunto)
-		>= UMBRAL_DIRECCION_CARRERA
-end
-
-local function obtenerMultiplicadorAccion(punto)
-	if estaCorriendoHaciaPunto(punto) then
+local function obtenerMultiplicadorAccion()
+	if humanoide:GetAttribute("SprintActivoLocal") == true
+		and humanoide.MoveDirection.Magnitude > 0.05
+		and (jugadorLocal:GetAttribute("Stamina") or 0) > 0 then
 		return MULTIPLICADOR_CARRERA
 	end
 
@@ -426,7 +414,7 @@ end
 -- ACCIÃN GENÃRICA -------------------------------------------------------
 
 local function ejecutarAccion(puntoInicial, puntoFinal, config)
-	local multiplicador = obtenerMultiplicadorAccion(puntoInicial)
+	local multiplicador = obtenerMultiplicadorAccion()
 	accionActiva = true
 	local direccion = obtenerDireccion(puntoInicial, puntoFinal)
 	if not aproximarseAlPunto(puntoInicial) then

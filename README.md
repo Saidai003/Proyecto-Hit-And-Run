@@ -50,6 +50,9 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
   encontrar pareja se desactiva la práctica.
 - Un indicador inferior muestra `RMB` (clic derecho) y la acción de parkour disponible.
+- Las acciones de ventana y paso estrecho reciben el bonus de velocidad del 35 %
+  solo al iniciarse mientras el personaje esprinta con stamina y se mueve;
+  caminar hacia el marcador ya no concede ese bonus.
 - El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
   cuando no hay contador de vidas.
 - El nombre visible del rol perseguidor es `CHASER`.

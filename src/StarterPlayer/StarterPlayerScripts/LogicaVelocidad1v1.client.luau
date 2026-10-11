@@ -78,6 +78,13 @@ local sprintActivo = false
 local movimientoBloqueado = false
 local ultimoSalto = 0
 
+local function establecerSprintActivo(activo)
+	sprintActivo = activo
+	if humanoide and humanoide.Parent then
+		humanoide:SetAttribute("SprintActivoLocal", activo)
+	end
+end
+
 local fovObjetivo = FOV_NORMAL
 
 
@@ -126,6 +133,7 @@ local function configurarRol(rol)
 	end
 
 	stamina = staminaMaxima
+	establecerSprintActivo(false)
 	EventoSprint:FireServer(false)
 
 	if humanoide and not movimientoBloqueado then
@@ -159,7 +167,7 @@ local function activarSprint()
 		return
 	end
 
-	sprintActivo = true
+	establecerSprintActivo(true)
 	EventoSprint:FireServer(true)
 
 	if humanoide then
@@ -174,7 +182,7 @@ end
 
 local function desactivarSprint(informarServidor)
 
-	sprintActivo = false
+	establecerSprintActivo(false)
 	if informarServidor ~= false then EventoSprint:FireServer(false) end
 
 	if humanoide and not movimientoBloqueado then
@@ -297,7 +305,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, datos)
 	elseif estado == "BLOQUEAR_MOVIMIENTO" then
 
 		movimientoBloqueado = true
-		sprintActivo = false
+		establecerSprintActivo(false)
 		EventoSprint:FireServer(false)
 
 		fovObjetivo = FOV_NORMAL
@@ -318,7 +326,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, datos)
 
 	elseif estado == "RESET_JUGADOR" then
 
-		sprintActivo = false
+		establecerSprintActivo(false)
 		EventoSprint:FireServer(false)
 
 		stamina = staminaMaxima
@@ -356,7 +364,7 @@ jugadorLocal.CharacterAdded:Connect(function(nuevoCharacter)
 	-- o el jugador respawna congelado.
 	movimientoBloqueado = false
 
-	sprintActivo = false
+	establecerSprintActivo(false)
 	EventoSprint:FireServer(false)
 
 	stamina = staminaMaxima
