@@ -51,3 +51,10 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 - Probar estos cambios en el lobby y en partida, en R15, con subida y bajada largas, salida manual con clic derecho, llegada natural al extremo y stamina baja o agotada.
 - Confirmar que las acciones de parkour existentes y el indicador contextual no presentan regresiones.
 - **Preparado, por probar:** equipar y lanzar `Coffee`; la taza y el vapor deben seguir visibles y unidos al `Handle`, y la silla debe continuar funcionando. El script `CoffeeVisualFix` repara el asset importado al cargarlo, pero la Tool sigue siendo un objeto del Place fuera de Rojo.
+
+## Audio
+
+- **Subidos y enlazados:** 22 efectos de `SFX/` para botones, resultados, ventana, palés, escalada, golpes, lanzamiento y caídas. Los IDs están en `AudioCatalog.luau` y `tools/audio-ids.json`; la clave no se guarda en el repositorio.
+- **Pendiente de verificación:** los 22 uploads estaban en estado `Reviewing` al terminar. Comprobar aprobación, permisos de uso en la experiencia, volumen/duplicaciones con dos clientes y que se oyen tras sincronizar Rojo y publicar.
+- El audio de cuenta regresiva dura 11 segundos pero la cuenta actual es de 3; requiere edición o selección de una muestra diferente antes de integrarlo. Los 4 sonidos de cristal tampoco tienen todavía una acción de rotura asignada.
+- La música de persecución que ya existe en el Place debe quedar intacta. No usar `brief_metallic_hit.mp3` como pista de persecución.

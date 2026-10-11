@@ -6,6 +6,7 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Workspace = game:GetService("Workspace")
 local StaminaService = require(script.Parent:WaitForChild("StaminaService"))
+local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 local PhysicsService = game:GetService("PhysicsService")
 
 local EventoJuego = ReplicatedStorage:WaitForChild("EventoJuego")
@@ -51,9 +52,9 @@ local MARGEN_ATERRIZAJE = 5
 local GRUPO_PARED = "PaleWall"
 local GRUPO_ATRAVESANDO = "Saltando"
 
-local SONIDO_CAIDA = "rbxassetid://0"
-local SONIDO_ROMPER = "rbxassetid://0"
-local SONIDO_ATURDIMIENTO = "rbxassetid://0"
+local SONIDO_CAIDA = "PalletDrop"
+local SONIDO_ROMPER = "PalletBreak"
+local SONIDO_ATURDIMIENTO = "Pain"
 
 
 --==================================================
@@ -152,9 +153,9 @@ local function obtenerPersonaje(jugador)
 end
 
 
-local function reproducirSonido(id, posicion)
+local function reproducirSonido(nombre, posicion)
 
-	if id == "rbxassetid://0" then
+	if not audio.GetId(nombre) then
 		return
 	end
 
@@ -169,14 +170,7 @@ local function reproducirSonido(id, posicion)
 	anclaje.Position = posicion
 	anclaje.Parent = Workspace
 
-	local sonido = Instance.new("Sound")
-
-	sonido.SoundId = id
-	sonido.Volume = 1
-	sonido.RollOffMaxDistance = 80
-	sonido.Parent = anclaje
-
-	sonido:Play()
+	audio.Play(nombre, anclaje, 0.8, 5)
 
 	Debris:AddItem(anclaje, 4)
 end
@@ -1187,6 +1181,7 @@ local function saltarPale(datos, jugador)
 		duracionSalto,
 		ALTURA_SALTO
 	)
+	audio.Play("VaultPallet", root, 0.65, 4)
 
 	-- Al terminar vuelve a colisionar normalmente.
 	task.delay(duracionSalto + 0.15, function()

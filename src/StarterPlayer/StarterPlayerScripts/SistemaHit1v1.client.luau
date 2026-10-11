@@ -5,6 +5,8 @@ local ContentProvider = game:GetService("ContentProvider")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
+local SoundService = game:GetService("SoundService")
+local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
 local jugador = Players.LocalPlayer
 
@@ -17,7 +19,6 @@ local EventoHit1v1 = ReplicatedStorage:WaitForChild("EventoHit1v1")
 --==================================================
 
 local ANIM_GOLPE = "rbxassetid://122984890985296"
-local SONIDO_HIT = "rbxassetid://0" -- <- tu sonido de hit
 
 -- Tiempos de la animaciÃ³n (en segundos de la animaciÃ³n)
 local INICIO_LUNGE = 0.29
@@ -107,23 +108,17 @@ end
 -- EFECTOS
 --==================================================
 
-local function efectoImpacto(personajeVictima)
+local function efectoImpacto(personajeVictima, atacante)
 	local root = personajeVictima:FindFirstChild("HumanoidRootPart")
 
 	if not root then
 		return
 	end
 
-	-- Sonido en el punto de impacto
-	if SONIDO_HIT ~= "rbxassetid://0" then
-		local sonido = Instance.new("Sound")
-		sonido.SoundId = SONIDO_HIT
-		sonido.Volume = 1
-		sonido.RollOffMaxDistance = 80
-		sonido.Parent = root
-		sonido:Play()
-		Debris:AddItem(sonido, 3)
-	end
+	local herramienta = atacante and atacante.Character
+		and atacante.Character:FindFirstChildOfClass("Tool")
+	local usaBate = herramienta and herramienta.Name == "Baseball Bat"
+	audio.Play(usaBate and "BatHit" or "HandHit", root, 0.85, 4)
 
 	-- Chispas
 	local attachment = Instance.new("Attachment")
@@ -470,11 +465,12 @@ EventoHit1v1.OnClientEvent:Connect(function(tipo, atacante, victima, cooldown)
 	local personajeVictima = victima and victima.Character
 
 	if personajeVictima then
-		efectoImpacto(personajeVictima) -- lo ven y oyen los dos jugadores
+		efectoImpacto(personajeVictima, atacante) -- lo ven y oyen los dos jugadores
 	end
 
 	if victima == jugador then
 		efectoRecibido()
+		audio.Play("Pain", SoundService, 0.45, 4)
 	end
 end)
 

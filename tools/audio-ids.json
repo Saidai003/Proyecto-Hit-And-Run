@@ -1,0 +1,90 @@
+{
+  "Click": {
+    "assetId": "95419007190174",
+    "moderationState": "Reviewing"
+  },
+  "VaultWindow": {
+    "assetId": "98475698683381",
+    "moderationState": "Reviewing"
+  },
+  "PalletDrop": {
+    "assetId": "112110400852921",
+    "moderationState": "Reviewing"
+  },
+  "PalletBreak1": {
+    "assetId": "137318622981502",
+    "moderationState": "Reviewing"
+  },
+  "HandHit": {
+    "assetId": "112314582471840",
+    "moderationState": "Reviewing"
+  },
+  "BatHit": {
+    "assetId": "76128807343727",
+    "moderationState": "Reviewing"
+  },
+  "Throw": {
+    "assetId": "105084370178233",
+    "moderationState": "Reviewing"
+  },
+  "HardLanding": {
+    "assetId": "129748933598521",
+    "moderationState": "Reviewing"
+  },
+  "RoundWin": {
+    "assetId": "86366417069418",
+    "moderationState": "Reviewing"
+  },
+  "RoundLose": {
+    "assetId": "132807385688965",
+    "moderationState": "Reviewing"
+  },
+  "VaultPallet": {
+    "assetId": "71324019196060",
+    "moderationState": "Reviewing"
+  },
+  "Climb": {
+    "assetId": "139056317088357",
+    "moderationState": "Reviewing"
+  },
+  "SoftLanding": {
+    "assetId": "91968943870725",
+    "moderationState": "Reviewing"
+  },
+  "Pain": {
+    "assetId": "108250855260638",
+    "moderationState": "Reviewing"
+  },
+  "DoubleClick": {
+    "assetId": "109642342823088",
+    "moderationState": "Reviewing"
+  },
+  "FinalWin": {
+    "assetId": "113927936889757",
+    "moderationState": "Reviewing"
+  },
+  "FinalLose": {
+    "assetId": "87755197109088",
+    "moderationState": "Reviewing"
+  },
+  "WinVoice": {
+    "assetId": "122310405320954",
+    "moderationState": "Reviewing"
+  },
+  "LoseVoice": {
+    "assetId": "134971666801218",
+    "moderationState": "Reviewing"
+  },
+  "PalletBreak2": {
+    "assetId": "131858820825793",
+    "moderationState": "Reviewing"
+  },
+  "PalletBreak3": {
+    "assetId": "128731825301451",
+    "moderationState": "Reviewing"
+  },
+  "PalletBreak4": {
+    "assetId": "110034654223473",
+    "moderationState": "Reviewing"
+  }
+}

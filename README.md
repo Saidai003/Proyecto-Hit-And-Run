@@ -26,6 +26,20 @@ Rojo siga escuchando en 34872 y que el plugin indique **Connected**. Al cambiar
 `default.project.json`, vuelve a conectar el plugin si perdió la conexión;
 para cambios normales de scripts, basta con reiniciar el playtest.
 
+## Audio
+
+Los efectos de `SFX/` se enlazan mediante `src/ReplicatedStorage/AudioCatalog.luau`.
+El script `tools/upload-audio.cjs` sube solo los efectos usados por el MVP a la
+biblioteca de la cuenta propietaria mediante Open Cloud y registra los IDs en
+`tools/audio-ids.json`. Requiere una clave con acceso a Assets/Write en la variable
+local `ROBLOX_API_KEY`; nunca se guarda la clave en el repositorio. Los 22
+efectos usados por el MVP se subieron y sus IDs están en el catálogo. Roblox
+los dejó inicialmente en revisión, de modo que su reproducción depende de la
+moderación y los permisos del asset. La música de persecución existente en
+Studio no se modifica. El MP3 largo `brief_metallic_hit.mp3` no se usa ni se
+sube como música. Los archivos originales de `SFX/` permanecen locales; no se
+publican en GitHub.
+
 ## Cambios de esta tanda
 
 - Rango ajustado a 5.8 studs para ventanas/pasos estrechos, 6.5 para palés y

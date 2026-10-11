@@ -4,6 +4,7 @@ local Workspace = game:GetService("Workspace")
 local StaminaService = require(script.Parent:WaitForChild("StaminaService"))
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
+local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 
@@ -35,6 +36,10 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
 	if accion == "EscaladaFin" then
 		StaminaService.EndClimb(jugador)
+		if root then
+			local climbSound = root:FindFirstChild("Climb")
+			if climbSound and climbSound:IsA("Sound") then climbSound:Destroy() end
+		end
 		if humanoide then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false) end
 		return true
 	end
@@ -51,7 +56,12 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		if typeof(origen) ~= "Instance" or not Climbables.IsClimbable(origen) or not origen:IsDescendantOf(Workspace)
 			or distanciaParte(origen, root.Position) > 5.5 then return nil end
 		local factor = StaminaService.BeginClimb(jugador, root)
-		if factor then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true) end
+		if factor then
+			humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+			local previousSound = root:FindFirstChild("Climb")
+			if previousSound and previousSound:IsA("Sound") then previousSound:Destroy() end
+			audio.Play("Climb", root, 0.45, false, true)
+		end
 		return factor
 	end
 	local prefijo = nombres[accion]
@@ -66,7 +76,9 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		or (root.Position - origen.Position).Magnitude > 6.3
 		or math.abs(root.Position.Y - origen.Position.Y) > 4.5
 		or (origen.Position - destino.Position).Magnitude > 30 then return nil end
-	return StaminaService.Consume(jugador, accion)
+	local factor = StaminaService.Consume(jugador, accion)
+	if factor and accion == "Ventana" then audio.Play("VaultWindow", root, 0.65, 5) end
+	return factor
 end
 
 local function prepararJugador(jugador)

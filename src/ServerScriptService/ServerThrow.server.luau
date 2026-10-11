@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
+local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
 local throwEvent = ReplicatedStorage:FindFirstChild("ThrowChairEvent")
 if not throwEvent then
@@ -151,6 +152,7 @@ throwEvent.OnServerEvent:Connect(function(player, aimDirection)
 		pcall(function() handle:SetNetworkOwner(nil) end)
 
 		handle.AssemblyLinearVelocity = velocity
+		audio.Play("Throw", handle, 0.7, 4)
 		local bv = Instance.new("BodyVelocity")
 		bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
 		bv.Velocity = velocity
