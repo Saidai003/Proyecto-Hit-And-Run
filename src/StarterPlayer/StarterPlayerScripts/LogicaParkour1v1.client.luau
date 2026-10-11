@@ -14,6 +14,7 @@ local DISTANCIA_INTERACCION = 5.8
 local DISTANCIA_INICIO_ANIMACION = 1.8
 local VELOCIDAD_NARROWED_WALK = 6.5
 local VELOCIDAD_SALTO_VENTANA = 9
+local FACTOR_PARKOUR_PERSEGUIDOR = 0.8
 
 local MULTIPLICADOR_CARRERA = 1.35
 
@@ -518,10 +519,9 @@ local function ejecutarAccion(puntoInicial, puntoFinal, config)
 end
 
 local function ejecutarNarrowedWalk(puntoInicial, puntoFinal)
-	-- DETECTAR SI ES PERSEGUIDOR PARA REDUCIR LA VELOCIDAD
 	local velocidadActual = VELOCIDAD_NARROWED_WALK
 	if jugadorLocal:GetAttribute("Rol") == "PERSEGUIDOR" then
-		velocidadActual = 3.0 -- Velocidad lenta exclusiva para el perseguidor en espacios estrechos
+		velocidadActual *= FACTOR_PARKOUR_PERSEGUIDOR
 	end
 
 	ejecutarAccion(puntoInicial, puntoFinal, {
@@ -535,10 +535,9 @@ local function ejecutarNarrowedWalk(puntoInicial, puntoFinal)
 end
 
 local function ejecutarSaltoVentana(puntoInicial, puntoFinal)
-	-- DETECTAR SI ES PERSEGUIDOR PARA REDUCIR LA VELOCIDAD
 	local velocidadActual = VELOCIDAD_SALTO_VENTANA
 	if jugadorLocal:GetAttribute("Rol") == "PERSEGUIDOR" then
-		velocidadActual = 4.5 -- Velocidad lenta exclusiva para el perseguidor al saltar
+		velocidadActual *= FACTOR_PARKOUR_PERSEGUIDOR
 	end
 
 	ejecutarAccion(puntoInicial, puntoFinal, {

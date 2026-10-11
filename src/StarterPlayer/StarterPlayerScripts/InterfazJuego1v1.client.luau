@@ -845,6 +845,9 @@ attackButton.MouseButton1Click:Connect(atacar)
 
 EventoJuego.OnClientEvent:Connect(function(estado, ...)
 	local datos = {...}
+	if estado ~= "RESULTADO_RONDA" then
+		messageLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
 
 	print("[INTERFAZ]: Evento recibido:", estado)
 
@@ -933,7 +936,16 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		local resultado = datos[1]
 
 		messageLabel.Visible = true
-		messageLabel.Text = tostring(resultado)
+		if resultado == "WIN" then
+			messageLabel.Text = "You Win"
+			messageLabel.TextColor3 = Color3.fromRGB(60, 220, 100)
+		elseif resultado == "LOSE" then
+			messageLabel.Text = "You Lose"
+			messageLabel.TextColor3 = Color3.fromRGB(220, 70, 70)
+		else
+			messageLabel.Text = "Round Over"
+			messageLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
 
 	elseif estado == "RESULTADO_FINAL" then
 
@@ -976,11 +988,11 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		local jugadorLocal = Players.LocalPlayer
 
 		if resultado.ganador == jugadorLocal.Name then
-			resultTitle.Text = "You win!"
+			resultTitle.Text = "You Win"
 			resultTitle.TextColor3 = Color3.fromRGB(60, 220, 100)
 
 		elseif resultado.ganador then
-			resultTitle.Text = "You lose!"
+			resultTitle.Text = "You Lose"
 			resultTitle.TextColor3 = Color3.fromRGB(220, 70, 70)
 
 		else

@@ -625,10 +625,19 @@ local function finalizarRonda(motivo)
 		"DESBLOQUEAR_MOVIMIENTO"
 	)
 
-	EventoJuego:FireAllClients(
-		"RESULTADO_RONDA",
-		motivo
-	)
+	local ganadorRonda = nil
+	if motivo == "RUNNER_ELIMINATED" then
+		ganadorRonda = perseguidor
+	elseif motivo == "TIME_LIMIT" then
+		ganadorRonda = perseguido
+	end
+	for _, jugador in ipairs({ jugador1, jugador2 }) do
+		if jugador and jugador.Parent == Players then
+			local resultado = ganadorRonda and (jugador == ganadorRonda and "WIN" or "LOSE")
+				or "ROUND_OVER"
+			EventoJuego:FireClient(jugador, "RESULTADO_RONDA", resultado)
+		end
+	end
 
 	print("")
 	print("========================================")
@@ -654,7 +663,7 @@ _G.FinalizarRondaAhora = function()
 
 	if EstadoPartida == "RONDA_ACTIVA" then
 
-		finalizarRonda("PRUEBA")
+		finalizarRonda("TEST_END")
 
 	else
 
@@ -788,7 +797,7 @@ local function atacar(jugador, requestId)
 
 	if vidas[perseguido] <= 0 then
 
-		finalizarRonda("DERROTA")
+		finalizarRonda("RUNNER_ELIMINATED")
 
 	end
 end
@@ -867,7 +876,7 @@ RunService.Heartbeat:Connect(function()
 							if perseguidor and perseguidor.Parent == Players then
 								EventoJuego:FireClient(perseguidor, "VIDAS_RIVAL", vidas[jugador], jugador.UserId)
 							end
-							if vidas[jugador] <= 0 then finalizarRonda("DERROTA") end
+							if vidas[jugador] <= 0 then finalizarRonda("RUNNER_ELIMINATED") end
 						end
 					end
 				end
@@ -891,7 +900,7 @@ local function esperarFinDeRonda()
 		if tiempoTranscurrido >= TIEMPO_MAXIMO_RONDA then
 
 			finalizarRonda(
-				"Time limit reached"
+				"TIME_LIMIT"
 			)
 
 			return
@@ -900,7 +909,7 @@ local function esperarFinDeRonda()
 		if not jugadoresPresentes() then
 
 			finalizarRonda(
-				"A player abandoned the match"
+				"PLAYER_LEFT"
 			)
 
 			return

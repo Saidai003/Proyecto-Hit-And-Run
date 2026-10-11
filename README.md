@@ -53,6 +53,10 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - Las acciones de ventana y paso estrecho reciben el bonus de velocidad del 35 %
   solo al iniciarse mientras el personaje esprinta con stamina y se mueve;
   caminar hacia el marcador ya no concede ese bonus.
+- El Chaser cruza ventanas y pasos estrechos al 80 % de la velocidad del Runner,
+  con el mismo bonus de sprint y las mismas reglas de stamina.
+- El resultado de cada ronda se muestra desde la perspectiva del jugador como
+  `You Win` o `You Lose`; los textos visibles de la interfaz están en inglés.
 - El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
   cuando no hay contador de vidas.
 - El nombre visible del rol perseguidor es `CHASER`.
