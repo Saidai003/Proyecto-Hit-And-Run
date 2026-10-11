@@ -8,9 +8,9 @@ del Place en esta carpeta para que el nuevo `Baseball Bat` no quede solo en Stud
 
 ## Rojo
 
-El servidor de este proyecto escucha en `localhost:34873`. La sesión de prueba
-`RojoTest` en el puerto 34872 no se modifica. Conecta el plugin de Rojo de Studio
-al **34873** estando abierto el Place correcto. Rojo está configurado para
+El servidor de este proyecto escucha en `localhost:34872`. La antigua sesión de
+prueba `RojoTest` fue reemplazada para evitar confusiones. Conecta el plugin de
+Rojo de Studio al **34872** estando abierto el Place correcto. Rojo está configurado para
 preservar instancias no representadas por archivos (mapa, silla, bate y remotos).
 Antes de la primera sincronización, guarda una copia del Place actual.
 
