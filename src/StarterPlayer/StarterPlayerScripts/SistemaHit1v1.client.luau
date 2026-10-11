@@ -56,6 +56,7 @@ local ocupado = false        -- lunge + ataque + cooldown
 local presionando = false    -- botÃ³n de golpe mantenido
 local idAtaque = 0           -- invalida acciones pendientes al cancelar
 local conexionLunge = nil
+local conexionRecuperacion = nil
 
 local velocidadBase = nil
 local velocidadBoost = nil
@@ -171,22 +172,37 @@ pantallaGui.ResetOnSpawn = false
 pantallaGui.DisplayOrder = 50
 pantallaGui.Parent = jugador:WaitForChild("PlayerGui")
 
-local flashRojo = Instance.new("Frame")
-flashRojo.Size = UDim2.fromScale(1, 1)
-flashRojo.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-flashRojo.BackgroundTransparency = 1
-flashRojo.BorderSizePixel = 0
-flashRojo.Parent = pantallaGui
+local bordes = {}
+for _, borde in ipairs({
+	{ "Top", UDim2.fromScale(1, 0.22), UDim2.fromScale(0, 0), 90 },
+	{ "Bottom", UDim2.fromScale(1, 0.22), UDim2.fromScale(0, 0.78), 270 },
+	{ "Left", UDim2.fromScale(0.2, 1), UDim2.fromScale(0, 0), 0 },
+	{ "Right", UDim2.fromScale(0.2, 1), UDim2.fromScale(0.8, 0), 180 },
+}) do
+	local frame = Instance.new("Frame")
+	frame.Name = borde[1]
+	frame.Size = borde[2]
+	frame.Position = borde[3]
+	frame.BackgroundTransparency = 1
+	frame.BorderSizePixel = 0
+	frame.Parent = pantallaGui
+	local gradient = Instance.new("UIGradient")
+	gradient.Rotation = borde[4]
+	gradient.Transparency = NumberSequence.new(0, 1)
+	gradient.Parent = frame
+	table.insert(bordes, frame)
+end
+
+local function efectoBordes(color)
+	for _, frame in ipairs(bordes) do
+		frame.BackgroundColor3 = color
+		frame.BackgroundTransparency = 0.08
+		TweenService:Create(frame, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
+	end
+end
 
 local function efectoRecibido()
-	-- Flash rojo en pantalla
-	flashRojo.BackgroundTransparency = 0.65
-
-	TweenService:Create(
-		flashRojo,
-		TweenInfo.new(0.35),
-		{ BackgroundTransparency = 1 }
-	):Play()
+	efectoBordes(Color3.fromRGB(225, 45, 55))
 
 	-- Sacudida de cÃ¡mara
 	local h = humanoide
@@ -240,10 +256,40 @@ local function terminarLunge()
 	velocidadBoost = nil
 end
 
+local function terminarRecuperacion()
+	if conexionRecuperacion then
+		conexionRecuperacion:Disconnect()
+		conexionRecuperacion = nil
+	end
+	if humanoide then humanoide:SetAttribute("AttackRecoveryLocal", false) end
+	if trackGolpe then
+		trackGolpe.Looped = false
+		trackGolpe:AdjustSpeed(1)
+		if trackGolpe.IsPlaying then trackGolpe:Stop(0.1) end
+	end
+end
+
+local function iniciarRecuperacion(miId)
+	if humanoide then humanoide:SetAttribute("AttackRecoveryLocal", true) end
+	if not trackGolpe or trackGolpe.Length <= 0 then return end
+	local inicioCola = trackGolpe.Length * 0.8
+	trackGolpe.Looped = true
+	trackGolpe:AdjustSpeed(0.7)
+	trackGolpe.TimePosition = inicioCola
+	conexionRecuperacion = RunService.Heartbeat:Connect(function()
+		if idAtaque ~= miId then return end
+		if not trackGolpe.IsPlaying then trackGolpe:Play(0.05, 1, 0.7) end
+		if trackGolpe.TimePosition < inicioCola or trackGolpe.TimePosition >= trackGolpe.Length * 0.99 then
+			trackGolpe.TimePosition = inicioCola
+		end
+	end)
+end
+
 -- Cancela todo el golpe (muerte, bloqueo, nuevo personaje...).
 local function cancelarGolpe()
 	idAtaque += 1
 	terminarLunge()
+	terminarRecuperacion()
 
 	if trackGolpe and trackGolpe.IsPlaying then
 		trackGolpe:Stop(0.1)
@@ -260,6 +306,7 @@ local function lanzarGolpe(miId)
 	if trackGolpe and trackGolpe.IsPlaying and trackGolpe.TimePosition < FIN_LUNGE then
 		trackGolpe.TimePosition = FIN_LUNGE
 	end
+	iniciarRecuperacion(miId)
 
 	-- El servidor valida distancia, cooldown y vidas
 	task.delay(RETRASO_IMPACTO, function()
@@ -279,6 +326,7 @@ local function lanzarGolpe(miId)
 			return
 		end
 
+		terminarRecuperacion()
 		ocupado = false
 	end)
 end
@@ -352,6 +400,11 @@ local function configurarPersonaje(char)
 	char:WaitForChild("HumanoidRootPart")
 
 	humanoide.Died:Connect(cancelarGolpe)
+	char:GetAttributeChangedSignal("KnockedOut"):Connect(function()
+		if char == jugador.Character and char:GetAttribute("KnockedOut") then
+			efectoBordes(Color3.fromRGB(255, 208, 65))
+		end
+	end)
 
 	cargarAnimacion()
 end
@@ -376,6 +429,15 @@ EventoJuego.OnClientEvent:Connect(function(tipo, valor)
 
 	elseif tipo == "DESBLOQUEAR_MOVIMIENTO" then
 		bloqueado = false
+	elseif tipo == "CAIDA_ATURDIDO" then
+		if valor then
+			efectoBordes(Color3.fromRGB(225, 45, 55))
+			task.delay(0.16, function()
+				efectoBordes(Color3.fromRGB(255, 208, 65))
+			end)
+		else
+			efectoBordes(Color3.fromRGB(255, 208, 65))
+		end
 	end
 end)
 

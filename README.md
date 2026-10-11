@@ -33,9 +33,9 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   `NoEscalando` al soltarla o terminar naturalmente.
 - La aproximación a una acción usa `Humanoid:MoveTo` y la velocidad actual del
   jugador; si no puede llegar, no inicia la animación.
-- ALT ejecuta un salto de prueba que gasta 15 de stamina; Espacio sigue reservado
-  para parkour. El salto con ALT se cancela si hay menos de 15 de stamina. Su
-  potencia se redujo de 50 a 40 y necesita prueba en los muros del mapa.
+- Espacio ejecuta el salto de potencia 40 y gasta 15 de stamina; con menos de
+  15 no se puede saltar. ALT ya no ejecuta el salto. El ajuste de altura aún
+  necesita prueba en los muros del mapa.
 - El retrato de vidas tiene un fallback con la cabeza del personaje de Studio
   cuando Roblox no entrega una miniatura de los jugadores simulados.
 - El aturdimiento de caída aplica un impulso y giro breve para que el personaje
@@ -43,12 +43,21 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - El botón de donación usa el Developer Product `3717856374` creado por el dueño
   con precio base de 100 Robux. La UI consulta el precio vigente de Roblox antes
   de abrir el aviso de compra, y muestra una aclaración de que cualquier paquete
-  de Robux ofrecido por Roblox es distinto del precio de la donación. La compra
+  de Robux ofrecido por Roblox es distinto del precio de la donación. El botón
+  está sobre el menú del lobby para no tapar la lista de jugadores. La compra
   no entrega objetos ni ventajas.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
-  encontrar pareja se desactiva la práctica. ALT es solo una prueba de salto;
-  la tecla definitiva continúa pendiente de decisión de diseño.
-- Un indicador inferior muestra `Space` y la acción disponible.
+  encontrar pareja se desactiva la práctica.
+- Un indicador inferior muestra `RMB` (clic derecho) y la acción de parkour disponible.
+- El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
+  cuando no hay contador de vidas.
+- El nombre visible del rol perseguidor es `CHASER`.
+- Tras atacar, acertando o fallando, el perseguidor camina al 40 % de su velocidad
+  normal durante el cooldown. La última quinta parte de la animación de golpe
+  se repite como recuperación provisional.
+- Los bordes de pantalla muestran rojo al recibir daño y amarillo en el
+  aturdimiento de caída. La detección de aterrizaje comienza antes del contacto
+  pleno para reducir el retardo percibido del noqueo.
 - Las vidas del perseguido se muestran una sola vez con corazón, retrato circular
   del avatar y contador; el retrato dinámico utiliza la miniatura nativa de
   Roblox de 420×420 (la API no ofrece 512×512).
@@ -57,7 +66,7 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - El perseguidor recibe un bate construido con un agarre vertical controlado al comenzar su rol. Equiparlo usa
   mayor alcance y cooldown que el golpe con la mano; se puede desequipar para
   volver a la mano y equipar la silla independientemente.
-- Space inicia o corta la escalada de una `TrussPart` o pieza marcada `Escalable`
+- El clic derecho inicia o corta la escalada de una `TrussPart` o pieza marcada `Escalable`
   próxima. La escalada consume 5 puntos de stamina por stud vertical realmente
   recorrido, hacia arriba o abajo; al agotarse se suelta. Las piezas marcadas
   deben tener geometría que el Humanoid pueda escalar. Ventanas, estrechos,
@@ -85,14 +94,14 @@ Rojo, pero falta el playtest para confirmarlos.
    en Workspace, pero el bate equipado usa piezas controladas para evitar su
    pivote desplazado.
 2. En Studio con dos clientes: comprobar mano/bate/silla, 6 rondas, stamina baja,
-   escalada Space y caída desde una ventana alta. Revisar Output por errores.
+   escalada con clic derecho y caída desde una ventana alta. Revisar Output por errores.
 3. En una versión publicada con dos cuentas: entrar al mismo lobby, pulsar Play,
    confirmar que ambos llegan a la misma instancia privada y que al acabar
    vuelven juntos al lobby original o a uno público. Roblox no admite probar
    `TeleportService` plenamente en el playtest local de Studio.
 
-El salto con ALT es **experimental**: su tecla definitiva sigue como decisión de
-diseño. La guía de puntería de la silla también se mantiene por ahora.
+El salto con Espacio y potencia 40 aún necesita balance en el mapa. La guía de
+puntería de la silla también se mantiene por ahora.
 
 Prueba de regresión de marcadores del respaldo:
 `node tools/check-parkour-pairs.cjs`. Necesita la dependencia local en `.tools`.

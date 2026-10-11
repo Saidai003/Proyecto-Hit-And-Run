@@ -650,11 +650,15 @@ RunService.Heartbeat:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(input, procesado)
-	if procesado then
+	if procesado and input.UserInputType ~= Enum.UserInputType.MouseButton2 then
 		return
 	end
+	if UserInputService:GetFocusedTextBox() then return end
+	local interfaz = jugadorLocal.PlayerGui:FindFirstChild("PantallaPrincipal_1v1_GUI")
+	if interfaz and ((interfaz:FindFirstChild("HowToPlayModal") and interfaz.HowToPlayModal.Visible)
+		or (interfaz:FindFirstChild("DonationConfirmation") and interfaz.DonationConfirmation.Visible)) then return end
 
-	if input.KeyCode ~= Enum.KeyCode.Space then
+	if input.UserInputType ~= Enum.UserInputType.MouseButton2 then
 		return
 	end
 
@@ -669,7 +673,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 		alternarEscalada()
 		return
 	end
-	-- The pallet controller owns Space whenever a pallet endpoint is in range.
+	-- The pallet controller owns right-click whenever a pallet endpoint is in range.
 	for _, objeto in ipairs(workspace:GetDescendants()) do
 		if objeto:IsA("BasePart")
 			and (objeto.Name == "PuntoPale_1" or objeto.Name == "PuntoPale_2")

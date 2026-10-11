@@ -708,7 +708,16 @@ local function atacar(jugador)
 		return
 	end
 
-	ultimoAtaque[jugador] = ahora + cooldown
+	local recuperacionHasta = ahora + cooldown
+	ultimoAtaque[jugador] = recuperacionHasta
+	if humanoideAtacante then
+		humanoideAtacante:SetAttribute("AttackRecovery", true)
+		task.delay(cooldown, function()
+			if humanoideAtacante.Parent and ultimoAtaque[jugador] == recuperacionHasta then
+				humanoideAtacante:SetAttribute("AttackRecovery", false)
+			end
+		end)
+	end
 
 	local hrpPerseguidor =
 		obtenerHRP(perseguidor)
@@ -781,6 +790,18 @@ local UMBRAL_ATURDIMIENTO_CAIDA = 12
 local UMBRAL_DANO_CAIDA = 25
 local registroCaidas = {}
 
+local function aterrizajeInminente(jugador, humanoide, root)
+	if root.AssemblyLinearVelocity.Y > -10
+		or humanoide:GetState() == Enum.HumanoidStateType.Climbing then return false end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { jugador.Character }
+	params.RespectCanCollide = true
+	local alturaPies = humanoide.HipHeight + root.Size.Y * 0.5
+	local resultado = Workspace:Raycast(root.Position, Vector3.new(0, -(alturaPies + 1), 0), params)
+	return resultado ~= nil and resultado.Distance <= alturaPies + 0.45
+end
+
 RunService.Heartbeat:Connect(function()
 	if EstadoPartida ~= "RONDA_ACTIVA" or not ataquesHabilitados then
 		table.clear(registroCaidas)
@@ -792,7 +813,9 @@ RunService.Heartbeat:Connect(function()
 			local root = obtenerHRP(jugador)
 			if humanoide and root and humanoide.Health > 0 then
 				local registro = registroCaidas[jugador]
-				if humanoide.FloorMaterial == Enum.Material.Air then
+				local aterrizando = humanoide.FloorMaterial ~= Enum.Material.Air
+					or (registro ~= nil and aterrizajeInminente(jugador, humanoide, root))
+				if not aterrizando then
 					if not registro or registro.character ~= jugador.Character then
 						registroCaidas[jugador] = {character = jugador.Character, maxY = root.Position.Y}
 					else
@@ -804,6 +827,7 @@ RunService.Heartbeat:Connect(function()
 					if caida >= UMBRAL_ATURDIMIENTO_CAIDA
 						and not jugador.Character:GetAttribute("KnockedOut")
 						and not humanoide:GetAttribute("FallStunned") then
+						EventoJuego:FireClient(jugador, "CAIDA_ATURDIDO", jugador == perseguido and caida >= UMBRAL_DANO_CAIDA)
 						local duracion = math.clamp(0.4 + (caida - UMBRAL_ATURDIMIENTO_CAIDA) * 0.04, 0.4, 2.5)
 						humanoide:SetAttribute("FallStunned", true)
 						humanoide.PlatformStand = true

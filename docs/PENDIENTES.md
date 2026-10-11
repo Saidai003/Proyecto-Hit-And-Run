@@ -8,10 +8,10 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 - **Preparado, por probar:** aceptar `TrussPart` y piezas `BasePart` marcadas con el atributo booleano o etiqueta `Escalable`. Una pieza normal marcada debe tener geometría de escalera que el Humanoid realmente pueda subir; la marca no transforma una pared lisa en escalera.
 - **Preparado, por probar:** cobrar 5 puntos de stamina por stud vertical recorrido al subir o bajar, sin tarifa inicial; a cero, soltar la escalada. Comprobar que no se cobre por caídas ajenas a la escalada.
 
-## Salto experimental con ALT
+## Salto con Espacio
 
 - **Preparado, por probar:** reducir `JumpPower` experimental de 50 a 40; comprobar en los muros del mapa si basta para preservar los recorridos de persecución.
-- La tecla definitiva de salto sigue siendo una decisión de diseño abierta; ALT continúa siendo solo una prueba.
+- **Preparado, por probar:** Espacio pasa a ser la tecla del salto; ALT deja de saltar. Comprobar el gasto de stamina y que no se active parkour accidentalmente.
 
 ## Donación y pantalla de compra
 
@@ -21,10 +21,24 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Interfaz «How to Play»
 
-- **Preparado, por probar:** sustituir el bloque de texto cortado por tarjetas visuales desplazables y mantener `GOT IT!` fuera de la zona de contenido. La tarjeta de `ALT` explica el salto experimental.
+- **Preparado, por probar:** sustituir el bloque de texto cortado por tarjetas visuales desplazables y mantener `GOT IT!` fuera de la zona de contenido. Las tarjetas explican Espacio para saltar y clic derecho para parkour.
 - Verificar la presentación en distintas resoluciones y escalas de pantalla, con el panel del lobby abierto.
+
+## Nueva tanda de ajustes
+
+- **Preparado, por probar:** reducir la altura del panel oscuro de stamina en el lobby, sin quitar información de las rondas.
+- **Preparado, por probar:** mover el botón de donación fuera de la lista de jugadores, centrado sobre el menú del lobby.
+- **Preparado, por probar:** mostrar `CHASER` como nombre visible del perseguidor.
+- **Preparado, por probar:** ralentizar al perseguidor un 60 % durante la recuperación de cada ataque, acierte o falle, y repetir el tramo final de la animación. Verificar mano y bate.
+- **Preparado, por probar:** anticipar el noqueo al aterrizar y mostrar bordes rojos al recibir daño, amarillos al quedar aturdido. Verificar caídas con y sin pérdida de vidas.
+- **Preparado, por probar:** todas las acciones de parkour pasan de Espacio a clic derecho, incluido soltar la escalada; verificar en lobby y partida que el clic derecho no interfiera con cámara ni interfaces.
+
+## Alertas de Studio ajenas a estos scripts
+
+- El plugin de Rojo mostró `GetClassIcon:  is not a Roblox class` dentro de `Roact/VirtualScroller`. El servidor Rojo 7.7.1 seguía escuchando en `127.0.0.1:34872` y el build local pasó. Confirmar si reaparece al reiniciar Studio; si ocurre, guardar la primera línea de error, no solo el stack.
+- `Workspace.ROCK.Script` espera indefinidamente un hijo `ThrowEvent`. El asset `ROCK` está en el Place, fuera de los scripts sincronizados por Rojo. No crear el evento a ciegas: confirmar si el asset se usa y, si no, desactivar solo su script huérfano en una copia guardada del Place.
 
 ## Verificación
 
-- Probar estos cambios en el lobby y en partida, en R15, con subida y bajada largas, salida manual con Space, llegada natural al extremo y stamina baja o agotada.
+- Probar estos cambios en el lobby y en partida, en R15, con subida y bajada largas, salida manual con clic derecho, llegada natural al extremo y stamina baja o agotada.
 - Confirmar que las acciones de parkour existentes y el indicador contextual no presentan regresiones.

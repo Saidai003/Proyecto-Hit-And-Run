@@ -28,11 +28,11 @@ panelCorner.CornerRadius = UDim.new(0, 10)
 panelCorner.Parent = panel
 
 local key = Instance.new("TextLabel")
-key.Name = "SpaceKey"
+key.Name = "RightMouseKey"
 key.Size = UDim2.fromOffset(72, 34)
 key.Position = UDim2.fromOffset(7, 7)
 key.BackgroundColor3 = Color3.fromRGB(42, 47, 56)
-key.Text = "Space"
+key.Text = "RMB"
 key.TextColor3 = Color3.new(1, 1, 1)
 key.TextSize = 17
 key.Font = Enum.Font.GothamBold

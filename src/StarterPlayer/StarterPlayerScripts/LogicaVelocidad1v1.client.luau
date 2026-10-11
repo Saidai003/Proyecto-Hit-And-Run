@@ -76,7 +76,7 @@ local consumoSprint = CONSUMO_SPRINT_PERSEGUIDO
 
 local sprintActivo = false
 local movimientoBloqueado = false
-local ultimoSaltoAlt = 0
+local ultimoSalto = 0
 
 local fovObjetivo = FOV_NORMAL
 
@@ -199,14 +199,14 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 
 	if input.KeyCode == Enum.KeyCode.LeftShift then
 		activarSprint()
-	elseif input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
+	elseif input.KeyCode == Enum.KeyCode.Space then
 		if movimientoBloqueado or not humanoide or humanoide.Health <= 0
 			or humanoide.FloorMaterial == Enum.Material.Air
 			or humanoide:GetAttribute("ParkourEspecialActivo")
 			or humanoide:GetAttribute("EscaladaActiva")
 			or humanoide:GetAttribute("FallStunned")
-			or os.clock() - ultimoSaltoAlt < 0.4 then return end
-		ultimoSaltoAlt = os.clock()
+			or os.clock() - ultimoSalto < 0.4 then return end
+		ultimoSalto = os.clock()
 		local ok, permitido = pcall(function()
 			return ReplicatedStorage:WaitForChild("SolicitarParkour1v1"):InvokeServer("Salto")
 		end)
@@ -261,6 +261,9 @@ RunService.Heartbeat:Connect(function(deltaTime)
 		local velocidad = sprintActivo and velocidadSprint or velocidadBase
 		if humanoide:GetAttribute("EscaladaActiva") and humanoide:GetAttribute("EscaladaLenta") then
 			velocidad *= 0.7
+		end
+		if humanoide:GetAttribute("AttackRecovery") or humanoide:GetAttribute("AttackRecoveryLocal") then
+			velocidad *= 0.4
 		end
 		humanoide.WalkSpeed = velocidad
 	end

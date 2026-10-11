@@ -119,8 +119,8 @@ howCorner.Parent = btnHowTo
 local btnDonate = Instance.new("TextButton")
 btnDonate.Name = "Donate"
 btnDonate.Size = UDim2.fromOffset(132, 38)
-btnDonate.AnchorPoint = Vector2.new(1, 0)
-btnDonate.Position = UDim2.new(1, -16, 0, 78)
+btnDonate.AnchorPoint = Vector2.new(0.5, 1)
+btnDonate.Position = UDim2.new(0.5, 0, 1, -102)
 btnDonate.BackgroundColor3 = Color3.fromRGB(97, 69, 37)
 btnDonate.BorderSizePixel = 0
 btnDonate.Text = donationConfig.ProductId > 0 and "DONATE" or "DONATE SOON"
@@ -136,8 +136,8 @@ donateCorner.Parent = btnDonate
 local donateFeedback = Instance.new("TextLabel")
 donateFeedback.Name = "DonationFeedback"
 donateFeedback.Size = UDim2.fromOffset(230, 52)
-donateFeedback.AnchorPoint = Vector2.new(1, 0)
-donateFeedback.Position = UDim2.new(1, -16, 0, 122)
+donateFeedback.AnchorPoint = Vector2.new(0.5, 1)
+donateFeedback.Position = UDim2.new(0.5, 0, 1, -145)
 donateFeedback.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
 donateFeedback.BackgroundTransparency = 0.12
 donateFeedback.TextColor3 = Color3.new(1, 1, 1)
@@ -372,12 +372,12 @@ local function addGuideCard(keyText, title, description, accent)
 	detail.Parent = card
 end
 
-addGuideCard("RUNNER", "Escape", "Survive until time runs out. Use obstacles to lose the Killer.", Color3.fromRGB(35, 126, 100))
-addGuideCard("KILLER", "Hunt", "Catch the Runner. Press F to attack at close range.", Color3.fromRGB(146, 61, 65))
+addGuideCard("RUNNER", "Escape", "Survive until time runs out. Use obstacles to lose the Chaser.", Color3.fromRGB(35, 126, 100))
+addGuideCard("CHASER", "Hunt", "Catch the Runner. Press F or left-click to attack.", Color3.fromRGB(146, 61, 65))
 addGuideCard("SHIFT", "Sprint", "Hold to run faster. Watch your stamina.", Color3.fromRGB(66, 92, 144))
-addGuideCard("ALT", "Jump (test)", "Jump over small obstacles. Costs stamina; height is experimental.", Color3.fromRGB(102, 80, 143))
-addGuideCard("SPACE", "Parkour", "Near a prompt: vault, squeeze through, drop or break a pallet.", Color3.fromRGB(141, 96, 46))
-addGuideCard("SPACE", "Climb / Drop Off", "Near a climbable ladder: climb. Press again to let go. Climbing uses stamina as you move.", Color3.fromRGB(141, 96, 46))
+addGuideCard("SPACE", "Jump", "Jump over small obstacles. Costs stamina; jump height is limited.", Color3.fromRGB(102, 80, 143))
+addGuideCard("RMB", "Parkour", "Right-click near a prompt to vault, squeeze through or use a pallet.", Color3.fromRGB(141, 96, 46))
+addGuideCard("RMB", "Climb / Drop Off", "Right-click near a ladder to climb. Right-click again to let go.", Color3.fromRGB(141, 96, 46))
 addGuideCard("STAMINA", "Manage energy", "Low stamina slows parkour. At zero, you cannot jump or keep climbing.", Color3.fromRGB(74, 103, 125))
 guideScroll.CanvasSize = UDim2.fromOffset(0, guideLayout.AbsoluteContentSize.Y + 8)
 
@@ -415,6 +415,7 @@ hudPanel.Parent = screenGui
 local hudCorner = Instance.new("UICorner")
 hudCorner.CornerRadius = UDim.new(0, 12)
 hudCorner.Parent = hudPanel
+
 
 local roleLabel = Instance.new("TextLabel")
 roleLabel.Name = "Role"
@@ -461,6 +462,19 @@ livesWidget.BackgroundTransparency = 1
 livesWidget.Visible = false
 livesWidget.ZIndex = 20
 livesWidget.Parent = hudPanel
+
+local function ajustarTamanoHud()
+	local enLobby = sideMenu.Visible
+	local altura = livesWidget.Visible and 132 or 84
+	local ancho = enLobby and 240 or 312
+	hudPanel.Size = UDim2.fromOffset(ancho, altura)
+	hudPanel.Position = UDim2.new(0, 16, 1, -(altura + (enLobby and 96 or 16)))
+	roleLabel.Size = UDim2.fromOffset(ancho - 24, 34)
+	staminaLabel.Size = UDim2.fromOffset(ancho - 24, 30)
+end
+livesWidget:GetPropertyChangedSignal("Visible"):Connect(ajustarTamanoHud)
+sideMenu:GetPropertyChangedSignal("Visible"):Connect(ajustarTamanoHud)
+ajustarTamanoHud()
 
 local heart = Instance.new("TextLabel")
 heart.Name = "Heart"
@@ -853,7 +867,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		staminaLabel.Visible = true
 
 		if rol == "PERSEGUIDOR" then
-			roleLabel.Text = "KILLER"
+			roleLabel.Text = "CHASER"
 			attackButton.Visible = true
 		else
 			roleLabel.Text = "RUNNER"
@@ -995,7 +1009,7 @@ local function actualizarHudLobby()
 	if Workspace:GetAttribute("LobbyPractica") == true and sideMenu.Visible then
 		hudPanel.Visible = true
 		roleLabel.Visible = true
-		roleLabel.Text = jugador:GetAttribute("Rol") == "PERSEGUIDOR" and "KILLER" or "RUNNER"
+		roleLabel.Text = jugador:GetAttribute("Rol") == "PERSEGUIDOR" and "CHASER" or "RUNNER"
 		staminaLabel.Visible = true
 		livesWidget.Visible = false
 	elseif sideMenu.Visible then

@@ -102,7 +102,7 @@ end
 -- terminar, lo reorienta para mirar hacia el Punto
 -- opuesto. Misma mecÃ¡nica que aproximarseAlPunto en
 -- LogicaParkour1v1, aplicada al salto de pale para que no
--- sea un movimiento brusco cuando se pulsa Space lejos del
+-- sea un movimiento brusco cuando se pulsa clic derecho lejos del
 -- Punto exacto.
 local function aproximarseAlPuntoDelPale(puntoCercano)
 	local character = jugadorLocal.Character
@@ -144,9 +144,13 @@ end
 -- DETECCIÃN DE TECLADO
 --==================================================
 UserInputService.InputBegan:Connect(function(input, procesado)
+	if procesado and input.UserInputType ~= Enum.UserInputType.MouseButton2 then return end
 	if UserInputService:GetFocusedTextBox() ~= nil then return end
+	local interfaz = jugadorLocal.PlayerGui:FindFirstChild("PantallaPrincipal_1v1_GUI")
+	if interfaz and ((interfaz:FindFirstChild("HowToPlayModal") and interfaz.HowToPlayModal.Visible)
+		or (interfaz:FindFirstChild("DonationConfirmation") and interfaz.DonationConfirmation.Visible)) then return end
 
-	if input.KeyCode == Enum.KeyCode.Space then
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
 		if debounce then return end
 
 		local character = jugadorLocal.Character
