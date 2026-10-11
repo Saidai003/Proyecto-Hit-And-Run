@@ -56,7 +56,6 @@ local ocupado = false        -- lunge + ataque + cooldown
 local presionando = false    -- botÃ³n de golpe mantenido
 local idAtaque = 0           -- invalida acciones pendientes al cancelar
 local conexionLunge = nil
-local conexionRecuperacion = nil
 
 local velocidadBase = nil
 local velocidadBoost = nil
@@ -257,10 +256,6 @@ local function terminarLunge()
 end
 
 local function terminarRecuperacion()
-	if conexionRecuperacion then
-		conexionRecuperacion:Disconnect()
-		conexionRecuperacion = nil
-	end
 	if humanoide then humanoide:SetAttribute("AttackRecoveryLocal", false) end
 	if trackGolpe then
 		trackGolpe.Looped = false
@@ -269,20 +264,15 @@ local function terminarRecuperacion()
 	end
 end
 
-local function iniciarRecuperacion(miId)
+local function iniciarRecuperacion(cooldown)
 	if humanoide then humanoide:SetAttribute("AttackRecoveryLocal", true) end
 	if not trackGolpe or trackGolpe.Length <= 0 then return end
-	local inicioCola = trackGolpe.Length * 0.8
-	trackGolpe.Looped = true
-	trackGolpe:AdjustSpeed(0.7)
-	trackGolpe.TimePosition = inicioCola
-	conexionRecuperacion = RunService.Heartbeat:Connect(function()
-		if idAtaque ~= miId then return end
-		if not trackGolpe.IsPlaying then trackGolpe:Play(0.05, 1, 0.7) end
-		if trackGolpe.TimePosition < inicioCola or trackGolpe.TimePosition >= trackGolpe.Length * 0.99 then
-			trackGolpe.TimePosition = inicioCola
-		end
-	end)
+	local duracionCola = trackGolpe.Length * 0.3
+	local velocidadCola = duracionCola / cooldown
+	trackGolpe.Looped = false
+	if not trackGolpe.IsPlaying then trackGolpe:Play(0.05, 1, velocidadCola) end
+	trackGolpe.TimePosition = trackGolpe.Length * 0.7
+	trackGolpe:AdjustSpeed(velocidadCola)
 end
 
 -- Cancela todo el golpe (muerte, bloqueo, nuevo personaje...).
@@ -302,11 +292,11 @@ end
 local function lanzarGolpe(miId)
 	terminarLunge()
 
-	-- Si se soltÃ³ antes de tiempo, salta directo al ataque
-	if trackGolpe and trackGolpe.IsPlaying and trackGolpe.TimePosition < FIN_LUNGE then
-		trackGolpe.TimePosition = FIN_LUNGE
-	end
-	iniciarRecuperacion(miId)
+	-- La recuperacion comienza siempre en el 70 % exacto del track.
+	local herramienta = herramientaEquipada()
+	local cooldown = herramienta and herramienta:GetAttribute("AttackKind") == "Bat"
+		and COOLDOWN_BATE or COOLDOWN_GOLPE
+	iniciarRecuperacion(cooldown)
 
 	-- El servidor valida distancia, cooldown y vidas
 	task.delay(RETRASO_IMPACTO, function()
@@ -318,9 +308,6 @@ local function lanzarGolpe(miId)
 	end)
 
 	-- Cooldown
-	local herramienta = herramientaEquipada()
-	local cooldown = herramienta and herramienta:GetAttribute("AttackKind") == "Bat"
-		and COOLDOWN_BATE or COOLDOWN_GOLPE
 	task.delay(cooldown, function()
 		if idAtaque ~= miId then
 			return

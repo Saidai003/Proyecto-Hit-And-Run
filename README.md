@@ -54,8 +54,8 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   cuando no hay contador de vidas.
 - El nombre visible del rol perseguidor es `CHASER`.
 - Tras atacar, acertando o fallando, el perseguidor camina al 40 % de su velocidad
-  normal durante el cooldown. La última quinta parte de la animación de golpe
-  se repite como recuperación provisional.
+  normal durante el cooldown. El último 30 % de la animación de golpe se reproduce
+  una sola vez, lentamente, durante ese período.
 - Los bordes de pantalla muestran rojo al recibir daño y amarillo en el
   aturdimiento de caída. La detección de aterrizaje comienza antes del contacto
   pleno para reducir el retardo percibido del noqueo.
