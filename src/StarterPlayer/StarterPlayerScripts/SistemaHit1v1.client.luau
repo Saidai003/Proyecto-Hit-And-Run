@@ -29,10 +29,8 @@ local MULTIPLICADOR_LUNGE = 1.5
 -- Segundos desde que empieza el ataque (0.71) hasta que el golpe "conecta"
 local RETRASO_IMPACTO = 0.1
 
--- Cooldown desde que empieza el ataque. Debe ser un poco mayor que
--- COOLDOWN_ATAQUE del servidor (1) para evitar rechazos por latencia.
-local COOLDOWN_GOLPE = 1.1
-local COOLDOWN_BATE = 1.8
+-- Safety timeout if the authoritative attack result never arrives.
+local TIEMPO_ESPERA_RESULTADO = 2.5
 
 local function herramientaEquipada()
 	local personaje = jugador.Character
@@ -56,6 +54,8 @@ local ocupado = false        -- lunge + ataque + cooldown
 local presionando = false    -- botÃ³n de golpe mantenido
 local idAtaque = 0           -- invalida acciones pendientes al cancelar
 local conexionLunge = nil
+local esperandoResultado = false
+local inicioAtaque = 0
 
 local velocidadBase = nil
 local velocidadBoost = nil
@@ -264,20 +264,16 @@ local function terminarRecuperacion()
 	end
 end
 
-local function iniciarRecuperacion(cooldown)
+local function iniciarRecuperacion()
 	if humanoide then humanoide:SetAttribute("AttackRecoveryLocal", true) end
-	if not trackGolpe or trackGolpe.Length <= 0 then return end
-	local duracionCola = trackGolpe.Length * 0.3
-	local velocidadCola = duracionCola / cooldown
-	trackGolpe.Looped = false
-	if not trackGolpe.IsPlaying then trackGolpe:Play(0.05, 1, velocidadCola) end
-	trackGolpe.TimePosition = trackGolpe.Length * 0.7
-	trackGolpe:AdjustSpeed(velocidadCola)
+	-- No extra swing or looping recovery animation after the impact frame.
+	if trackGolpe and trackGolpe.IsPlaying then trackGolpe:Stop(0.08) end
 end
 
 -- Cancela todo el golpe (muerte, bloqueo, nuevo personaje...).
 local function cancelarGolpe()
 	idAtaque += 1
+	esperandoResultado = false
 	terminarLunge()
 	terminarRecuperacion()
 
@@ -291,12 +287,8 @@ end
 -- Empieza el ataque en sÃ­ (a partir de 0.71).
 local function lanzarGolpe(miId)
 	terminarLunge()
-
-	-- La recuperacion comienza siempre en el 70 % exacto del track.
-	local herramienta = herramientaEquipada()
-	local cooldown = herramienta and herramienta:GetAttribute("AttackKind") == "Bat"
-		and COOLDOWN_BATE or COOLDOWN_GOLPE
-	iniciarRecuperacion(cooldown)
+	esperandoResultado = true
+	iniciarRecuperacion()
 
 	-- El servidor valida distancia, cooldown y vidas
 	task.delay(RETRASO_IMPACTO, function()
@@ -304,15 +296,14 @@ local function lanzarGolpe(miId)
 			return
 		end
 
-		EventoAtaque:FireServer()
+		inicioAtaque = os.clock()
+		EventoAtaque:FireServer(miId)
 	end)
 
-	-- Cooldown
-	task.delay(cooldown, function()
-		if idAtaque ~= miId then
-			return
-		end
-
+	-- Release safely if the server rejects the request or the reply is lost.
+	task.delay(TIEMPO_ESPERA_RESULTADO, function()
+		if idAtaque ~= miId or not esperandoResultado then return end
+		esperandoResultado = false
 		terminarRecuperacion()
 		ocupado = false
 	end)
@@ -458,7 +449,20 @@ end)
 -- HIT CONFIRMADO POR EL SERVIDOR
 --==================================================
 
-EventoHit1v1.OnClientEvent:Connect(function(tipo, atacante, victima)
+EventoHit1v1.OnClientEvent:Connect(function(tipo, atacante, victima, cooldown)
+	if tipo == "ATTACK_RESULT" then
+		local requestId = atacante
+		if requestId ~= idAtaque or not esperandoResultado
+			or typeof(cooldown) ~= "number" then return end
+		esperandoResultado = false
+		local restante = math.max(0, cooldown - (os.clock() - inicioAtaque))
+		task.delay(restante, function()
+			if requestId ~= idAtaque then return end
+			terminarRecuperacion()
+			ocupado = false
+		end)
+		return
+	end
 	if tipo ~= "HIT" then
 		return
 	end

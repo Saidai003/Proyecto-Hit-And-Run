@@ -49,13 +49,16 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   no entrega objetos ni ventajas.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
   encontrar pareja se desactiva la práctica.
-- Un indicador inferior muestra `RMB` (clic derecho) y la acción de parkour disponible.
+- Un indicador inferior muestra `RMB` (clic derecho) y la acción de parkour disponible;
+  en ventanas también muestra `SPACE`, que sustituye el salto normal cuando el
+  jugador se mueve hacia la ventana.
 - El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
   cuando no hay contador de vidas.
 - El nombre visible del rol perseguidor es `CHASER`.
-- Tras atacar, acertando o fallando, el perseguidor camina al 40 % de su velocidad
-  normal durante el cooldown. El último 30 % de la animación de golpe se reproduce
-  una sola vez, lentamente, durante ese período.
+- Tras fallar un ataque, el perseguidor camina al 40 % de su velocidad normal
+  solo brevemente (0,35 s con mano, 0,5 s con bate), sin animación adicional.
+  Un acierto mantiene el cooldown más largo (1 s / 1,8 s); con el bate, una
+  recuperación procedural lo apunta hacia abajo y lo devuelve lentamente a su posición.
 - Los bordes de pantalla muestran rojo al recibir daño y amarillo en el
   aturdimiento de caída. La detección de aterrizaje comienza antes del contacto
   pleno para reducir el retardo percibido del noqueo.

@@ -402,7 +402,7 @@ end
 addGuideCard("RUNNER", "Escape", "Survive until time runs out. Use obstacles to lose the Chaser.", Color3.fromRGB(35, 126, 100))
 addGuideCard("CHASER", "Hunt", "Catch the Runner. Press F or left-click to attack.", Color3.fromRGB(146, 61, 65))
 addGuideCard("SHIFT", "Sprint", "Hold to run faster. Watch your stamina.", Color3.fromRGB(66, 92, 144))
-addGuideCard("SPACE", "Jump", "Jump over small obstacles. Costs stamina; jump height is limited.", Color3.fromRGB(102, 80, 143))
+addGuideCard("SPACE", "Jump / Window", "Jump over small obstacles. Moving into a window vaults it instead.", Color3.fromRGB(102, 80, 143))
 addGuideCard("RMB", "Parkour", "Right-click near a prompt to vault, squeeze through or use a pallet.", Color3.fromRGB(141, 96, 46))
 addGuideCard("RMB", "Climb / Drop Off", "Right-click near a ladder to climb. Right-click again to let go.", Color3.fromRGB(141, 96, 46))
 addGuideCard("STAMINA", "Manage energy", "Low stamina slows parkour. At zero, you cannot jump or keep climbing.", Color3.fromRGB(74, 103, 125))
@@ -838,16 +838,6 @@ local function atacar()
 end
 
 attackButton.MouseButton1Click:Connect(atacar)
-
-UserInputService.InputBegan:Connect(function(input, procesado)
-	if procesado then
-		return
-	end
-
-	if input.KeyCode == Enum.KeyCode.F then
-		atacar()
-	end
-end)
 
 -- =========================================================
 -- EVENTOS DEL SERVIDOR

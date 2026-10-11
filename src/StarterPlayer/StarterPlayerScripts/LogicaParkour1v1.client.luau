@@ -550,6 +550,38 @@ local function ejecutarSaltoVentana(puntoInicial, puntoFinal)
 	})
 end
 
+-- Space is redirected only when the player is moving into a nearby window.
+-- Other parkour actions remain on right-click.
+local tryWindowVault = script.Parent:FindFirstChild("TryWindowVault")
+if not tryWindowVault then
+	tryWindowVault = Instance.new("BindableFunction")
+	tryWindowVault.Name = "TryWindowVault"
+	tryWindowVault.Parent = script.Parent
+end
+tryWindowVault.OnInvoke = function()
+	if accionActiva or cooldown or not obtenerPersonaje() then return false end
+	if not (workspace:GetAttribute("RondaEnJuego") or workspace:GetAttribute("LobbyPractica")) then return false end
+	if humanoide.Health <= 0 or humanoide:GetAttribute("Inmovilizado")
+		or humanoide:GetAttribute("FallStunned") or escaladaActiva then return false end
+	local punto = buscarPuntoMasCercano("PuntoSalto")
+	if not punto then return false end
+	local destino = obtenerPuntoOpuesto(punto)
+	if not destino then return false end
+	local movimiento = humanoide.MoveDirection
+	if movimiento.Magnitude < 0.1 then return false end
+	local haciaPunto = punto.Position - rootPart.Position
+	local haciaSalida = destino.Position - punto.Position
+	haciaPunto = Vector3.new(haciaPunto.X, 0, haciaPunto.Z)
+	haciaSalida = Vector3.new(haciaSalida.X, 0, haciaSalida.Z)
+	if haciaSalida.Magnitude < 0.1 then return false end
+	local direccion = haciaPunto.Magnitude > DISTANCIA_INICIO_ANIMACION
+		and haciaPunto.Unit or haciaSalida.Unit
+	if movimiento:Dot(direccion) < 0.45 then return false end
+	accionActiva = true
+	task.spawn(ejecutarSaltoVentana, punto, destino)
+	return true
+end
+
 -- INPUT -----------------------------------------------------------------
 
 local function distanciaEscalable(objeto)

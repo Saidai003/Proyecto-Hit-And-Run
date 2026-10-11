@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local EventoJuego = ReplicatedStorage:WaitForChild("EventoJuego")
 local EventoCountdown = ReplicatedStorage:WaitForChild("EventoCountdown")
@@ -40,6 +41,8 @@ local DISTANCIA_ATAQUE = 6
 local COOLDOWN_ATAQUE = 1
 local DISTANCIA_BATE = 8
 local COOLDOWN_BATE = 1.8
+local COOLDOWN_FALLO_MANO = 0.35
+local COOLDOWN_FALLO_BATE = 0.5
 
 
 --==================================================
@@ -668,7 +671,7 @@ end
 -- ATAQUE
 --==================================================
 
-local function atacar(jugador)
+local function atacar(jugador, requestId)
 
 	if EstadoPartida ~= "RONDA_ACTIVA" then
 		return
@@ -700,7 +703,6 @@ local function atacar(jugador)
 	local herramienta = jugador.Character and jugador.Character:FindFirstChildOfClass("Tool")
 	if herramienta and herramienta:GetAttribute("Throwable") then return end
 	local usaBate = herramienta and herramienta:GetAttribute("AttackKind") == "Bat"
-	local cooldown = usaBate and COOLDOWN_BATE or COOLDOWN_ATAQUE
 	local alcance = usaBate and DISTANCIA_BATE or DISTANCIA_ATAQUE
 
 	if ultimoAtaque[jugador] and ahora < ultimoAtaque[jugador] then
@@ -708,6 +710,16 @@ local function atacar(jugador)
 		return
 	end
 
+	local hrpPerseguidor =
+		obtenerHRP(perseguidor)
+
+	local hrpPerseguido =
+		obtenerHRP(perseguido)
+
+	local acerto = hrpPerseguidor ~= nil and hrpPerseguido ~= nil
+		and (hrpPerseguidor.Position - hrpPerseguido.Position).Magnitude <= alcance
+	local cooldown = acerto and (usaBate and COOLDOWN_BATE or COOLDOWN_ATAQUE)
+		or (usaBate and COOLDOWN_FALLO_BATE or COOLDOWN_FALLO_MANO)
 	local recuperacionHasta = ahora + cooldown
 	ultimoAtaque[jugador] = recuperacionHasta
 	if humanoideAtacante then
@@ -718,27 +730,27 @@ local function atacar(jugador)
 			end
 		end)
 	end
+	EventoHit1v1:FireClient(jugador, "ATTACK_RESULT", requestId, acerto, cooldown)
+	if not acerto then return end
 
-	local hrpPerseguidor =
-		obtenerHRP(perseguidor)
-
-	local hrpPerseguido =
-		obtenerHRP(perseguido)
-
-	if not hrpPerseguidor
-		or not hrpPerseguido then
-
-		return
-	end
-
-	local distancia =
-		(
-			hrpPerseguidor.Position
-			- hrpPerseguido.Position
-		).Magnitude
-
-	if distancia > alcance then
-		return
+	-- Bat recovery is a separate, one-shot pose: tip down, then slowly upright.
+	if usaBate and herramienta and herramienta.Parent == jugador.Character then
+		local joint = jugador.Character:FindFirstChild("RightGrip", true)
+		local objetivo = joint and joint:IsA("JointInstance")
+			and joint.Part1 == herramienta:FindFirstChild("Handle") and joint or herramienta
+		local propiedad = objetivo == herramienta and "Grip" or "C1"
+		local inicial = objetivo[propiedad]
+		local abajo = inicial * CFrame.Angles(math.rad(135), 0, 0)
+		local bajar = TweenService:Create(objetivo,
+			TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ [propiedad] = abajo })
+		local subir = TweenService:Create(objetivo,
+			TweenInfo.new(cooldown - 0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+			{ [propiedad] = inicial })
+		bajar.Completed:Once(function(estado)
+			if estado == Enum.PlaybackState.Completed and herramienta.Parent then subir:Play() end
+		end)
+		bajar:Play()
 	end
 
 	vidas[perseguido] -= 1

@@ -29,7 +29,8 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 - **Preparado, por probar:** reducir la altura del panel oscuro de stamina en el lobby, sin quitar información de las rondas.
 - **Preparado, por probar:** ubicar el botón de donación fuera de la lista de jugadores y del indicador central de parkour: abajo a la derecha en pantallas anchas y arriba a la izquierda en pantallas estrechas.
 - **Preparado, por probar:** mostrar `CHASER` como nombre visible del perseguidor.
-- **Preparado, por probar:** ralentizar al perseguidor un 60 % durante la recuperación de cada ataque, acierte o falle. Reproducir el tramo del 70 % al final de la animación una sola vez, lentamente y sin gestos de golpe adicionales. Verificar mano y bate.
+- **Preparado, por probar:** tras un fallo, ralentizar al perseguidor un 60 % brevemente y sin animación extra; tras un acierto, mantener cooldown largo y hacer que el bate apunte hacia abajo y vuelva lentamente mediante una pose procedural. Verificar mano y bate, tanto al acertar como al fallar, y que el bate vuelva a su agarre al cambiar de herramienta.
+- **Preparado, por probar:** al pulsar Espacio mientras el personaje se mueve hacia una ventana cercana, ejecutar el vault en vez de consumir stamina en un salto normal. Saltar normalmente al alejarse de la ventana; clic derecho debe seguir funcionando para todas las acciones de parkour.
 - **Preparado, por probar:** anticipar el noqueo al aterrizar y mostrar bordes rojos al recibir daño, amarillos al quedar aturdido. Verificar caídas con y sin pérdida de vidas.
 - **Preparado, por probar:** todas las acciones de parkour pasan de Espacio a clic derecho, incluido soltar la escalada; verificar en lobby y partida que el clic derecho no interfiera con cámara ni interfaces.
 

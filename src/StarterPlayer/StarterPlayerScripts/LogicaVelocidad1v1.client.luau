@@ -206,6 +206,11 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 			or humanoide:GetAttribute("EscaladaActiva")
 			or humanoide:GetAttribute("FallStunned")
 			or os.clock() - ultimoSalto < 0.4 then return end
+		local ventana = script.Parent:FindFirstChild("TryWindowVault")
+		if ventana and ventana:IsA("BindableFunction") then
+			local ok, redirigido = pcall(function() return ventana:Invoke() end)
+			if ok and redirigido then return end
+		end
 		ultimoSalto = os.clock()
 		local ok, permitido = pcall(function()
 			return ReplicatedStorage:WaitForChild("SolicitarParkour1v1"):InvokeServer("Salto")
