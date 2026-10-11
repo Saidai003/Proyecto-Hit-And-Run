@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
 local jugador = Players.LocalPlayer
 local playerGui = jugador:WaitForChild("PlayerGui")
@@ -238,33 +239,74 @@ jugador:GetAttributeChangedSignal("Stamina"):Connect(actualizarStamina)
 jugador:GetAttributeChangedSignal("StaminaMax"):Connect(actualizarStamina)
 actualizarStamina()
 
-local livesLabel = Instance.new("TextLabel")
-livesLabel.Name = "Lives"
-livesLabel.Size = UDim2.fromOffset(288, 32)
-livesLabel.Position = UDim2.fromOffset(12, 85)
-livesLabel.BackgroundTransparency = 1
-livesLabel.TextXAlignment = Enum.TextXAlignment.Left
-livesLabel.Text = ""
-livesLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-livesLabel.TextSize = 22
-livesLabel.Font = Enum.Font.GothamBold
-livesLabel.Visible = false
-livesLabel.ZIndex = 20
-livesLabel.Parent = hudPanel
+local livesWidget = Instance.new("Frame")
+livesWidget.Name = "RunnerLives"
+livesWidget.Size = UDim2.fromOffset(145, 48)
+livesWidget.Position = UDim2.fromOffset(12, 80)
+livesWidget.BackgroundTransparency = 1
+livesWidget.Visible = false
+livesWidget.ZIndex = 20
+livesWidget.Parent = hudPanel
 
-local rivalLivesLabel = Instance.new("TextLabel")
-rivalLivesLabel.Name = "RivalLives"
-rivalLivesLabel.Size = UDim2.fromOffset(288, 32)
-rivalLivesLabel.Position = UDim2.fromOffset(12, 85)
-rivalLivesLabel.BackgroundTransparency = 1
-rivalLivesLabel.Text = ""
-rivalLivesLabel.TextColor3 = Color3.fromRGB(255, 180, 180)
-rivalLivesLabel.TextSize = 22
-rivalLivesLabel.Font = Enum.Font.GothamBold
-rivalLivesLabel.TextXAlignment = Enum.TextXAlignment.Left
-rivalLivesLabel.Visible = false
-rivalLivesLabel.ZIndex = 20
-rivalLivesLabel.Parent = hudPanel
+local heart = Instance.new("TextLabel")
+heart.Name = "Heart"
+heart.Size = UDim2.fromOffset(62, 54)
+heart.Position = UDim2.fromOffset(0, -3)
+heart.BackgroundTransparency = 1
+heart.Text = utf8.char(0x2764)
+heart.TextColor3 = Color3.fromRGB(225, 53, 78)
+heart.TextSize = 53
+heart.Font = Enum.Font.GothamBold
+heart.ZIndex = 20
+heart.Parent = livesWidget
+
+local runnerPortrait = Instance.new("ImageLabel")
+runnerPortrait.Name = "RunnerPortrait"
+runnerPortrait.Size = UDim2.fromOffset(33, 33)
+runnerPortrait.Position = UDim2.fromOffset(14, 11)
+runnerPortrait.BackgroundColor3 = Color3.fromRGB(85, 35, 48)
+runnerPortrait.BorderSizePixel = 0
+runnerPortrait.Image = ""
+runnerPortrait.ZIndex = 21
+runnerPortrait.Parent = livesWidget
+local portraitCorner = Instance.new("UICorner")
+portraitCorner.CornerRadius = UDim.new(1, 0)
+portraitCorner.Parent = runnerPortrait
+
+local livesCount = Instance.new("TextLabel")
+livesCount.Name = "Count"
+livesCount.Size = UDim2.fromOffset(78, 46)
+livesCount.Position = UDim2.fromOffset(64, 1)
+livesCount.BackgroundTransparency = 1
+livesCount.TextXAlignment = Enum.TextXAlignment.Left
+livesCount.Text = ""
+livesCount.TextColor3 = Color3.fromRGB(255, 245, 245)
+livesCount.TextSize = 27
+livesCount.Font = Enum.Font.GothamBold
+livesCount.ZIndex = 20
+livesCount.Parent = livesWidget
+
+local portraitUserId = nil
+local function actualizarVidas(cantidad, userId)
+	livesWidget.Visible = true
+	livesCount.Text = "x " .. tostring(cantidad)
+	if typeof(userId) ~= "number" or portraitUserId == userId then return end
+	portraitUserId = userId
+	runnerPortrait.Image = ""
+	task.spawn(function()
+		for _ = 1, 4 do
+			local ok, contenido, listo = pcall(function()
+				return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+			end)
+			if portraitUserId ~= userId then return end
+			if ok and listo then
+				runnerPortrait.Image = contenido
+				return
+			end
+			task.wait(0.5)
+		end
+	end)
+end
 
 local roundLabel = Instance.new("TextLabel")
 roundLabel.Name = "Round"
@@ -508,11 +550,10 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 
 		roleLabel.Visible = false
 		staminaLabel.Visible = false
-		livesLabel.Visible = false
+		livesWidget.Visible = false
 		roundLabel.Visible = false
 		attackButton.Visible = false
 		resultPanel.Visible = false
-		rivalLivesLabel.Visible = false
 
 		sideMenu.Visible = not esPartidaPrivada
 		btnHowTo.Visible = true
@@ -550,15 +591,13 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 
 		local vidas = datos[1]
 
-		livesLabel.Visible = true
-		livesLabel.Text = "YOUR LIVES: " .. tostring(vidas)
+		actualizarVidas(vidas, datos[2])
 
 	elseif estado == "VIDAS_RIVAL" then
 
 		local vidasRival = datos[1]
 
-		rivalLivesLabel.Visible = true
-		rivalLivesLabel.Text = "RUNNER LIVES: " .. tostring(vidasRival)
+		actualizarVidas(vidasRival, datos[2])
 
 	elseif estado == "COUNTDOWN" then
 
@@ -591,14 +630,13 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 
 		roleLabel.Visible = false
 		hudPanel.Visible = false
-		livesLabel.Visible = false
+		livesWidget.Visible = false
 		roundLabel.Visible = false
 		staminaLabel.Visible = false
 		attackButton.Visible = false
 		messageLabel.Visible = false
 
 		resultPanel.Visible = true
-		rivalLivesLabel.Visible = false
 
 		local tiempo1 = resultado.tiempo1
 		local tiempo2 = resultado.tiempo2
@@ -658,8 +696,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		btnPlay.Text = "PLAY NOW!"
 		btnPlay.BackgroundColor3 = Color3.fromRGB(45, 180, 80)
 
-		rivalLivesLabel.Visible = false
-		livesLabel.Visible = false
+		livesWidget.Visible = false
 		roundLabel.Visible = false
 	elseif estado == "ERROR_LOBBY" then
 		messageLabel.Visible = true
@@ -671,5 +708,20 @@ if esPartidaPrivada then
 	sideMenu.Visible = false
 	banner.Visible = false
 end
+
+local function actualizarHudLobby()
+	if Workspace:GetAttribute("LobbyPractica") == true and sideMenu.Visible then
+		hudPanel.Visible = true
+		roleLabel.Visible = true
+		roleLabel.Text = jugador:GetAttribute("Rol") == "PERSEGUIDOR" and "KILLER" or "RUNNER"
+		staminaLabel.Visible = true
+		livesWidget.Visible = false
+	elseif sideMenu.Visible then
+		hudPanel.Visible = false
+	end
+end
+Workspace:GetAttributeChangedSignal("LobbyPractica"):Connect(actualizarHudLobby)
+jugador:GetAttributeChangedSignal("Rol"):Connect(actualizarHudLobby)
+actualizarHudLobby()
 
 print("[INTERFAZ]: Interfaz 1v1 cargada correctamente.")

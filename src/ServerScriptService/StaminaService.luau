@@ -36,7 +36,8 @@ end
 -- Returns a duration multiplier. At low stamina, speed is 70% of normal.
 function StaminaService.Consume(jugador, accion)
 	local costo = COSTO[accion]
-	if not costo or jugador.Parent ~= Players or not Workspace:GetAttribute("RondaEnJuego") then
+	if not costo or jugador.Parent ~= Players
+		or not (Workspace:GetAttribute("RondaEnJuego") or Workspace:GetAttribute("LobbyPractica")) then
 		return nil
 	end
 	local ahora = os.clock()
@@ -60,6 +61,7 @@ remote.OnServerEvent:Connect(function(jugador, activo)
 end)
 
 Players.PlayerAdded:Connect(function(jugador)
+	if not jugador:GetAttribute("Rol") then jugador:SetAttribute("Rol", "PERSEGUIDO") end
 	StaminaService.Reset(jugador)
 	jugador:GetAttributeChangedSignal("Rol"):Connect(function()
 		StaminaService.Reset(jugador)
@@ -71,7 +73,10 @@ Players.PlayerRemoving:Connect(function(jugador)
 	ultimoUso[jugador] = nil
 	agotadoHasta[jugador] = nil
 end)
-for _, jugador in ipairs(Players:GetPlayers()) do StaminaService.Reset(jugador) end
+for _, jugador in ipairs(Players:GetPlayers()) do
+	if not jugador:GetAttribute("Rol") then jugador:SetAttribute("Rol", "PERSEGUIDO") end
+	StaminaService.Reset(jugador)
+end
 
 local publishClock = 0
 RunService.Heartbeat:Connect(function(dt)
@@ -79,15 +84,16 @@ RunService.Heartbeat:Connect(function(dt)
 	for _, jugador in ipairs(Players:GetPlayers()) do
 		local actual = stamina[jugador] or maximo(jugador)
 		local humanoide = jugador.Character and jugador.Character:FindFirstChildOfClass("Humanoid")
-		local enRonda = Workspace:GetAttribute("RondaEnJuego") == true
-		local puedeCorrer = sprint[jugador] and enRonda
+		local enJuego = Workspace:GetAttribute("RondaEnJuego") == true
+			or Workspace:GetAttribute("LobbyPractica") == true
+		local puedeCorrer = sprint[jugador] and enJuego
 			and humanoide and humanoide.Health > 0 and humanoide.MoveDirection.Magnitude > 0
 			and not humanoide:GetAttribute("Inmovilizado")
 			and not humanoide:GetAttribute("ParkourEspecialActivo")
 		if puedeCorrer and actual > 0 then
 			actual = math.max(0, actual - (jugador:GetAttribute("Rol") == "PERSEGUIDOR" and 20 or 18) * dt)
 			if actual == 0 then agotadoHasta[jugador] = os.clock() + PAUSA_TRAS_AGOTARSE end
-		elseif not (sprint[jugador] and enRonda) and os.clock() >= (agotadoHasta[jugador] or 0) then
+		elseif not (sprint[jugador] and enJuego) and os.clock() >= (agotadoHasta[jugador] or 0) then
 			actual = math.min(maximo(jugador), actual + REGEN * dt)
 		end
 		stamina[jugador] = actual

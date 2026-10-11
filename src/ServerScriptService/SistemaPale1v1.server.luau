@@ -25,7 +25,7 @@ end
 -- CONFIGURACIÃN
 --==================================================
 
-local DISTANCIA_INTERACCION = 5
+local DISTANCIA_INTERACCION = 8.5
 
 local TIEMPO_CAIDA = 0.3
 local ANGULO_CAIDA = 50
@@ -1282,7 +1282,7 @@ EventoPale.OnServerEvent:Connect(
 				"RondaEnJuego"
 			)
 
-		if not rondaEnJuego then
+		if not rondaEnJuego and not Workspace:GetAttribute("LobbyPractica") then
 
 			return
 		end
@@ -1358,8 +1358,9 @@ EventoPale.OnServerEvent:Connect(
 							).Magnitude
 						)
 
-					if distancia
-						<= mejorDistancia then
+					if distancia <= mejorDistancia
+						and math.min(math.abs(root.Position.Y - datos.p1.Position.Y),
+							math.abs(root.Position.Y - datos.p2.Position.Y)) <= 4.5 then
 
 						mejorDistancia =
 							distancia

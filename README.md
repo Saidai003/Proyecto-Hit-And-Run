@@ -28,6 +28,16 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 
 ## Cambios de esta tanda
 
+- En el lobby público se puede practicar parkour y sprint como perseguido; al
+  encontrar pareja se desactiva la práctica. El salto normal continúa pendiente
+  de decisión de diseño.
+- El rango de ventanas y pasos estrechos es 7.5 studs; el de palés, 8.5.
+  Un indicador inferior muestra `Space` y la acción disponible.
+- Las vidas del perseguido se muestran una sola vez con corazón, retrato circular
+  del avatar y contador; el retrato dinámico utiliza la miniatura nativa de
+  Roblox de 420×420 (la API no ofrece 512×512).
+- El cursor se oculta durante la ronda y vuelve al lobby. Al terminar el parkour,
+  el personaje se corrige solo si penetró el suelo, sin adelantar su caída.
 - El perseguidor recibe un bate construido con un agarre vertical controlado al comenzar su rol. Equiparlo usa
   mayor alcance y cooldown que el golpe con la mano; se puede desequipar para
   volver a la mano y equipar la silla independientemente.

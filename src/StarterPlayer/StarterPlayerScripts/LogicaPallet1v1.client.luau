@@ -15,7 +15,7 @@ local ANIM_FAST_VAULT = "rbxassetid://91247705762076"
 local ANIM_DROP = "rbxassetid://95338026656426"
 local ANIM_HIT = "rbxassetid://122984890985296"
 
-local DISTANCIA_INTERACCION = 7
+local DISTANCIA_INTERACCION = 8.5
 local DISTANCIA_LLEGADA = 0.1
 local VELOCIDAD_APROXIMACION = 10
 local debounce = false
@@ -62,7 +62,9 @@ local function obtenerPaleCercano(posicionJugador)
 					local dist2 = (posicionJugador - p2.Position).Magnitude
 					local distancia = math.min(dist1, dist2)
 
-					if distancia <= mejorDistancia then
+					if distancia <= mejorDistancia
+						and math.min(math.abs(posicionJugador.Y - objeto.Position.Y),
+							math.abs(posicionJugador.Y - p2.Position.Y)) <= 4.5 then
 						mejorDistancia = distancia
 						mejorPale = contenedor
 					end

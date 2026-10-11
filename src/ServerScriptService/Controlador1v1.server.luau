@@ -396,7 +396,8 @@ local function asignarRoles()
 	EventoJuego:FireClient(
 		perseguido,
 		"VIDAS",
-		vidas[perseguido]
+		vidas[perseguido],
+		perseguido.UserId
 	)
 
 	-- El perseguidor ve las vidas del RIVAL (las del
@@ -405,7 +406,8 @@ local function asignarRoles()
 	EventoJuego:FireClient(
 		perseguidor,
 		"VIDAS_RIVAL",
-		vidas[perseguido]
+		vidas[perseguido],
+		perseguido.UserId
 	)
 
 	EventoJuego:FireClient(
@@ -489,6 +491,7 @@ end)
 local function esperarJugadores()
 
 	EstadoPartida = "ESPERANDO_JUGADORES"
+	Workspace:SetAttribute("LobbyPractica", not ES_SERVIDOR_PARTIDA or RunService:IsStudio())
 	if ES_SERVIDOR_PARTIDA and not RunService:IsStudio() then
 		local limite = os.clock() + TIEMPO_ESPERA_RIVAL
 		while os.clock() < limite do
@@ -749,7 +752,8 @@ local function atacar(jugador)
 	EventoJuego:FireClient(
 		perseguido,
 		"VIDAS",
-		vidas[perseguido]
+		vidas[perseguido],
+		perseguido.UserId
 	)
 
 	-- Mantener al perseguidor al tanto de las vidas
@@ -757,7 +761,8 @@ local function atacar(jugador)
 	EventoJuego:FireClient(
 		perseguidor,
 		"VIDAS_RIVAL",
-		vidas[perseguido]
+		vidas[perseguido],
+		perseguido.UserId
 	)
 
 	if vidas[perseguido] <= 0 then
@@ -814,9 +819,9 @@ RunService.Heartbeat:Connect(function()
 						if jugador == perseguido and caida >= UMBRAL_DANO_CAIDA then
 							local dano = math.max(1, math.floor((caida - UMBRAL_DANO_CAIDA) / 15) + 1)
 							vidas[jugador] = math.max(0, (vidas[jugador] or 0) - dano)
-							EventoJuego:FireClient(jugador, "VIDAS", vidas[jugador])
+							EventoJuego:FireClient(jugador, "VIDAS", vidas[jugador], jugador.UserId)
 							if perseguidor and perseguidor.Parent == Players then
-								EventoJuego:FireClient(perseguidor, "VIDAS_RIVAL", vidas[jugador])
+								EventoJuego:FireClient(perseguidor, "VIDAS_RIVAL", vidas[jugador], jugador.UserId)
 							end
 							if vidas[jugador] <= 0 then finalizarRonda("DERROTA") end
 						end
@@ -988,6 +993,7 @@ while true do
 
 		continue
 	end
+	Workspace:SetAttribute("LobbyPractica", false)
 
 	if not ES_SERVIDOR_PARTIDA and not RunService:IsStudio() then
 		enviarAPartidaPrivada(jugador1, jugador2)

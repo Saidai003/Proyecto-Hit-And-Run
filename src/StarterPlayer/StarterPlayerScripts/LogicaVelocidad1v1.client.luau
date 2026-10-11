@@ -34,22 +34,26 @@ local CAMERA_DISTANCIA = 12
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
 local camaraDePartida = false
+local cursorOriginal = UserInputService.MouseIconEnabled
 
 local function configurarCamaraDePartida(activa)
 	camaraDePartida = activa
 	if activa then
 		jugadorLocal.CameraMinZoomDistance = CAMERA_DISTANCIA
 		jugadorLocal.CameraMaxZoomDistance = CAMERA_DISTANCIA
+		UserInputService.MouseIconEnabled = false
 	else
 		jugadorLocal.CameraMinZoomDistance = zoomMinOriginal
 		jugadorLocal.CameraMaxZoomDistance = zoomMaxOriginal
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		UserInputService.MouseIconEnabled = cursorOriginal
 	end
 end
 
 RunService:BindToRenderStep("MatchFreeLook", Enum.RenderPriority.Camera.Value + 1, function()
 	if camaraDePartida then
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+		UserInputService.MouseIconEnabled = false
 	end
 end)
 

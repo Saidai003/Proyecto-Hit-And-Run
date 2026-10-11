@@ -9,7 +9,7 @@ local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 
 local jugadorLocal = Players.LocalPlayer
 
-local DISTANCIA_INTERACCION = 5
+local DISTANCIA_INTERACCION = 7.5
 local VELOCIDAD_APROXIMACION = 10
 local VELOCIDAD_NARROWED_WALK = 6.5
 local VELOCIDAD_SALTO_VENTANA = 9
@@ -198,7 +198,8 @@ local function buscarPuntoMasCercano(prefijo)
 				local distancia =
 					(rootPart.Position - objeto.Position).Magnitude
 
-				if distancia <= distanciaMasCercana then
+				if distancia <= distanciaMasCercana
+					and math.abs(rootPart.Position.Y - objeto.Position.Y) <= 4.5 then
 					distanciaMasCercana = distancia
 					puntoMasCercano = objeto
 				end
@@ -287,14 +288,15 @@ local function ajustarAlSuelo(direccion)
 	if not sueloY then
 		return
 	end
-
-	local posicion = Vector3.new(
-		rootPart.Position.X,
-		sueloY + alturaSobreSuelo,
-		rootPart.Position.Z
-	)
-
-	rootPart.CFrame = crearCFrameOrientado(posicion, direccion)
+	local alturaMinima = humanoide.HipHeight + rootPart.Size.Y * 0.5 + 0.12
+	local yMinima = sueloY + alturaMinima
+	if rootPart.Position.Y < yMinima then
+		rootPart.CFrame = crearCFrameOrientado(
+			Vector3.new(rootPart.Position.X, yMinima, rootPart.Position.Z), direccion
+		)
+		local velocidad = rootPart.AssemblyLinearVelocity
+		rootPart.AssemblyLinearVelocity = Vector3.new(velocidad.X, math.max(0, velocidad.Y), velocidad.Z)
+	end
 end
 
 -- COLISIONES ------------------------------------------------------------
@@ -375,6 +377,9 @@ end
 
 local function terminarAccion(direccion)
 	desactivarAntiGravity()
+	if rootPart and rootPart.Parent and humanoide and humanoide.Parent then
+		ajustarAlSuelo(direccion)
+	end
 
 	if rootPart and rootPart.Parent then
 		rootPart.AssemblyLinearVelocity = Vector3.zero
@@ -392,8 +397,17 @@ local function terminarAccion(direccion)
 		-- Gravity takes over at the endpoint; a lower floor must be reached by falling.
 		humanoide:ChangeState(Enum.HumanoidStateType.Freefall)
 	end
-
 	accionActiva = false
+	local rootFinal = rootPart
+	task.spawn(function()
+		local fin = os.clock() + 0.35
+		while os.clock() < fin and not accionActiva and rootFinal == rootPart
+			and rootFinal and rootFinal.Parent and humanoide and humanoide.Parent do
+			ajustarAlSuelo(direccion)
+			RunService.Heartbeat:Wait()
+		end
+	end)
+
 	cooldown = true
 
 	task.delay(TIEMPO_COOLDOWN, function()
@@ -552,7 +566,7 @@ local function distanciaTruss(objeto)
 end
 
 local function trussCercano()
-	local mejor, distancia = nil, 5
+	local mejor, distancia = nil, 7.5
 	for _, objeto in ipairs(workspace:GetDescendants()) do
 		if objeto:IsA("TrussPart") then
 			local d = distanciaTruss(objeto)
@@ -624,8 +638,16 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 	for _, objeto in ipairs(workspace:GetDescendants()) do
 		if objeto:IsA("BasePart")
 			and (objeto.Name == "PuntoPale_1" or objeto.Name == "PuntoPale_2")
-			and (rootPart.Position - objeto.Position).Magnitude <= 5 then
-			return
+			and (rootPart.Position - objeto.Position).Magnitude <= 8.5
+			and math.abs(rootPart.Position.Y - objeto.Position.Y) <= 4.5 then
+			local pale = objeto.Parent
+			local estado = pale and (pale:GetAttribute("EstadoPale") or "Parado")
+			local rol = jugadorLocal:GetAttribute("Rol")
+			if (rol == "PERSEGUIDO" and (estado == "Parado" or estado == "Caido"))
+				or (rol == "PERSEGUIDOR" and estado == "Caido"
+					and not pale:GetAttribute("Rompiendo")) then
+				return
+			end
 		end
 	end
 

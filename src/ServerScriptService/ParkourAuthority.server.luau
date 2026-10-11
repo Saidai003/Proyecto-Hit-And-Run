@@ -27,12 +27,12 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		if humanoide then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false) end
 		return true
 	end
-	if not Workspace:GetAttribute("RondaEnJuego") then return nil end
+	if not (Workspace:GetAttribute("RondaEnJuego") or Workspace:GetAttribute("LobbyPractica")) then return nil end
 	if not root or not humanoide or humanoide.Health <= 0
 		or humanoide:GetAttribute("Inmovilizado") or humanoide:GetAttribute("FallStunned") then return nil end
 	if accion == "Escalada" then
 		if typeof(origen) ~= "Instance" or not origen:IsA("TrussPart") or not origen:IsDescendantOf(Workspace)
-			or distanciaParte(origen, root.Position) > 5 then return nil end
+			or distanciaParte(origen, root.Position) > 7.5 then return nil end
 		local factor = StaminaService.Consume(jugador, accion)
 		if factor then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true) end
 		return factor
@@ -46,7 +46,8 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		or not origen.Name:match("^" .. prefijo .. "_[12]$")
 		or not destino.Name:match("^" .. prefijo .. "_[12]$")
 		or origen.Name == destino.Name
-		or (root.Position - origen.Position).Magnitude > 5.5
+		or (root.Position - origen.Position).Magnitude > 8
+		or math.abs(root.Position.Y - origen.Position.Y) > 4.5
 		or (origen.Position - destino.Position).Magnitude > 30 then return nil end
 	return StaminaService.Consume(jugador, accion)
 end
