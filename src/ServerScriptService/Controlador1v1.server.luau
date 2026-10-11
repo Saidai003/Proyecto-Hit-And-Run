@@ -260,84 +260,50 @@ local function retirarBate(jugador)
 end
 
 local function entregarBate(jugador)
-	local modelo = Workspace:FindFirstChild("Baseball Bat")
 	local mochila = jugador:FindFirstChildOfClass("Backpack")
 	local humanoide = obtenerHumanoide(jugador)
 	if not mochila or not humanoide then
 		warn("[Bat] Missing backpack or humanoid for ", jugador.Name)
 		return
 	end
-	if not modelo then
-		warn("[Bat] Baseball Bat asset not found in Workspace; using a basic bat")
-		local herramienta = Instance.new("Tool")
-		herramienta.Name = "Baseball Bat"
-		herramienta.CanBeDropped = false
-		herramienta:SetAttribute("AttackKind", "Bat")
-		local mango = Instance.new("Part")
-		mango.Name = "Handle"
-		mango.Shape = Enum.PartType.Cylinder
-		mango.Size = Vector3.new(0.55, 3.2, 0.55)
-		mango.Color = Color3.fromRGB(153, 100, 54)
-		mango.Material = Enum.Material.Wood
-		mango.CanCollide = false
-		mango.Massless = true
-		mango.Parent = herramienta
-		herramienta.Grip = CFrame.new(0, -1.1, 0)
-		herramienta.Parent = mochila
-		humanoide:EquipTool(herramienta)
-		return
-	end
-
-	local visual = modelo:Clone()
-	for _, objeto in ipairs(visual:GetDescendants()) do
-		if objeto:IsA("BaseScript") or objeto:IsA("ModuleScript") then
-			objeto:Destroy()
-		end
-	end
-	if visual:IsA("Tool") then
-		visual.Name = "Baseball Bat"
-		visual.CanBeDropped = false
-		visual:SetAttribute("AttackKind", "Bat")
-		visual.Parent = mochila
-		humanoide:EquipTool(visual)
-		return
-	end
-	local partes = {}
-	for _, objeto in ipairs(visual:GetDescendants()) do
-		if objeto:IsA("BasePart") then table.insert(partes, objeto) end
-	end
-	if #partes == 0 then
-		warn("[Bat] Baseball Bat model has no BasePart")
-		visual:Destroy()
-		return
-	end
-
 	local herramienta = Instance.new("Tool")
 	herramienta.Name = "Baseball Bat"
 	herramienta.CanBeDropped = false
 	herramienta.RequiresHandle = true
 	herramienta:SetAttribute("AttackKind", "Bat")
-	herramienta.Grip = CFrame.new(0, -0.7, 0)
+	-- The hand holds the lower end of a vertical bat. We avoid the public
+	-- model's unknown pivot, which previously displaced it to the right.
+	herramienta.Grip = CFrame.identity
 	local mango = Instance.new("Part")
 	mango.Name = "Handle"
-	mango.Size = Vector3.new(0.3, 1, 0.3)
+	mango.Size = Vector3.new(0.32, 1.1, 0.32)
 	mango.Transparency = 1
 	mango.CanCollide = false
 	mango.CanTouch = false
 	mango.Massless = true
-	mango.CFrame = visual:GetPivot()
 	mango.Parent = herramienta
-	visual.Parent = herramienta
-	for _, parte in ipairs(partes) do
-		parte.Anchored = false
+	local function agregarParte(nombre, largo, diametro, color, altura)
+		local parte = Instance.new("Part")
+		parte.Name = nombre
+		parte.Shape = Enum.PartType.Cylinder
+		parte.Size = Vector3.new(largo, diametro, diametro)
+		parte.Color = color
+		parte.Material = Enum.Material.Wood
 		parte.CanCollide = false
 		parte.CanTouch = false
 		parte.Massless = true
+		-- Roblox cylinders are long along local X; turn X onto the handle's Y.
+		parte.CFrame = mango.CFrame * CFrame.new(0, altura, 0)
+			* CFrame.Angles(0, 0, math.rad(90))
+		parte.Parent = herramienta
 		local soldadura = Instance.new("WeldConstraint")
 		soldadura.Part0 = mango
 		soldadura.Part1 = parte
-		soldadura.Parent = mango
+		soldadura.Parent = parte
 	end
+	agregarParte("GripVisual", 1.1, 0.32, Color3.fromRGB(66, 43, 31), 0)
+	agregarParte("Barrel", 2.05, 0.62, Color3.fromRGB(171, 110, 57), 1.55)
+	agregarParte("Pommel", 0.18, 0.44, Color3.fromRGB(55, 36, 26), -0.62)
 	herramienta.Parent = mochila
 	humanoide:EquipTool(herramienta)
 end

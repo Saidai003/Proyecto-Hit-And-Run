@@ -150,7 +150,7 @@ local function activarSprint()
 		return
 	end
 
-	if stamina <= 0 then
+	if stamina < 15 then
 		return
 	end
 
@@ -167,10 +167,10 @@ local function activarSprint()
 end
 
 
-local function desactivarSprint()
+local function desactivarSprint(informarServidor)
 
 	sprintActivo = false
-	EventoSprint:FireServer(false)
+	if informarServidor ~= false then EventoSprint:FireServer(false) end
 
 	if humanoide and not movimientoBloqueado then
 		humanoide.WalkSpeed = velocidadBase
@@ -225,7 +225,7 @@ RunService.Heartbeat:Connect(function(deltaTime)
 
 	stamina = jugadorLocal:GetAttribute("Stamina") or stamina
 	if sprintActivo and stamina <= 0 then
-		desactivarSprint()
+		desactivarSprint(false)
 	end
 
 

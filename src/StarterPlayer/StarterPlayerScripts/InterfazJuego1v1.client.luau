@@ -39,15 +39,20 @@ screenGui.Parent = playerGui
 
 local banner = Instance.new("TextLabel")
 banner.Name = "Banner"
-banner.Size = UDim2.new(0, 400, 0, 35)
-banner.Position = UDim2.new(0.5, -200, 0, 20)
-banner.BackgroundTransparency = 1
-banner.Text = "PROTOTYPE v1.0 â¢ Feedback is greatly appreciated!"
-banner.TextColor3 = Color3.fromRGB(220, 220, 220)
-banner.TextSize = 14
-banner.Font = Enum.Font.Gotham
+banner.Size = UDim2.fromOffset(350, 40)
+banner.AnchorPoint = Vector2.new(0.5, 0)
+banner.Position = UDim2.new(0.5, 0, 0, 16)
+banner.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
+banner.BackgroundTransparency = 0.18
+banner.Text = "HIT & RUN  |  1v1"
+banner.TextColor3 = Color3.fromRGB(245, 248, 250)
+banner.TextSize = 18
+banner.Font = Enum.Font.GothamBold
 banner.ZIndex = 1
 banner.Parent = screenGui
+local bannerCorner = Instance.new("UICorner")
+bannerCorner.CornerRadius = UDim.new(0, 10)
+bannerCorner.Parent = banner
 
 -- =========================================================
 -- MENU
@@ -55,11 +60,16 @@ banner.Parent = screenGui
 
 local sideMenu = Instance.new("Frame")
 sideMenu.Name = "SideMenu"
-sideMenu.Size = UDim2.new(1, 0, 0, 100)
-sideMenu.Position = UDim2.new(0, 0, 1, -115)
-sideMenu.BackgroundTransparency = 1
+sideMenu.Size = UDim2.fromOffset(500, 70)
+sideMenu.AnchorPoint = Vector2.new(0.5, 1)
+sideMenu.Position = UDim2.new(0.5, 0, 1, -18)
+sideMenu.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
+sideMenu.BackgroundTransparency = 0.18
 sideMenu.ZIndex = 10
 sideMenu.Parent = screenGui
+local menuCorner = Instance.new("UICorner")
+menuCorner.CornerRadius = UDim.new(0, 12)
+menuCorner.Parent = sideMenu
 
 -- =========================================================
 -- PLAY NOW
@@ -67,8 +77,8 @@ sideMenu.Parent = screenGui
 
 local btnPlay = Instance.new("TextButton")
 btnPlay.Name = "PlayNow"
-btnPlay.Size = UDim2.new(0, 220, 0, 50)
-btnPlay.Position = UDim2.new(0.5, -110, 0, 0)
+btnPlay.Size = UDim2.fromOffset(232, 48)
+btnPlay.Position = UDim2.fromOffset(11, 11)
 btnPlay.BackgroundColor3 = Color3.fromRGB(45, 180, 80)
 btnPlay.BorderSizePixel = 0
 btnPlay.Text = "PLAY NOW!"
@@ -88,10 +98,9 @@ playCorner.Parent = btnPlay
 
 local btnHowTo = Instance.new("TextButton")
 btnHowTo.Name = "HowToPlay"
-btnHowTo.Size = UDim2.new(0, 220, 0, 45)
-btnHowTo.AnchorPoint = Vector2.new(1, 0)
-btnHowTo.Position = UDim2.new(1, -35, 0, 5)
-btnHowTo.BackgroundColor3 = Color3.fromRGB(45, 120, 210)
+btnHowTo.Size = UDim2.fromOffset(232, 48)
+btnHowTo.Position = UDim2.fromOffset(257, 11)
+btnHowTo.BackgroundColor3 = Color3.fromRGB(46, 94, 147)
 btnHowTo.BorderSizePixel = 0
 btnHowTo.Text = "HOW TO PLAY"
 btnHowTo.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -110,8 +119,9 @@ howCorner.Parent = btnHowTo
 
 local modalHowTo = Instance.new("Frame")
 modalHowTo.Name = "HowToPlayModal"
-modalHowTo.Size = UDim2.new(0, 360, 0, 240)
-modalHowTo.Position = UDim2.new(0.5, -180, 0.5, -120)
+modalHowTo.Size = UDim2.fromOffset(400, 290)
+modalHowTo.AnchorPoint = Vector2.new(0.5, 0.5)
+modalHowTo.Position = UDim2.fromScale(0.5, 0.5)
 modalHowTo.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 modalHowTo.BackgroundTransparency = 0.05
 modalHowTo.BorderSizePixel = 0
@@ -135,7 +145,7 @@ modalTitle.ZIndex = 101
 modalTitle.Parent = modalHowTo
 
 local modalDescription = Instance.new("TextLabel")
-modalDescription.Size = UDim2.new(1, -30, 0, 125)
+modalDescription.Size = UDim2.new(1, -30, 0, 185)
 modalDescription.Position = UDim2.new(0, 15, 0, 55)
 modalDescription.BackgroundTransparency = 1
 modalDescription.Text = [[
@@ -149,7 +159,7 @@ squeezes through gaps, or toggles climbing near a truss.
 These actions use stamina; low stamina slows parkour.
 ]]
 modalDescription.TextColor3 = Color3.fromRGB(220, 220, 220)
-modalDescription.TextSize = 14
+modalDescription.TextSize = 16
 modalDescription.Font = Enum.Font.Gotham
 modalDescription.TextWrapped = true
 modalDescription.TextXAlignment = Enum.TextXAlignment.Left
@@ -177,30 +187,45 @@ closeCorner.Parent = btnCloseModal
 -- HUD DE PARTIDA
 -- =========================================================
 
+local hudPanel = Instance.new("Frame")
+hudPanel.Name = "MatchHud"
+hudPanel.Size = UDim2.fromOffset(312, 132)
+hudPanel.Position = UDim2.new(0, 16, 1, -148)
+hudPanel.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
+hudPanel.BackgroundTransparency = 0.17
+hudPanel.BorderSizePixel = 0
+hudPanel.Visible = false
+hudPanel.ZIndex = 19
+hudPanel.Parent = screenGui
+local hudCorner = Instance.new("UICorner")
+hudCorner.CornerRadius = UDim.new(0, 12)
+hudCorner.Parent = hudPanel
+
 local roleLabel = Instance.new("TextLabel")
 roleLabel.Name = "Role"
-roleLabel.Size = UDim2.new(0, 300, 0, 45)
-roleLabel.Position = UDim2.new(0, 20, 0, 20)
+roleLabel.Size = UDim2.fromOffset(288, 34)
+roleLabel.Position = UDim2.fromOffset(12, 8)
 roleLabel.BackgroundTransparency = 1
+roleLabel.TextXAlignment = Enum.TextXAlignment.Left
 roleLabel.Text = ""
 roleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-roleLabel.TextSize = 30
+roleLabel.TextSize = 24
 roleLabel.Font = Enum.Font.GothamBold
 roleLabel.Visible = false
 roleLabel.ZIndex = 20
-roleLabel.Parent = screenGui
+roleLabel.Parent = hudPanel
 
 local staminaLabel = Instance.new("TextLabel")
 staminaLabel.Name = "Stamina"
-staminaLabel.Size = UDim2.new(0, 260, 0, 30)
-staminaLabel.Position = UDim2.new(0, 20, 0, 68)
+staminaLabel.Size = UDim2.fromOffset(288, 30)
+staminaLabel.Position = UDim2.fromOffset(12, 47)
 staminaLabel.BackgroundTransparency = 1
 staminaLabel.TextXAlignment = Enum.TextXAlignment.Left
 staminaLabel.TextSize = 18
 staminaLabel.Font = Enum.Font.GothamBold
 staminaLabel.Visible = false
 staminaLabel.ZIndex = 20
-staminaLabel.Parent = screenGui
+staminaLabel.Parent = hudPanel
 
 local function actualizarStamina()
 	local actual = jugador:GetAttribute("Stamina") or 0
@@ -215,31 +240,31 @@ actualizarStamina()
 
 local livesLabel = Instance.new("TextLabel")
 livesLabel.Name = "Lives"
-livesLabel.Size = UDim2.new(0, 250, 0, 35)
-livesLabel.Position = UDim2.new(0, 20, 1, -60)
+livesLabel.Size = UDim2.fromOffset(288, 32)
+livesLabel.Position = UDim2.fromOffset(12, 85)
 livesLabel.BackgroundTransparency = 1
+livesLabel.TextXAlignment = Enum.TextXAlignment.Left
 livesLabel.Text = ""
 livesLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 livesLabel.TextSize = 22
 livesLabel.Font = Enum.Font.GothamBold
 livesLabel.Visible = false
 livesLabel.ZIndex = 20
-livesLabel.Parent = screenGui
+livesLabel.Parent = hudPanel
 
 local rivalLivesLabel = Instance.new("TextLabel")
 rivalLivesLabel.Name = "RivalLives"
-rivalLivesLabel.Size = UDim2.new(0, 250, 0, 35)
-rivalLivesLabel.AnchorPoint = Vector2.new(1, 1)
-rivalLivesLabel.Position = UDim2.new(1, -20, 1, -145)
+rivalLivesLabel.Size = UDim2.fromOffset(288, 32)
+rivalLivesLabel.Position = UDim2.fromOffset(12, 85)
 rivalLivesLabel.BackgroundTransparency = 1
 rivalLivesLabel.Text = ""
 rivalLivesLabel.TextColor3 = Color3.fromRGB(255, 180, 180)
 rivalLivesLabel.TextSize = 22
 rivalLivesLabel.Font = Enum.Font.GothamBold
-rivalLivesLabel.TextXAlignment = Enum.TextXAlignment.Right
+rivalLivesLabel.TextXAlignment = Enum.TextXAlignment.Left
 rivalLivesLabel.Visible = false
 rivalLivesLabel.ZIndex = 20
-rivalLivesLabel.Parent = screenGui
+rivalLivesLabel.Parent = hudPanel
 
 local roundLabel = Instance.new("TextLabel")
 roundLabel.Name = "Round"
@@ -282,16 +307,21 @@ attackCorner.Parent = attackButton
 
 local messageLabel = Instance.new("TextLabel")
 messageLabel.Name = "Message"
-messageLabel.Size = UDim2.new(0, 500, 0, 80)
-messageLabel.Position = UDim2.new(0.5, -250, 0.5, -40)
-messageLabel.BackgroundTransparency = 1
+messageLabel.Size = UDim2.fromOffset(460, 76)
+messageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+messageLabel.Position = UDim2.fromScale(0.5, 0.45)
+messageLabel.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
+messageLabel.BackgroundTransparency = 0.2
 messageLabel.Text = ""
 messageLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-messageLabel.TextSize = 38
+messageLabel.TextSize = 28
 messageLabel.Font = Enum.Font.GothamBold
 messageLabel.Visible = false
 messageLabel.ZIndex = 20
 messageLabel.Parent = screenGui
+local messageCorner = Instance.new("UICorner")
+messageCorner.CornerRadius = UDim.new(0, 10)
+messageCorner.Parent = messageLabel
 
 -- =========================================================
 -- RESULTADO FINAL
@@ -473,6 +503,8 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 
 		messageLabel.Visible = true
 		messageLabel.Text = "WAITING FOR OPPONENT..."
+		hudPanel.Visible = false
+		banner.Visible = not esPartidaPrivada
 
 		roleLabel.Visible = false
 		staminaLabel.Visible = false
@@ -482,7 +514,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		resultPanel.Visible = false
 		rivalLivesLabel.Visible = false
 
-		sideMenu.Visible = true
+		sideMenu.Visible = not esPartidaPrivada
 		btnHowTo.Visible = true
 
 	elseif estado == "ROL" then
@@ -490,6 +522,8 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		local rol = datos[1]
 
 		sideMenu.Visible = false
+		banner.Visible = false
+		hudPanel.Visible = true
 		modalHowTo.Visible = false
 		messageLabel.Visible = false
 		resultPanel.Visible = false
@@ -556,6 +590,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		local resultado = datos[1]
 
 		roleLabel.Visible = false
+		hudPanel.Visible = false
 		livesLabel.Visible = false
 		roundLabel.Visible = false
 		staminaLabel.Visible = false
@@ -616,6 +651,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		resultPanel.Visible = false
 
 		sideMenu.Visible = not esPartidaPrivada
+		banner.Visible = not esPartidaPrivada
 		btnPlay.Visible = true
 		btnHowTo.Visible = true
 		btnPlay.Active = true
@@ -631,6 +667,9 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 	end
 end)
 
-if esPartidaPrivada then sideMenu.Visible = false end
+if esPartidaPrivada then
+	sideMenu.Visible = false
+	banner.Visible = false
+end
 
 print("[INTERFAZ]: Interfaz 1v1 cargada correctamente.")

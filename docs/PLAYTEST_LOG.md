@@ -29,3 +29,22 @@ pregunta: *¿algún jugador quedó pegado sin poder moverse?*
 **Nota:** el autor creyó que el rango de aturdimiento había cambiado en este
 playtest. No lo había: `LARGO_ZONA_ATURDIMIENTO` seguía en 5. El cambio se
 aplicó después, como BUG-02.
+
+---
+
+## 2026-10-11 — ronda de estabilización MVP
+
+- **Autor:** usuario, prueba en Studio tras conectar Rojo.
+- **Confirmado:** el bate aparece; el HUD muestra stamina; parkour con poca
+  stamina se ejecuta más lento.
+- **Fallos observados:** stamina comienza a recuperarse al llegar a cero con
+  Shift aún presionado; bate desplazado a la derecha; marcadores de parkour
+  pueden activar una ventana equivocada o no activarse; HUD tapa el chat y el
+  lobby tiene textos poco legibles.
+- **Corrección preparada, pendiente de repetir playtest:** bloqueo de
+  recuperación hasta soltar Shift y breve pausa de agotamiento; bate geométrico
+  vertical agarrado por el extremo inferior; emparejamiento recíproco y cercano
+  de marcadores; HUD agrupado abajo a la izquierda y lobby de mayor contraste.
+- **Prueba automática local:** 22 marcadores del último respaldo tienen pares
+  recíprocos; `rojo build` pasa. Esto no valida los marcadores que se hayan
+  añadido después en Studio ni sustituye el playtest.

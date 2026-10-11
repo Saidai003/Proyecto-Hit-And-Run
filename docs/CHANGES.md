@@ -223,3 +223,20 @@ La corrección natural sería que `iniciarRonda` emita su propio
 `DESBLOQUEAR_MOVIMIENTO` tras el `task.wait(0.5)`, dejando el flujo de ronda
 autocontenido. No se aplicó porque modifica el flujo de partida y requiere
 aprobación del autor.
+
+---
+
+## 2026-10-11 — regresiones detectadas tras sincronizar Rojo
+
+- `StaminaService`: Shift permanece como entrada retenida al agotarse. La
+  recuperación no empieza hasta soltarlo y transcurrir una breve pausa.
+- `ParkourPairs`: cliente y servidor resuelven el mismo par de marcadores por
+  cercanía, desnivel y reciprocidad. Evita que un marcador hijo directo de
+  Workspace se empareje con la primera ventana del mapa. La acción más cercana
+  entre ventana y estrecho tiene prioridad.
+- `Controlador1v1`: bate con geometría y mango controlados, vertical respecto
+  de la mano, sin depender del pivote del asset público.
+- `InterfazJuego1v1`: rol, stamina y vidas se agrupan abajo a la izquierda;
+  lobby y mensajes reciben paneles de alto contraste.
+- **Verificación:** 22 marcadores del respaldo pasan la comprobación de pares;
+  compilación Rojo correcta. Playtest de dos clientes pendiente.

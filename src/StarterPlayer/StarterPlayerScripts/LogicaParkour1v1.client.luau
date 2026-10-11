@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local ContentProvider = game:GetService("ContentProvider")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SolicitarParkour = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
+local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 
 local jugadorLocal = Players.LocalPlayer
 
@@ -192,6 +193,7 @@ local function buscarPuntoMasCercano(prefijo)
 		if objeto:IsA("BasePart") then
 			if objeto.Name == prefijo .. "_1"
 				or objeto.Name == prefijo .. "_2" then
+				if not ParkourPairs.Resolve(objeto) then continue end
 
 				local distancia =
 					(rootPart.Position - objeto.Position).Magnitude
@@ -204,36 +206,11 @@ local function buscarPuntoMasCercano(prefijo)
 		end
 	end
 
-	return puntoMasCercano
+	return puntoMasCercano, distanciaMasCercana
 end
 
 local function obtenerPuntoOpuesto(punto)
-	local nombreOpuesto
-
-	if punto.Name:sub(-2) == "_1" then
-		nombreOpuesto = punto.Name:sub(1, -3) .. "_2"
-	else
-		nombreOpuesto = punto.Name:sub(1, -3) .. "_1"
-	end
-	local pareado = punto.Parent and punto.Parent:FindFirstChild(nombreOpuesto)
-	if pareado and pareado:IsA("BasePart") then return pareado end
-
-	-- BÃºsqueda inteligente: busca entre todos los puntos del mundo 
-	-- el que tenga el nombre opuesto y estÃ© mÃ¡s cerca del punto inicial.
-	local puntoOpuestoCercano = nil
-	local menorDistancia = math.huge
-
-	for _, objeto in ipairs(workspace:GetDescendants()) do
-		if objeto:IsA("BasePart") and objeto.Name == nombreOpuesto then
-			local distancia = (punto.Position - objeto.Position).Magnitude
-			if distancia < menorDistancia then
-				menorDistancia = distancia
-				puntoOpuestoCercano = objeto
-			end
-		end
-	end
-
-	return puntoOpuestoCercano
+	return ParkourPairs.Resolve(punto)
 end
 
 local function obtenerDireccion(puntoInicial, puntoFinal)
@@ -652,9 +629,10 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 		end
 	end
 
-	local puntoNarrowed = buscarPuntoMasCercano("PuntoEntrada")
+	local puntoNarrowed, distanciaNarrowed = buscarPuntoMasCercano("PuntoEntrada")
+	local puntoVentana, distanciaVentana = buscarPuntoMasCercano("PuntoSalto")
 
-	if puntoNarrowed then
+	if puntoNarrowed and (not puntoVentana or distanciaNarrowed <= distanciaVentana) then
 		local puntoFinal = obtenerPuntoOpuesto(puntoNarrowed)
 
 		if puntoFinal then
@@ -662,8 +640,6 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 			return
 		end
 	end
-
-	local puntoVentana = buscarPuntoMasCercano("PuntoSalto")
 
 	if puntoVentana then
 		local puntoFinal = obtenerPuntoOpuesto(puntoVentana)

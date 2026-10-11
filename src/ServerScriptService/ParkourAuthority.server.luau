@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local StaminaService = require(script.Parent:WaitForChild("StaminaService"))
+local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 
 local remote = Instance.new("RemoteFunction")
 remote.Name = "SolicitarParkour1v1"
@@ -43,6 +44,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		or not origen:IsA("BasePart") or not destino:IsA("BasePart")
 		or not origen:IsDescendantOf(Workspace) or not destino:IsDescendantOf(Workspace)
 		or origen == destino or origen.Parent ~= destino.Parent
+		or ParkourPairs.Resolve(origen) ~= destino
 		or not origen.Name:match("^" .. prefijo .. "_[12]$")
 		or not destino.Name:match("^" .. prefijo .. "_[12]$")
 		or origen.Name == destino.Name

@@ -1,10 +1,11 @@
 # Proyecto Roblox Prototype
 
 Esta carpeta es la fuente de los scripts del MVP. `default.project.json` sincroniza
-`src/ServerScriptService` y `src/StarterPlayer/StarterPlayerScripts` con Roblox Studio.
+`src/ServerScriptService`, `src/ReplicatedStorage` y
+`src/StarterPlayer/StarterPlayerScripts` con Roblox Studio.
 El mapa y los objetos de Workspace siguen en el archivo `.rbxl` de Studio; el
 respaldo anterior está en `Backup_DO_NOT_TOUCH`. Guarda también la versión actual
-del Place en esta carpeta para que el nuevo `Baseball Bat` no quede solo en Studio.
+del Place en esta carpeta para que el mapa actual no quede solo en Studio.
 
 ## Rojo
 
@@ -20,7 +21,7 @@ Ese build no incluye el mapa ni sustituye una prueba de juego.
 
 ## Cambios de esta tanda
 
-- El perseguidor recibe el bate del Workspace al comenzar su rol. Equiparlo usa
+- El perseguidor recibe un bate construido con un agarre vertical controlado al comenzar su rol. Equiparlo usa
   mayor alcance y cooldown que el golpe con la mano; se puede desequipar para
   volver a la mano y equipar la silla independientemente.
 - Space inicia o corta la escalada de una `TrussPart` próxima. Ventanas, estrechos,
@@ -39,9 +40,10 @@ Ese build no incluye el mapa ni sustituye una prueba de juego.
 
 ## Verificación pendiente en Studio / publicado
 
-1. Conectar Rojo al puerto 34873 y confirmar que `Baseball Bat` está en Workspace.
-   Revisar su agarre, escala y orientación en R15; retirar scripts incorporados
-   al asset público si los tiene.
+1. Conectar Rojo al puerto 34872 y confirmar que `ParkourPairs` aparece en
+   ReplicatedStorage. Revisar el agarre del bate en R15. El asset público sigue
+   en Workspace, pero el bate equipado usa piezas controladas para evitar su
+   pivote desplazado.
 2. En Studio con dos clientes: comprobar mano/bate/silla, 6 rondas, stamina baja,
    escalada Space y caída desde una ventana alta. Revisar Output por errores.
 3. En una versión publicada con dos cuentas: entrar al mismo lobby, pulsar Play,
@@ -51,3 +53,6 @@ Ese build no incluye el mapa ni sustituye una prueba de juego.
 
 El salto normal deliberadamente **no está implementado**: su control sigue como
 decisión de diseño. La guía de puntería de la silla también se mantiene por ahora.
+
+Prueba de regresión de marcadores del respaldo:
+`node tools/check-parkour-pairs.cjs`. Necesita la dependencia local en `.tools`.
