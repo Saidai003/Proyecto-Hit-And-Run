@@ -70,6 +70,9 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 
 ## Verificación pendiente en Studio / publicado
 
+Los nuevos ajustes de escalada y salto solicitados tras el último playtest están
+registrados en [docs/PENDIENTES.md](docs/PENDIENTES.md); aún no se han aplicado.
+
 1. Conectar Rojo al puerto 34872 y confirmar que `ParkourPairs` aparece en
    ReplicatedStorage. Revisar el agarre del bate en R15. El asset público sigue
    en Workspace, pero el bate equipado usa piezas controladas para evitar su
