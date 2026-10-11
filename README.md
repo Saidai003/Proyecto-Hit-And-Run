@@ -39,9 +39,9 @@ se apaga al encontrar partida. Los efectos cortos se precargan en segundo plano
 para reducir el retraso de su primera reproducción. Roblox
 los dejó inicialmente en revisión, de modo que su reproducción depende de la
 moderación y los permisos del asset. La música de persecución existente en
-Studio no se modifica. `brief_metallic_hit.mp3` tiene el mismo contenido que
-`lobby_music.mp3` y no se subió por separado. Los archivos originales de `SFX/` permanecen locales; no se
-publican en GitHub.
+Studio no se modifica. El duplicado local `brief_metallic_hit.mp3` se eliminó;
+`lobby_music.mp3` es la única copia de esa pista en `SFX/`. Los MP3 de `SFX/`
+permanecen locales; no se publican en GitHub.
 
 ## Cambios de esta tanda
 

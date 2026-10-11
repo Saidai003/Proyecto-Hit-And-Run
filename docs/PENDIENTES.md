@@ -58,4 +58,4 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 - **Pendiente de verificación:** el usuario confirma que los efectos se reproducen, pero con retraso. Probar volumen/duplicaciones con dos clientes y comprobar que la precarga mejora el primer uso tras sincronizar Rojo y publicar.
 - La música de lobby también quedó inicialmente en `Reviewing`. Comprobar que se oye solo mientras `LobbyPractica` es verdadero y que se desvanece al encontrar partida. Medir si la precarga reduce el retraso de los efectos; si persiste, revisar los propios archivos y los disparos desde servidor.
 - El audio de cuenta regresiva dura 11 segundos pero la cuenta actual es de 3; requiere edición o selección de una muestra diferente antes de integrarlo. Los 4 sonidos de cristal tampoco tienen todavía una acción de rotura asignada.
-- La música de persecución que ya existe en el Place debe quedar intacta. No usar `brief_metallic_hit.mp3` como pista de persecución.
+- La música de persecución que ya existe en el Place debe quedar intacta. Se eliminó el MP3 local duplicado `brief_metallic_hit.mp3`; la pista de lobby permanece como `lobby_music.mp3`.
