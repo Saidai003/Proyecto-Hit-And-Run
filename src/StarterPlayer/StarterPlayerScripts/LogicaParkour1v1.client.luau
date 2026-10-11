@@ -332,18 +332,31 @@ local function aproximarseAlPunto(punto)
 	local objetivo = Vector3.new(punto.Position.X, rootPart.Position.Y, punto.Position.Z)
 	local distancia = (rootPart.Position - objetivo).Magnitude
 	if distancia <= DISTANCIA_INICIO_ANIMACION then return true end
-	local limite = os.clock() + math.max(1, distancia / math.max(humanoide.WalkSpeed, 1) + 1)
-	while os.clock() < limite and humanoide.Parent and rootPart.Parent do
-		local restante = (Vector3.new(rootPart.Position.X, objetivo.Y, rootPart.Position.Z) - objetivo).Magnitude
+	local humanoideAproximacion = humanoide
+	local rootAproximacion = rootPart
+	local limite = os.clock() + math.max(1, distancia / math.max(humanoideAproximacion.WalkSpeed, 1) + 1)
+	local nombreControl = "ParkourApproach1v1"
+	-- Default player controls overwrite MoveTo while a movement key is held.
+	-- Apply the walk direction after those controls, without changing WalkSpeed.
+	RunService:BindToRenderStep(nombreControl, Enum.RenderPriority.Character.Value + 1, function()
+		if not humanoideAproximacion.Parent or not rootAproximacion.Parent then return end
+		local diferencia = objetivo - Vector3.new(rootAproximacion.Position.X, objetivo.Y, rootAproximacion.Position.Z)
+		humanoideAproximacion:Move(diferencia.Magnitude > DISTANCIA_INICIO_ANIMACION
+			and diferencia.Unit or Vector3.zero, false)
+	end)
+	local llego = false
+	while os.clock() < limite and humanoideAproximacion.Parent and rootAproximacion.Parent
+		and humanoide == humanoideAproximacion and rootPart == rootAproximacion do
+		local restante = (Vector3.new(rootAproximacion.Position.X, objetivo.Y, rootAproximacion.Position.Z) - objetivo).Magnitude
 		if restante <= DISTANCIA_INICIO_ANIMACION then
-			humanoide:MoveTo(rootPart.Position)
-			return true
+			llego = true
+			break
 		end
-		humanoide:MoveTo(objetivo)
 		RunService.Heartbeat:Wait()
 	end
-	humanoide:MoveTo(rootPart.Position)
-	return false
+	RunService:UnbindFromRenderStep(nombreControl)
+	if humanoideAproximacion.Parent then humanoideAproximacion:Move(Vector3.zero, false) end
+	return llego
 end
 
 -- INICIO / FIN DE ACCIÃN ------------------------------------------------
