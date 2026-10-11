@@ -1,0 +1,19 @@
+{
+  "name": "GolpearYHuirMVP",
+  "servePort": 34873,
+  "tree": {
+    "$className": "DataModel",
+    "$ignoreUnknownInstances": false,
+    "ServerScriptService": {
+      "$path": "src/ServerScriptService",
+      "$ignoreUnknownInstances": false
+    },
+    "StarterPlayer": {
+      "$ignoreUnknownInstances": false,
+      "StarterPlayerScripts": {
+        "$path": "src/StarterPlayer/StarterPlayerScripts",
+        "$ignoreUnknownInstances": false
+      }
+    }
+  }
+}
