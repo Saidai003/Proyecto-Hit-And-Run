@@ -39,10 +39,9 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   cuando Roblox no entrega una miniatura de los jugadores simulados.
 - El aturdimiento de caída aplica un impulso y giro breve para que el personaje
   no permanezca parado mientras está noqueado.
-- El botón `DONATE SOON` está en el lobby. Para activar la donación, crea un
-  Developer Product de 5 Robux de esta experiencia en Creator Dashboard y pon
-  su Asset ID en `src/ReplicatedStorage/DonationConfig.luau`. Sin ese ID no se
-  inicia ninguna compra. El precio real lo fija Roblox, no el script.
+- El botón de donación usa el Developer Product `3717856374` creado por el dueño
+  con precio base de 100 Robux. La UI consulta el precio vigente de Roblox antes
+  de abrir el aviso de compra. La compra no entrega objetos ni ventajas.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
   encontrar pareja se desactiva la práctica. ALT es solo una prueba de salto;
   la tecla definitiva continúa pendiente de decisión de diseño.

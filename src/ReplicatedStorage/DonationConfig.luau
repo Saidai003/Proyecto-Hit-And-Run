@@ -1,6 +1,6 @@
--- Create a 5 Robux developer product for this experience, then replace 0 with its Asset ID.
--- The price itself is set in Creator Dashboard, not by this script.
+-- Donation developer product created for this experience by its owner.
+-- The price is set in Creator Dashboard; the client reads the current display price.
 return {
-	ProductId = 0,
-	SuggestedPriceRobux = 5,
+	ProductId = 3717856374,
+	SuggestedPriceRobux = 100,
 }

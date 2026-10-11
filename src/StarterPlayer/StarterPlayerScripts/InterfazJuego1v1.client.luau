@@ -159,19 +159,23 @@ local function mostrarDonacion(mensaje)
 	end)
 end
 
+local productoDisponible = false
 if donationConfig.ProductId > 0 then
 	task.spawn(function()
 		local ok, info = pcall(function()
-			return MarketplaceService:GetProductInfo(donationConfig.ProductId, Enum.InfoType.Product)
+			return MarketplaceService:GetProductInfoAsync(donationConfig.ProductId, Enum.InfoType.Product)
 		end)
-		if ok and info and info.PriceInRobux then
+		if ok and info and info.IsForSale ~= false and info.PriceInRobux then
+			productoDisponible = true
 			btnDonate.Text = "DONATE " .. tostring(info.PriceInRobux) .. " R$"
+		else
+			btnDonate.Text = "DONATE UNAVAILABLE"
 		end
 	end)
 end
 btnDonate.MouseButton1Click:Connect(function()
-	if donationConfig.ProductId <= 0 then
-		mostrarDonacion("Donations are pending product setup. No purchase was started.")
+	if not productoDisponible then
+		mostrarDonacion("Donation is not available yet. No purchase was started.")
 		return
 	end
 	local ok = pcall(function()
