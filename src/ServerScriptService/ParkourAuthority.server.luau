@@ -4,9 +4,7 @@ local Workspace = game:GetService("Workspace")
 local StaminaService = require(script.Parent:WaitForChild("StaminaService"))
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 
-local remote = Instance.new("RemoteFunction")
-remote.Name = "SolicitarParkour1v1"
-remote.Parent = ReplicatedStorage
+local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 
 local nombres = { Ventana = "PuntoSalto", Estrecho = "PuntoEntrada" }
 local function distanciaParte(parte, posicion)

@@ -13,9 +13,7 @@ local COSTO = { Ventana = 25, Estrecho = 20, Pale = 20, Escalada = 15 }
 local REGEN = 14
 local PAUSA_TRAS_AGOTARSE = 1.25
 
-local remote = Instance.new("RemoteEvent")
-remote.Name = "Sprint1v1"
-remote.Parent = ReplicatedStorage
+local remote = ReplicatedStorage:WaitForChild("Sprint1v1")
 
 local function maximo(jugador)
 	return MAX[jugador:GetAttribute("Rol")] or 100

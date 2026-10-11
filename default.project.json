@@ -6,7 +6,16 @@
     "$ignoreUnknownInstances": false,
     "ReplicatedStorage": {
       "$path": "src/ReplicatedStorage",
-      "$ignoreUnknownInstances": false
+      "$ignoreUnknownInstances": false,
+      "EventoJuego": { "$className": "RemoteEvent" },
+      "EventoCountdown": { "$className": "RemoteEvent" },
+      "EventoAtaque": { "$className": "RemoteEvent" },
+      "EventoHit1v1": { "$className": "RemoteEvent" },
+      "EventoMatchmaking": { "$className": "RemoteEvent" },
+      "EventoPale1v1": { "$className": "RemoteEvent" },
+      "Sprint1v1": { "$className": "RemoteEvent" },
+      "ThrowChairEvent": { "$className": "RemoteEvent" },
+      "SolicitarParkour1v1": { "$className": "RemoteFunction" }
     },
     "ServerScriptService": {
       "$path": "src/ServerScriptService",
