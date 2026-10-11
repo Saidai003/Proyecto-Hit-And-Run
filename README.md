@@ -44,7 +44,8 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   con precio base de 100 Robux. La UI consulta el precio vigente de Roblox antes
   de abrir el aviso de compra, y muestra una aclaración de que cualquier paquete
   de Robux ofrecido por Roblox es distinto del precio de la donación. El botón
-  está sobre el menú del lobby para no tapar la lista de jugadores. La compra
+  se sitúa abajo a la derecha en pantallas anchas y arriba a la izquierda en
+  pantallas estrechas, sin tapar el indicador central de parkour. La compra
   no entrega objetos ni ventajas.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
   encontrar pareja se desactiva la práctica.

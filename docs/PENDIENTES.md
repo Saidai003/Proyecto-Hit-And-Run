@@ -27,7 +27,7 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 ## Nueva tanda de ajustes
 
 - **Preparado, por probar:** reducir la altura del panel oscuro de stamina en el lobby, sin quitar información de las rondas.
-- **Preparado, por probar:** mover el botón de donación fuera de la lista de jugadores, centrado sobre el menú del lobby.
+- **Preparado, por probar:** ubicar el botón de donación fuera de la lista de jugadores y del indicador central de parkour: abajo a la derecha en pantallas anchas y arriba a la izquierda en pantallas estrechas.
 - **Preparado, por probar:** mostrar `CHASER` como nombre visible del perseguidor.
 - **Preparado, por probar:** ralentizar al perseguidor un 60 % durante la recuperación de cada ataque, acierte o falle, y repetir el tramo final de la animación. Verificar mano y bate.
 - **Preparado, por probar:** anticipar el noqueo al aterrizar y mostrar bordes rojos al recibir daño, amarillos al quedar aturdido. Verificar caídas con y sin pérdida de vidas.

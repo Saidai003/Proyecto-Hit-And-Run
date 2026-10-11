@@ -119,8 +119,8 @@ howCorner.Parent = btnHowTo
 local btnDonate = Instance.new("TextButton")
 btnDonate.Name = "Donate"
 btnDonate.Size = UDim2.fromOffset(132, 38)
-btnDonate.AnchorPoint = Vector2.new(0.5, 1)
-btnDonate.Position = UDim2.new(0.5, 0, 1, -102)
+btnDonate.AnchorPoint = Vector2.new(1, 1)
+btnDonate.Position = UDim2.new(1, -16, 1, -24)
 btnDonate.BackgroundColor3 = Color3.fromRGB(97, 69, 37)
 btnDonate.BorderSizePixel = 0
 btnDonate.Text = donationConfig.ProductId > 0 and "DONATE" or "DONATE SOON"
@@ -136,8 +136,8 @@ donateCorner.Parent = btnDonate
 local donateFeedback = Instance.new("TextLabel")
 donateFeedback.Name = "DonationFeedback"
 donateFeedback.Size = UDim2.fromOffset(230, 52)
-donateFeedback.AnchorPoint = Vector2.new(0.5, 1)
-donateFeedback.Position = UDim2.new(0.5, 0, 1, -145)
+donateFeedback.AnchorPoint = Vector2.new(1, 1)
+donateFeedback.Position = UDim2.new(1, -16, 1, -84)
 donateFeedback.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
 donateFeedback.BackgroundTransparency = 0.12
 donateFeedback.TextColor3 = Color3.new(1, 1, 1)
@@ -150,6 +150,33 @@ donateFeedback.Parent = screenGui
 local feedbackCorner = Instance.new("UICorner")
 feedbackCorner.CornerRadius = UDim.new(0, 8)
 feedbackCorner.Parent = donateFeedback
+
+-- Keep the donation away from both the player list and the centered parkour prompt.
+local donationViewportConnection
+local function positionDonation()
+	local camera = Workspace.CurrentCamera
+	if camera and camera.ViewportSize.X >= 850 then
+		btnDonate.AnchorPoint = Vector2.new(1, 1)
+		btnDonate.Position = UDim2.new(1, -16, 1, -24)
+		donateFeedback.AnchorPoint = Vector2.new(1, 1)
+		donateFeedback.Position = UDim2.new(1, -16, 1, -84)
+	else
+		btnDonate.AnchorPoint = Vector2.new(0, 0)
+		btnDonate.Position = UDim2.fromOffset(16, 76)
+		donateFeedback.AnchorPoint = Vector2.new(0, 0)
+		donateFeedback.Position = UDim2.fromOffset(16, 121)
+	end
+end
+local function watchDonationViewport()
+	if donationViewportConnection then donationViewportConnection:Disconnect() end
+	local camera = Workspace.CurrentCamera
+	if camera then
+		donationViewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(positionDonation)
+	end
+	positionDonation()
+end
+Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchDonationViewport)
+watchDonationViewport()
 
 local function mostrarDonacion(mensaje)
 	donateFeedback.Text = mensaje
