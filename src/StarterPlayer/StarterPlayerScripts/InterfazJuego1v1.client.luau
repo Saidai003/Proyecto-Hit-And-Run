@@ -151,8 +151,8 @@ modalDescription.BackgroundTransparency = 1
 modalDescription.Text = [[
 Play as a Runner or Killer!
 
-â¢ RUNNER: Outsmart the Killer and survive until time runs out.
-â¢ KILLER: Hunt down and eliminate the Runner using [F].
+- RUNNER: Outsmart the Killer and survive until time runs out.
+- KILLER: Hunt down and eliminate the Runner using [F].
 
 [CONTROLS]: Hold Shift to sprint. Space vaults windows/pallets,
 squeezes through gaps, or toggles climbing near a truss.

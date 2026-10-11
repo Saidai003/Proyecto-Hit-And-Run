@@ -456,7 +456,7 @@ local function agregarALaCola(jugador)
 
 	table.insert(jugadoresEnCola, jugador)
 
-	print("[MATCHMAKING]: " .. jugador.Name .. " entrÃ³ a la cola.")
+	print("[MATCHMAKING]: " .. jugador.Name .. " entro a la cola.")
 
 	EventoJuego:FireClient(
 		jugador,

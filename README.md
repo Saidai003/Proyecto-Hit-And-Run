@@ -18,7 +18,8 @@ Antes de la primera sincronización, guarda una copia del Place actual.
 Para reiniciar el servidor desde esta carpeta: `rojo serve default.project.json`.
 Para comprobar la estructura: `rojo build default.project.json --output check.rbxlx`.
 Ese build no incluye el mapa ni sustituye una prueba de juego.
-Los `RemoteEvent` y `SolicitarParkour1v1` ahora están declarados en
+Los eventos (`RemoteEvent`, `EventoCountdown` como `BindableEvent`) y
+`SolicitarParkour1v1` ahora están declarados en
 `default.project.json`; no dependen de objetos creados manualmente en Studio.
 Si desaparecen a la vez el menú y el parkour, comprueba primero que el servidor
 Rojo siga escuchando en 34872 y que el plugin indique **Connected**. Al cambiar

@@ -8,7 +8,7 @@
       "$path": "src/ReplicatedStorage",
       "$ignoreUnknownInstances": false,
       "EventoJuego": { "$className": "RemoteEvent" },
-      "EventoCountdown": { "$className": "RemoteEvent" },
+      "EventoCountdown": { "$className": "BindableEvent" },
       "EventoAtaque": { "$className": "RemoteEvent" },
       "EventoHit1v1": { "$className": "RemoteEvent" },
       "EventoMatchmaking": { "$className": "RemoteEvent" },
