@@ -62,7 +62,8 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   final premia al jugador que acumuló **más** tiempo sobreviviendo como Runner;
   las tarjetas crecen según el texto para que se pueda leer sin recortes.
 - El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
-  cuando no hay contador de vidas.
+  cuando no hay contador de vidas. Muestra una barra proporcional a la stamina
+  máxima de cada rol, con valor numérico y color de advertencia al agotarse.
 - El nombre visible del rol perseguidor es `CHASER`.
 - Tras fallar un ataque, el perseguidor camina al 40 % de su velocidad normal
   solo brevemente (0,35 s con mano, 0,5 s con bate), sin animación adicional.

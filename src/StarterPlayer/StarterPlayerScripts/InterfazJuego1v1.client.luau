@@ -547,24 +547,73 @@ roleLabel.Visible = false
 roleLabel.ZIndex = 20
 roleLabel.Parent = hudPanel
 
+local staminaWidget = Instance.new("Frame")
+staminaWidget.Name = "Stamina"
+staminaWidget.Size = UDim2.fromOffset(288, 38)
+staminaWidget.Position = UDim2.fromOffset(12, 45)
+staminaWidget.BackgroundTransparency = 1
+staminaWidget.Visible = false
+staminaWidget.ZIndex = 20
+staminaWidget.Parent = hudPanel
+
 local staminaLabel = Instance.new("TextLabel")
-staminaLabel.Name = "Stamina"
-staminaLabel.Size = UDim2.fromOffset(288, 30)
-staminaLabel.Position = UDim2.fromOffset(12, 47)
+staminaLabel.Name = "Label"
+staminaLabel.Size = UDim2.new(0.5, 0, 0, 19)
 staminaLabel.BackgroundTransparency = 1
+staminaLabel.Text = "STAMINA"
+staminaLabel.TextColor3 = Color3.fromRGB(220, 230, 236)
 staminaLabel.TextXAlignment = Enum.TextXAlignment.Left
-staminaLabel.TextSize = 18
+staminaLabel.TextSize = 14
 staminaLabel.Font = Enum.Font.GothamBold
-staminaLabel.Visible = false
-staminaLabel.ZIndex = 20
-staminaLabel.Parent = hudPanel
+staminaLabel.ZIndex = 21
+staminaLabel.Parent = staminaWidget
+
+local staminaValue = Instance.new("TextLabel")
+staminaValue.Name = "Value"
+staminaValue.Size = UDim2.new(0.5, 0, 0, 19)
+staminaValue.Position = UDim2.fromScale(0.5, 0)
+staminaValue.BackgroundTransparency = 1
+staminaValue.TextXAlignment = Enum.TextXAlignment.Right
+staminaValue.TextSize = 14
+staminaValue.Font = Enum.Font.GothamBold
+staminaValue.ZIndex = 21
+staminaValue.Parent = staminaWidget
+
+local staminaTrack = Instance.new("Frame")
+staminaTrack.Name = "Track"
+staminaTrack.Size = UDim2.new(1, 0, 0, 11)
+staminaTrack.Position = UDim2.fromOffset(0, 24)
+staminaTrack.BackgroundColor3 = Color3.fromRGB(58, 65, 72)
+staminaTrack.BorderSizePixel = 0
+staminaTrack.ClipsDescendants = true
+staminaTrack.ZIndex = 21
+staminaTrack.Parent = staminaWidget
+local trackCorner = Instance.new("UICorner")
+trackCorner.CornerRadius = UDim.new(1, 0)
+trackCorner.Parent = staminaTrack
+
+local staminaFill = Instance.new("Frame")
+staminaFill.Name = "Fill"
+staminaFill.Size = UDim2.fromScale(1, 1)
+staminaFill.BackgroundColor3 = Color3.fromRGB(95, 219, 149)
+staminaFill.BorderSizePixel = 0
+staminaFill.ZIndex = 22
+staminaFill.Parent = staminaTrack
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(1, 0)
+fillCorner.Parent = staminaFill
 
 local function actualizarStamina()
-	local actual = jugador:GetAttribute("Stamina") or 0
-	local maximo = jugador:GetAttribute("StaminaMax") or 100
-	staminaLabel.Text = string.format("STAMINA  %d / %d", math.floor(actual), maximo)
-	staminaLabel.TextColor3 = actual < 25
-		and Color3.fromRGB(255, 120, 85) or Color3.fromRGB(120, 220, 160)
+	local actual = tonumber(jugador:GetAttribute("Stamina")) or 0
+	local maximo = math.max(1, tonumber(jugador:GetAttribute("StaminaMax")) or 100)
+	local porcentaje = math.clamp(actual / maximo, 0, 1)
+	local color = porcentaje <= 0.25 and Color3.fromRGB(236, 104, 85)
+		or porcentaje <= 0.5 and Color3.fromRGB(242, 186, 77)
+		or Color3.fromRGB(95, 219, 149)
+	staminaValue.Text = string.format("%d / %d", math.floor(actual), maximo)
+	staminaValue.TextColor3 = color
+	staminaFill.Size = UDim2.fromScale(porcentaje, 1)
+	staminaFill.BackgroundColor3 = color
 end
 jugador:GetAttributeChangedSignal("Stamina"):Connect(actualizarStamina)
 jugador:GetAttributeChangedSignal("StaminaMax"):Connect(actualizarStamina)
@@ -573,7 +622,7 @@ actualizarStamina()
 local livesWidget = Instance.new("Frame")
 livesWidget.Name = "RunnerLives"
 livesWidget.Size = UDim2.fromOffset(145, 48)
-livesWidget.Position = UDim2.fromOffset(12, 80)
+livesWidget.Position = UDim2.fromOffset(12, 90)
 livesWidget.BackgroundTransparency = 1
 livesWidget.Visible = false
 livesWidget.ZIndex = 20
@@ -581,12 +630,12 @@ livesWidget.Parent = hudPanel
 
 local function ajustarTamanoHud()
 	local enLobby = sideMenu.Visible
-	local altura = livesWidget.Visible and 132 or 84
+	local altura = livesWidget.Visible and 144 or 94
 	local ancho = enLobby and 240 or 312
 	hudPanel.Size = UDim2.fromOffset(ancho, altura)
 	hudPanel.Position = UDim2.new(0, 16, 1, -(altura + (enLobby and 96 or 16)))
 	roleLabel.Size = UDim2.fromOffset(ancho - 24, 34)
-	staminaLabel.Size = UDim2.fromOffset(ancho - 24, 30)
+	staminaWidget.Size = UDim2.fromOffset(ancho - 24, 38)
 end
 livesWidget:GetPropertyChangedSignal("Visible"):Connect(ajustarTamanoHud)
 sideMenu:GetPropertyChangedSignal("Visible"):Connect(ajustarTamanoHud)
@@ -948,7 +997,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		banner.Visible = not esPartidaPrivada
 
 		roleLabel.Visible = false
-		staminaLabel.Visible = false
+		staminaWidget.Visible = false
 		livesWidget.Visible = false
 		roundLabel.Visible = false
 		attackButton.Visible = false
@@ -973,7 +1022,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		resultPanel.Visible = false
 
 		roleLabel.Visible = true
-		staminaLabel.Visible = true
+		staminaWidget.Visible = true
 
 		if rol == "PERSEGUIDOR" then
 			roleLabel.Text = "CHASER"
@@ -1044,7 +1093,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		hudPanel.Visible = false
 		livesWidget.Visible = false
 		roundLabel.Visible = false
-		staminaLabel.Visible = false
+		staminaWidget.Visible = false
 		attackButton.Visible = false
 		messageLabel.Visible = false
 
@@ -1128,7 +1177,7 @@ local function actualizarHudLobby()
 		hudPanel.Visible = true
 		roleLabel.Visible = true
 		roleLabel.Text = jugador:GetAttribute("Rol") == "PERSEGUIDOR" and "CHASER" or "RUNNER"
-		staminaLabel.Visible = true
+		staminaWidget.Visible = true
 		livesWidget.Visible = false
 	elseif sideMenu.Visible then
 		hudPanel.Visible = false
