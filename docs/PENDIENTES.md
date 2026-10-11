@@ -19,6 +19,11 @@ Registrados a partir de los últimos playtests del usuario. **No están implemen
 - Verificar en Creator Dashboard el precio vigente y la configuración regional del Developer Product `3717856374`, y confirmar qué precio muestra el botón del lobby para esa misma cuenta y región. Distinguir el precio del producto de cualquier paquete de Robux que Roblox ofrezca para financiar la compra.
 - Si esa oferta de Robux es una interfaz propia de Roblox, evaluar cómo aclarar el precio de la donación antes de abrirla. No cambiar precios ni iniciar compras hasta entender el origen de la discrepancia.
 
+## Interfaz «How to Play»
+
+- Corregir el texto cortado del panel: en la captura del usuario, la última instrucción termina visualmente en `toggles climbing near a` y el botón `GOT IT!` tapa lo que sigue. Ajustar altura, espaciado o desplazamiento del contenido para que todas las instrucciones se puedan leer sin superponerse con el botón.
+- Verificar la presentación en distintas resoluciones y escalas de pantalla, con el panel del lobby abierto.
+
 ## Verificación
 
 - Probar estos cambios en el lobby y en partida, en R15, con subida y bajada largas, salida manual con Space, llegada natural al extremo y stamina baja o agotada.
