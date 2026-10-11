@@ -50,3 +50,4 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 - Probar estos cambios en el lobby y en partida, en R15, con subida y bajada largas, salida manual con clic derecho, llegada natural al extremo y stamina baja o agotada.
 - Confirmar que las acciones de parkour existentes y el indicador contextual no presentan regresiones.
+- **Preparado, por probar:** equipar y lanzar `Coffee`; la taza y el vapor deben seguir visibles y unidos al `Handle`, y la silla debe continuar funcionando. El script `CoffeeVisualFix` repara el asset importado al cargarlo, pero la Tool sigue siendo un objeto del Place fuera de Rojo.

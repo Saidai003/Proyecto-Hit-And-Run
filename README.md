@@ -80,6 +80,11 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - El perseguidor recibe un bate construido con un agarre vertical controlado al comenzar su rol. Equiparlo usa
   mayor alcance y cooldown que el golpe con la mano; se puede desequipar para
   volver a la mano y equipar la silla independientemente.
+- La Tool `Coffee` importada se corrige al cargar: sus piezas visibles dejan de
+  estar ancladas y se unen al `Handle` exterior invisible. Así acompañan al
+  personaje al equiparla y al proyectil al lanzarla; la silla no se modifica.
+  La exportación original está conservada en `tools/coffee.rbxm`; el objeto del
+  Place aún se mantiene en Studio, fuera de la sincronización de Rojo.
 - El clic derecho inicia o corta la escalada de una `TrussPart` o pieza marcada `Escalable`
   próxima. La escalada consume 5 puntos de stamina por stud vertical realmente
   recorrido, hacia arriba o abajo; al agotarse se suelta. Las piezas marcadas
