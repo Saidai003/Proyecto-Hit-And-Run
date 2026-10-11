@@ -3,6 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
+local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
+local CollectionService = game:GetService("CollectionService")
 
 local jugador = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -64,7 +66,7 @@ end
 
 local candidatos = {}
 local function registrar(objeto)
-	if objeto:IsA("TrussPart") or (objeto:IsA("BasePart") and (
+	if Climbables.IsClimbable(objeto) or (objeto:IsA("BasePart") and (
 		objeto.Name == "PuntoPale_1" or objeto.Name == "PuntoPale_2"
 		or objeto.Name == "PuntoSalto_1" or objeto.Name == "PuntoSalto_2"
 		or objeto.Name == "PuntoEntrada_1" or objeto.Name == "PuntoEntrada_2")) then
@@ -74,6 +76,10 @@ end
 for _, objeto in ipairs(Workspace:GetDescendants()) do registrar(objeto) end
 Workspace.DescendantAdded:Connect(registrar)
 Workspace.DescendantRemoving:Connect(function(objeto) candidatos[objeto] = nil end)
+CollectionService:GetInstanceAddedSignal("Escalable"):Connect(registrar)
+CollectionService:GetInstanceRemovedSignal("Escalable"):Connect(function(objeto)
+	if not Climbables.IsClimbable(objeto) then candidatos[objeto] = nil end
+end)
 
 local function elegirAccion(posicion, rol, humanoide)
 	if humanoide:GetAttribute("EscaladaEstado") == "Escalando" then return "Drop Off" end
@@ -81,7 +87,7 @@ local function elegirAccion(posicion, rol, humanoide)
 	local parqueMasCercano, distanciaParque = nil, 5.8
 	local trussMasCercano = 5.5
 	for objeto in pairs(candidatos) do
-		if objeto:IsA("TrussPart") then
+		if Climbables.IsClimbable(objeto) then
 			local d = distanciaSuperficie(objeto, posicion)
 			if d <= trussMasCercano then trussMasCercano = d end
 		elseif objeto:IsA("BasePart") then

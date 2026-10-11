@@ -159,7 +159,67 @@ local function mostrarDonacion(mensaje)
 	end)
 end
 
+local donateConfirm = Instance.new("Frame")
+donateConfirm.Name = "DonationConfirmation"
+donateConfirm.Size = UDim2.new(0.82, 0, 0, 194)
+donateConfirm.AnchorPoint = Vector2.new(0.5, 0.5)
+donateConfirm.Position = UDim2.fromScale(0.5, 0.5)
+donateConfirm.BackgroundColor3 = Color3.fromRGB(25, 29, 36)
+donateConfirm.BorderSizePixel = 0
+donateConfirm.Visible = false
+donateConfirm.ZIndex = 120
+donateConfirm.Parent = screenGui
+local donateLimit = Instance.new("UISizeConstraint")
+donateLimit.MaxSize = Vector2.new(410, 194)
+donateLimit.Parent = donateConfirm
+local donateRound = Instance.new("UICorner")
+donateRound.CornerRadius = UDim.new(0, 10)
+donateRound.Parent = donateConfirm
+
+local donateTitle = Instance.new("TextLabel")
+donateTitle.Size = UDim2.new(1, -24, 0, 30)
+donateTitle.Position = UDim2.fromOffset(12, 10)
+donateTitle.BackgroundTransparency = 1
+donateTitle.Text = "SUPPORT THE GAME"
+donateTitle.TextColor3 = Color3.new(1, 1, 1)
+donateTitle.TextSize = 20
+donateTitle.Font = Enum.Font.GothamBold
+donateTitle.ZIndex = 121
+donateTitle.Parent = donateConfirm
+
+local donateExplanation = Instance.new("TextLabel")
+donateExplanation.Size = UDim2.new(1, -28, 0, 93)
+donateExplanation.Position = UDim2.fromOffset(14, 42)
+donateExplanation.BackgroundTransparency = 1
+donateExplanation.Text = ""
+donateExplanation.TextColor3 = Color3.fromRGB(220, 225, 230)
+donateExplanation.TextSize = 14
+donateExplanation.Font = Enum.Font.Gotham
+donateExplanation.TextWrapped = true
+donateExplanation.TextXAlignment = Enum.TextXAlignment.Left
+donateExplanation.TextYAlignment = Enum.TextYAlignment.Top
+donateExplanation.ZIndex = 121
+donateExplanation.Parent = donateConfirm
+
+local donateCancel = Instance.new("TextButton")
+donateCancel.Size = UDim2.new(0.44, 0, 0, 38)
+donateCancel.Position = UDim2.new(0.04, 0, 1, -48)
+donateCancel.BackgroundColor3 = Color3.fromRGB(65, 70, 78)
+donateCancel.Text = "CANCEL"
+donateCancel.TextColor3 = Color3.new(1, 1, 1)
+donateCancel.TextSize = 15
+donateCancel.Font = Enum.Font.GothamBold
+donateCancel.ZIndex = 121
+donateCancel.Parent = donateConfirm
+local donateContinue = donateCancel:Clone()
+donateContinue.Name = "Continue"
+donateContinue.Position = UDim2.new(0.52, 0, 1, -48)
+donateContinue.BackgroundColor3 = Color3.fromRGB(130, 91, 42)
+donateContinue.Text = "CONTINUE"
+donateContinue.Parent = donateConfirm
+
 local productoDisponible = false
+local precioDonacion = nil
 if donationConfig.ProductId > 0 then
 	task.spawn(function()
 		local ok, info = pcall(function()
@@ -167,6 +227,7 @@ if donationConfig.ProductId > 0 then
 		end)
 		if ok and info and info.IsForSale ~= false and info.PriceInRobux then
 			productoDisponible = true
+			precioDonacion = info.PriceInRobux
 			btnDonate.Text = "DONATE " .. tostring(info.PriceInRobux) .. " R$"
 		else
 			btnDonate.Text = "DONATE UNAVAILABLE"
@@ -178,6 +239,15 @@ btnDonate.MouseButton1Click:Connect(function()
 		mostrarDonacion("Donation is not available yet. No purchase was started.")
 		return
 	end
+	donateExplanation.Text = "Donation: " .. tostring(precioDonacion) .. " Robux. No in-game reward. If your balance is low, Roblox may offer a larger Robux package. That package is not the donation price."
+	donateConfirm.Visible = true
+end)
+donateCancel.MouseButton1Click:Connect(function()
+	donateConfirm.Visible = false
+end)
+donateContinue.MouseButton1Click:Connect(function()
+	donateConfirm.Visible = false
+	if not productoDisponible then return end
 	local ok = pcall(function()
 		MarketplaceService:PromptProductPurchase(jugador, donationConfig.ProductId)
 	end)
@@ -190,7 +260,7 @@ end)
 
 local modalHowTo = Instance.new("Frame")
 modalHowTo.Name = "HowToPlayModal"
-modalHowTo.Size = UDim2.fromOffset(400, 290)
+modalHowTo.Size = UDim2.new(0.88, 0, 0.78, 0)
 modalHowTo.AnchorPoint = Vector2.new(0.5, 0.5)
 modalHowTo.Position = UDim2.fromScale(0.5, 0.5)
 modalHowTo.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
@@ -200,13 +270,17 @@ modalHowTo.Visible = false
 modalHowTo.ZIndex = 100
 modalHowTo.Parent = screenGui
 
+local modalSize = Instance.new("UISizeConstraint")
+modalSize.MaxSize = Vector2.new(520, 440)
+modalSize.Parent = modalHowTo
+
 local modalCorner = Instance.new("UICorner")
 modalCorner.CornerRadius = UDim.new(0, 10)
 modalCorner.Parent = modalHowTo
 
 local modalTitle = Instance.new("TextLabel")
-modalTitle.Size = UDim2.new(1, -30, 0, 35)
-modalTitle.Position = UDim2.new(0, 15, 0, 15)
+modalTitle.Size = UDim2.new(1, -32, 0, 32)
+modalTitle.Position = UDim2.fromOffset(16, 12)
 modalTitle.BackgroundTransparency = 1
 modalTitle.Text = "HOW TO PLAY"
 modalTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -215,33 +289,102 @@ modalTitle.Font = Enum.Font.GothamBold
 modalTitle.ZIndex = 101
 modalTitle.Parent = modalHowTo
 
-local modalDescription = Instance.new("TextLabel")
-modalDescription.Size = UDim2.new(1, -30, 0, 185)
-modalDescription.Position = UDim2.new(0, 15, 0, 55)
-modalDescription.BackgroundTransparency = 1
-modalDescription.Text = [[
-Play as a Runner or Killer!
+local guideSubtitle = Instance.new("TextLabel")
+guideSubtitle.Size = UDim2.new(1, -32, 0, 24)
+guideSubtitle.Position = UDim2.fromOffset(16, 47)
+guideSubtitle.BackgroundTransparency = 1
+guideSubtitle.Text = "Roles and controls"
+guideSubtitle.TextColor3 = Color3.fromRGB(181, 194, 207)
+guideSubtitle.TextSize = 13
+guideSubtitle.Font = Enum.Font.Gotham
+guideSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+guideSubtitle.ZIndex = 101
+guideSubtitle.Parent = modalHowTo
 
-- RUNNER: Outsmart the Killer and survive until time runs out.
-- KILLER: Hunt down and eliminate the Runner using [F].
+local guideScroll = Instance.new("ScrollingFrame")
+guideScroll.Name = "GuideScroll"
+guideScroll.Size = UDim2.new(1, -32, 1, -135)
+guideScroll.Position = UDim2.fromOffset(16, 76)
+guideScroll.BackgroundTransparency = 1
+guideScroll.BorderSizePixel = 0
+guideScroll.ScrollBarThickness = 5
+guideScroll.ScrollBarImageColor3 = Color3.fromRGB(124, 145, 168)
+guideScroll.CanvasSize = UDim2.fromOffset(0, 0)
+guideScroll.ZIndex = 101
+guideScroll.Parent = modalHowTo
 
-[CONTROLS]: Hold Shift to sprint. ALT jumps (test control).
-Space vaults windows/pallets,
-squeezes through gaps, or toggles climbing near a truss.
-These actions use stamina; low stamina slows parkour.
-]]
-modalDescription.TextColor3 = Color3.fromRGB(220, 220, 220)
-modalDescription.TextSize = 16
-modalDescription.Font = Enum.Font.Gotham
-modalDescription.TextWrapped = true
-modalDescription.TextXAlignment = Enum.TextXAlignment.Left
-modalDescription.TextYAlignment = Enum.TextYAlignment.Top
-modalDescription.ZIndex = 101
-modalDescription.Parent = modalHowTo
+local guideLayout = Instance.new("UIListLayout")
+guideLayout.Padding = UDim.new(0, 7)
+guideLayout.Parent = guideScroll
+guideLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	guideScroll.CanvasSize = UDim2.fromOffset(0, guideLayout.AbsoluteContentSize.Y + 8)
+end)
+
+local function addGuideCard(keyText, title, description, accent)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, -10, 0, 88)
+	card.BackgroundColor3 = Color3.fromRGB(38, 44, 52)
+	card.BorderSizePixel = 0
+	card.ZIndex = 102
+	card.Parent = guideScroll
+	local cardCorner = Instance.new("UICorner")
+	cardCorner.CornerRadius = UDim.new(0, 8)
+	cardCorner.Parent = card
+
+	local badge = Instance.new("TextLabel")
+	badge.Size = UDim2.fromOffset(82, 42)
+	badge.Position = UDim2.fromOffset(9, 23)
+	badge.BackgroundColor3 = accent
+	badge.Text = keyText
+	badge.TextColor3 = Color3.new(1, 1, 1)
+	badge.TextSize = 15
+	badge.Font = Enum.Font.GothamBold
+	badge.ZIndex = 103
+	badge.Parent = card
+	local badgeCorner = Instance.new("UICorner")
+	badgeCorner.CornerRadius = UDim.new(0, 6)
+	badgeCorner.Parent = badge
+
+	local heading = Instance.new("TextLabel")
+	heading.Size = UDim2.new(1, -108, 0, 23)
+	heading.Position = UDim2.fromOffset(101, 8)
+	heading.BackgroundTransparency = 1
+	heading.Text = title
+	heading.TextColor3 = Color3.new(1, 1, 1)
+	heading.TextSize = 15
+	heading.Font = Enum.Font.GothamBold
+	heading.TextXAlignment = Enum.TextXAlignment.Left
+	heading.ZIndex = 103
+	heading.Parent = card
+
+	local detail = Instance.new("TextLabel")
+	detail.Size = UDim2.new(1, -108, 0, 53)
+	detail.Position = UDim2.fromOffset(101, 30)
+	detail.BackgroundTransparency = 1
+	detail.Text = description
+	detail.TextColor3 = Color3.fromRGB(207, 216, 224)
+	detail.TextSize = 12
+	detail.Font = Enum.Font.Gotham
+	detail.TextWrapped = true
+	detail.TextXAlignment = Enum.TextXAlignment.Left
+	detail.TextYAlignment = Enum.TextYAlignment.Top
+	detail.ZIndex = 103
+	detail.Parent = card
+end
+
+addGuideCard("RUNNER", "Escape", "Survive until time runs out. Use obstacles to lose the Killer.", Color3.fromRGB(35, 126, 100))
+addGuideCard("KILLER", "Hunt", "Catch the Runner. Press F to attack at close range.", Color3.fromRGB(146, 61, 65))
+addGuideCard("SHIFT", "Sprint", "Hold to run faster. Watch your stamina.", Color3.fromRGB(66, 92, 144))
+addGuideCard("ALT", "Jump (test)", "Jump over small obstacles. Costs stamina; height is experimental.", Color3.fromRGB(102, 80, 143))
+addGuideCard("SPACE", "Parkour", "Near a prompt: vault, squeeze through, drop or break a pallet.", Color3.fromRGB(141, 96, 46))
+addGuideCard("SPACE", "Climb / Drop Off", "Near a climbable ladder: climb. Press again to let go. Climbing uses stamina as you move.", Color3.fromRGB(141, 96, 46))
+addGuideCard("STAMINA", "Manage energy", "Low stamina slows parkour. At zero, you cannot jump or keep climbing.", Color3.fromRGB(74, 103, 125))
+guideScroll.CanvasSize = UDim2.fromOffset(0, guideLayout.AbsoluteContentSize.Y + 8)
 
 local btnCloseModal = Instance.new("TextButton")
-btnCloseModal.Size = UDim2.new(0, 120, 0, 35)
-btnCloseModal.Position = UDim2.new(0.5, -60, 1, -50)
+btnCloseModal.Size = UDim2.fromOffset(132, 38)
+btnCloseModal.AnchorPoint = Vector2.new(0.5, 1)
+btnCloseModal.Position = UDim2.new(0.5, 0, 1, -11)
 btnCloseModal.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 btnCloseModal.BorderSizePixel = 0
 btnCloseModal.Text = "GOT IT!"
@@ -699,6 +842,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		sideMenu.Visible = false
 		btnDonate.Visible = false
 		donateFeedback.Visible = false
+		donateConfirm.Visible = false
 		banner.Visible = false
 		hudPanel.Visible = true
 		modalHowTo.Visible = false

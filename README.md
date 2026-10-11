@@ -34,14 +34,17 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - La aproximación a una acción usa `Humanoid:MoveTo` y la velocidad actual del
   jugador; si no puede llegar, no inicia la animación.
 - ALT ejecuta un salto de prueba que gasta 15 de stamina; Espacio sigue reservado
-  para parkour. El salto con ALT se cancela si hay menos de 15 de stamina.
+  para parkour. El salto con ALT se cancela si hay menos de 15 de stamina. Su
+  potencia se redujo de 50 a 40 y necesita prueba en los muros del mapa.
 - El retrato de vidas tiene un fallback con la cabeza del personaje de Studio
   cuando Roblox no entrega una miniatura de los jugadores simulados.
 - El aturdimiento de caída aplica un impulso y giro breve para que el personaje
   no permanezca parado mientras está noqueado.
 - El botón de donación usa el Developer Product `3717856374` creado por el dueño
   con precio base de 100 Robux. La UI consulta el precio vigente de Roblox antes
-  de abrir el aviso de compra. La compra no entrega objetos ni ventajas.
+  de abrir el aviso de compra, y muestra una aclaración de que cualquier paquete
+  de Robux ofrecido por Roblox es distinto del precio de la donación. La compra
+  no entrega objetos ni ventajas.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
   encontrar pareja se desactiva la práctica. ALT es solo una prueba de salto;
   la tecla definitiva continúa pendiente de decisión de diseño.
@@ -54,7 +57,10 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 - El perseguidor recibe un bate construido con un agarre vertical controlado al comenzar su rol. Equiparlo usa
   mayor alcance y cooldown que el golpe con la mano; se puede desequipar para
   volver a la mano y equipar la silla independientemente.
-- Space inicia o corta la escalada de una `TrussPart` próxima. Ventanas, estrechos,
+- Space inicia o corta la escalada de una `TrussPart` o pieza marcada `Escalable`
+  próxima. La escalada consume 5 puntos de stamina por stud vertical realmente
+  recorrido, hacia arriba o abajo; al agotarse se suelta. Las piezas marcadas
+  deben tener geometría que el Humanoid pueda escalar. Ventanas, estrechos,
   salto de pale y escalada consumen stamina validada por el servidor. Con stamina
   insuficiente se ejecutan un 30 % más lento.
 - Las acrobacias terminan a la altura del marcador de salida; después actúa la
@@ -71,7 +77,8 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 ## Verificación pendiente en Studio / publicado
 
 Los nuevos ajustes de escalada y salto solicitados tras el último playtest están
-registrados en [docs/PENDIENTES.md](docs/PENDIENTES.md); aún no se han aplicado.
+registrados en [docs/PENDIENTES.md](docs/PENDIENTES.md); están preparados en
+Rojo, pero falta el playtest para confirmarlos.
 
 1. Conectar Rojo al puerto 34872 y confirmar que `ParkourPairs` aparece en
    ReplicatedStorage. Revisar el agarre del bate en R15. El asset público sigue

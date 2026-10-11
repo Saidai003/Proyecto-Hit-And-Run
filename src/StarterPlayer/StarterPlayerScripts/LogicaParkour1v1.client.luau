@@ -5,6 +5,8 @@ local ContentProvider = game:GetService("ContentProvider")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SolicitarParkour = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
+local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
+local CollectionService = game:GetService("CollectionService")
 
 local jugadorLocal = Players.LocalPlayer
 
@@ -37,6 +39,8 @@ local cooldown = false
 local escaladaActiva = false
 local trussActivo = nil
 local inicioEscalada = 0
+local ultimoEstadoEscalando = 0
+local ultimaProximidadEscalada = 0
 
 local tracksPrecargados = {}
 
@@ -548,7 +552,7 @@ end
 
 -- INPUT -----------------------------------------------------------------
 
-local function distanciaTruss(objeto)
+local function distanciaEscalable(objeto)
 	local localPos = objeto.CFrame:PointToObjectSpace(rootPart.Position)
 	local mitad = objeto.Size * 0.5
 	local cercano = Vector3.new(
@@ -559,11 +563,24 @@ local function distanciaTruss(objeto)
 	return (localPos - cercano).Magnitude
 end
 
-local function trussCercano()
+local escalables = {}
+local function registrarEscalable(objeto)
+	if Climbables.IsClimbable(objeto) then escalables[objeto] = true end
+end
+for _, objeto in ipairs(workspace:GetDescendants()) do registrarEscalable(objeto) end
+workspace.DescendantAdded:Connect(registrarEscalable)
+workspace.DescendantRemoving:Connect(function(objeto) escalables[objeto] = nil end)
+CollectionService:GetInstanceAddedSignal("Escalable"):Connect(registrarEscalable)
+CollectionService:GetInstanceRemovedSignal("Escalable"):Connect(function(objeto)
+	if not Climbables.IsClimbable(objeto) then escalables[objeto] = nil end
+end)
+
+local function escalableCercano(limite)
 	local mejor, distancia = nil, 5.5
-	for _, objeto in ipairs(workspace:GetDescendants()) do
-		if objeto:IsA("TrussPart") then
-			local d = distanciaTruss(objeto)
+	if limite then distancia = limite end
+	for objeto in pairs(escalables) do
+		if objeto:IsDescendantOf(workspace) and Climbables.IsClimbable(objeto) then
+			local d = distanciaEscalable(objeto)
 			if d < distancia then mejor, distancia = objeto, d end
 		end
 	end
@@ -582,7 +599,7 @@ local function alternarEscalada()
 		humanoide:ChangeState(Enum.HumanoidStateType.Freefall)
 		return true
 	end
-	local truss = trussCercano()
+	local truss = escalableCercano()
 	if not truss then return false end
 	local ok, factor = pcall(function()
 		return SolicitarParkour:InvokeServer("Escalada", truss)
@@ -591,6 +608,8 @@ local function alternarEscalada()
 	escaladaActiva = true
 	trussActivo = truss
 	inicioEscalada = os.clock()
+	ultimoEstadoEscalando = inicioEscalada
+	ultimaProximidadEscalada = inicioEscalada
 	humanoide:SetAttribute("EscaladaActiva", true)
 	humanoide:SetAttribute("EscaladaEstado", "Escalando")
 	humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
@@ -601,11 +620,23 @@ end
 
 RunService.Heartbeat:Connect(function()
 	if not escaladaActiva or not humanoide or not rootPart then return end
+	if jugadorLocal:GetAttribute("EscaladaSinStamina") then
+		alternarEscalada()
+		return
+	end
+	local ahora = os.clock()
 	local estado = humanoide:GetState()
-	local terminoNaturalmente = os.clock() - inicioEscalada > 0.35
+	if estado == Enum.HumanoidStateType.Climbing then ultimoEstadoEscalando = ahora end
+	local cercano = escalableCercano(6.5)
+	if cercano then
+		trussActivo = cercano
+		ultimaProximidadEscalada = ahora
+	end
+	humanoide:SetAttribute("EscaladaLenta", (jugadorLocal:GetAttribute("Stamina") or 0) < 15)
+	local terminoNaturalmente = ahora - inicioEscalada > 0.8
+		and ahora - ultimoEstadoEscalando > 0.65
 		and humanoide.FloorMaterial ~= Enum.Material.Air
-		and estado ~= Enum.HumanoidStateType.Climbing
-	if not trussActivo or not trussActivo.Parent or distanciaTruss(trussActivo) > 6.5
+	if not trussActivo or not trussActivo.Parent or ahora - ultimaProximidadEscalada > 0.65
 		or terminoNaturalmente then
 		escaladaActiva = false
 		trussActivo = nil

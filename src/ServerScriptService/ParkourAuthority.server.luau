@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local StaminaService = require(script.Parent:WaitForChild("StaminaService"))
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
+local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
 
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 
@@ -33,6 +34,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
 	if accion == "EscaladaFin" then
+		StaminaService.EndClimb(jugador)
 		if humanoide then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false) end
 		return true
 	end
@@ -46,9 +48,9 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		return StaminaService.Consume(jugador, accion)
 	end
 	if accion == "Escalada" then
-		if typeof(origen) ~= "Instance" or not origen:IsA("TrussPart") or not origen:IsDescendantOf(Workspace)
+		if typeof(origen) ~= "Instance" or not Climbables.IsClimbable(origen) or not origen:IsDescendantOf(Workspace)
 			or distanciaParte(origen, root.Position) > 5.5 then return nil end
-		local factor = StaminaService.Consume(jugador, accion)
+		local factor = StaminaService.BeginClimb(jugador, root)
 		if factor then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true) end
 		return factor
 	end

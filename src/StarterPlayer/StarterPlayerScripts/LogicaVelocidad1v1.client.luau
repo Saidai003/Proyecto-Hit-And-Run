@@ -211,7 +211,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 			return ReplicatedStorage:WaitForChild("SolicitarParkour1v1"):InvokeServer("Salto")
 		end)
 		if ok and permitido and humanoide and humanoide.Parent then
-			humanoide.JumpPower = 50
+			humanoide.JumpPower = 40
 			humanoide.Jump = true
 			humanoide:ChangeState(Enum.HumanoidStateType.Jumping)
 			task.delay(0.12, function()
