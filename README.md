@@ -49,9 +49,7 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   no entrega objetos ni ventajas.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
   encontrar pareja se desactiva la práctica.
-- Un indicador inferior muestra `RMB` (clic derecho) y la acción de parkour disponible;
-  en ventanas también muestra `SPACE`, que sustituye el salto normal cuando el
-  jugador se mueve hacia la ventana.
+- Un indicador inferior muestra `RMB` (clic derecho) y la acción de parkour disponible.
 - El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
   cuando no hay contador de vidas.
 - El nombre visible del rol perseguidor es `CHASER`.

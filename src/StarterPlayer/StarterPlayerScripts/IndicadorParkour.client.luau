@@ -145,12 +145,6 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	local mensaje = elegirAccion(root.Position, jugador:GetAttribute("Rol"), humanoide)
 	panel.Visible = mensaje ~= nil
-	if mensaje then
-		action.Text = mensaje
-		key.Text = mensaje == "Vault" and "SPACE / RMB" or "RMB"
-		key.Size = UDim2.fromOffset(mensaje == "Vault" and 120 or 72, 34)
-		action.Position = UDim2.fromOffset(mensaje == "Vault" and 136 or 88, 3)
-		action.Size = UDim2.fromOffset(mensaje == "Vault" and 120 or 167, 42)
-	end
+	if mensaje then action.Text = mensaje end
 	panel.Position = UDim2.new(0.5, 0, 1, Workspace:GetAttribute("LobbyPractica") and -105 or -34)
 end)
