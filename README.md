@@ -57,6 +57,10 @@ para cambios normales de scripts, basta con reiniciar el playtest.
   con el mismo bonus de sprint y las mismas reglas de stamina.
 - El resultado de cada ronda se muestra desde la perspectiva del jugador como
   `You Win` o `You Lose`; los textos visibles de la interfaz están en inglés.
+- `HOW TO PLAY` tiene pestañas separadas para Runner y Chaser. Explica objetivos,
+  controles, stamina, parkour y las seis rondas con roles alternados. El resultado
+  final premia al jugador que acumuló **más** tiempo sobreviviendo como Runner;
+  las tarjetas crecen según el texto para que se pueda leer sin recortes.
 - El panel de stamina se ajusta a su contenido y queda encima del menú en lobby
   cuando no hay contador de vidas.
 - El nombre visible del rol perseguidor es `CHASER`.
@@ -103,7 +107,9 @@ Rojo, pero falta el playtest para confirmarlos.
    en Workspace, pero el bate equipado usa piezas controladas para evitar su
    pivote desplazado.
 2. En Studio con dos clientes: comprobar mano/bate/silla, 6 rondas, stamina baja,
-   escalada con clic derecho y caída desde una ventana alta. Revisar Output por errores.
+   escalada con clic derecho y caída desde una ventana alta. Abrir las dos pestañas
+   de `HOW TO PLAY` y comprobar el desplazamiento en distintos tamaños de pantalla.
+   Confirmar que gana el mayor tiempo acumulado como Runner. Revisar Output por errores.
 3. En una versión publicada con dos cuentas: entrar al mismo lobby, pulsar Play,
    confirmar que ambos llegan a la misma instancia privada y que al acabar
    vuelven juntos al lobby original o a uno público. Roblox no admite probar

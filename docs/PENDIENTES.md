@@ -22,6 +22,8 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 ## Interfaz «How to Play»
 
 - **Preparado, por probar:** sustituir el bloque de texto cortado por tarjetas visuales desplazables y mantener `GOT IT!` fuera de la zona de contenido. Las tarjetas explican Espacio para saltar y clic derecho para parkour.
+- **Preparado, por probar:** pestañas Runner y Chaser con explicación propia de objetivos, controles y seis rondas alternadas. Las tarjetas ajustan su altura al texto. Verificar que nada se corte al cambiar de pestaña o resolución.
+- **Preparado, por probar:** el resultado final y el resaltado del marcador dan la victoria a quien acumuló **más** tiempo como Runner, según la regla confirmada por el usuario.
 - Verificar la presentación en distintas resoluciones y escalas de pantalla, con el panel del lobby abierto.
 
 ## Nueva tanda de ajustes

@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local MarketplaceService = game:GetService("MarketplaceService")
+local TextService = game:GetService("TextService")
 local donationConfig = require(ReplicatedStorage:WaitForChild("DonationConfig"))
 
 local jugador = Players.LocalPlayer
@@ -320,7 +321,7 @@ local guideSubtitle = Instance.new("TextLabel")
 guideSubtitle.Size = UDim2.new(1, -32, 0, 24)
 guideSubtitle.Position = UDim2.fromOffset(16, 47)
 guideSubtitle.BackgroundTransparency = 1
-guideSubtitle.Text = "Roles and controls"
+guideSubtitle.Text = "Pick a role below"
 guideSubtitle.TextColor3 = Color3.fromRGB(181, 194, 207)
 guideSubtitle.TextSize = 13
 guideSubtitle.Font = Enum.Font.Gotham
@@ -328,10 +329,40 @@ guideSubtitle.TextXAlignment = Enum.TextXAlignment.Left
 guideSubtitle.ZIndex = 101
 guideSubtitle.Parent = modalHowTo
 
+local guideTabs = Instance.new("Frame")
+guideTabs.Name = "RoleTabs"
+guideTabs.Size = UDim2.new(1, -32, 0, 40)
+guideTabs.Position = UDim2.fromOffset(16, 77)
+guideTabs.BackgroundTransparency = 1
+guideTabs.ZIndex = 101
+guideTabs.Parent = modalHowTo
+
+local function createRoleTab(name, label, position)
+	local button = Instance.new("TextButton")
+	button.Name = name
+	button.Size = UDim2.new(0.5, -4, 1, 0)
+	button.Position = position
+	button.BackgroundColor3 = Color3.fromRGB(45, 52, 61)
+	button.BorderSizePixel = 0
+	button.Text = label
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.TextSize = 16
+	button.Font = Enum.Font.GothamBold
+	button.ZIndex = 102
+	button.Parent = guideTabs
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 7)
+	corner.Parent = button
+	return button
+end
+
+local runnerTab = createRoleTab("RunnerTab", "RUNNER", UDim2.fromScale(0, 0))
+local chaserTab = createRoleTab("ChaserTab", "CHASER", UDim2.new(0.5, 4, 0, 0))
+
 local guideScroll = Instance.new("ScrollingFrame")
 guideScroll.Name = "GuideScroll"
-guideScroll.Size = UDim2.new(1, -32, 1, -135)
-guideScroll.Position = UDim2.fromOffset(16, 76)
+guideScroll.Size = UDim2.new(1, -32, 1, -185)
+guideScroll.Position = UDim2.fromOffset(16, 125)
 guideScroll.BackgroundTransparency = 1
 guideScroll.BorderSizePixel = 0
 guideScroll.ScrollBarThickness = 5
@@ -349,7 +380,7 @@ end)
 
 local function addGuideCard(keyText, title, description, accent)
 	local card = Instance.new("Frame")
-	card.Size = UDim2.new(1, -10, 0, 88)
+	card.Size = UDim2.new(1, -10, 0, 104)
 	card.BackgroundColor3 = Color3.fromRGB(38, 44, 52)
 	card.BorderSizePixel = 0
 	card.ZIndex = 102
@@ -360,7 +391,7 @@ local function addGuideCard(keyText, title, description, accent)
 
 	local badge = Instance.new("TextLabel")
 	badge.Size = UDim2.fromOffset(82, 42)
-	badge.Position = UDim2.fromOffset(9, 23)
+	badge.Position = UDim2.fromOffset(9, 31)
 	badge.BackgroundColor3 = accent
 	badge.Text = keyText
 	badge.TextColor3 = Color3.new(1, 1, 1)
@@ -385,7 +416,7 @@ local function addGuideCard(keyText, title, description, accent)
 	heading.Parent = card
 
 	local detail = Instance.new("TextLabel")
-	detail.Size = UDim2.new(1, -108, 0, 53)
+	detail.Size = UDim2.new(1, -108, 0, 69)
 	detail.Position = UDim2.fromOffset(101, 30)
 	detail.BackgroundTransparency = 1
 	detail.Text = description
@@ -397,16 +428,74 @@ local function addGuideCard(keyText, title, description, accent)
 	detail.TextYAlignment = Enum.TextYAlignment.Top
 	detail.ZIndex = 103
 	detail.Parent = card
+	return { frame = card, badge = badge, detail = detail }
 end
 
-addGuideCard("RUNNER", "Escape", "Survive until time runs out. Use obstacles to lose the Chaser.", Color3.fromRGB(35, 126, 100))
-addGuideCard("CHASER", "Hunt", "Catch the Runner. Press F or left-click to attack.", Color3.fromRGB(146, 61, 65))
-addGuideCard("SHIFT", "Sprint", "Hold to run faster. Watch your stamina.", Color3.fromRGB(66, 92, 144))
-addGuideCard("SPACE", "Jump", "Jump over small obstacles. Costs stamina; jump height is limited.", Color3.fromRGB(102, 80, 143))
-addGuideCard("RMB", "Parkour", "Right-click near a prompt to vault, squeeze through or use a pallet.", Color3.fromRGB(141, 96, 46))
-addGuideCard("RMB", "Climb / Drop Off", "Right-click near a ladder to climb. Right-click again to let go.", Color3.fromRGB(141, 96, 46))
-addGuideCard("STAMINA", "Manage energy", "Low stamina slows parkour. At zero, you cannot jump or keep climbing.", Color3.fromRGB(74, 103, 125))
-guideScroll.CanvasSize = UDim2.fromOffset(0, guideLayout.AbsoluteContentSize.Y + 8)
+local guideCards = {
+	RUNNER = {
+		{ "MATCH", "Six rounds", "Roles swap every round. Each player is Runner three times. A round lasts up to 120 seconds; the longest total Runner survival time wins the match." },
+		{ "GOAL", "Stay alive", "You have three lives each round. Survive until the timer ends; every hit or severe fall can cost a life." },
+		{ "SHIFT", "Sprint", "Hold Shift to run faster. Sprint drains stamina; starting a window or gap action while sprinting makes it faster." },
+		{ "SPACE", "Jump", "Jump over small obstacles. It costs stamina. Space does not vault windows; use the window prompt instead." },
+		{ "RMB", "Windows / gaps", "Right-click at Vault or Go Through to cross a window or narrow gap. You walk to its marker first if needed." },
+		{ "RMB", "Pallets", "Right-click to drop a standing pallet or vault a fallen one. A dropped pallet can delay the Chaser." },
+		{ "RMB", "Climb / drop", "Right-click near a climbable ladder or truss to climb; click again to drop off. Climbing drains stamina by distance." },
+		{ "STAMINA", "Manage energy", "Low stamina slows obstacle actions. At zero you cannot jump or continue climbing. High falls can stun you." },
+	},
+	CHASER = {
+		{ "MATCH", "Six rounds", "Roles swap every round. Each player is Chaser three times. Each round lasts up to 120 seconds; the longest total Runner survival time wins the match." },
+		{ "GOAL", "Catch the Runner", "Remove the Runner's three lives before time runs out. Their remaining lives appear on your HUD." },
+		{ "F / LMB", "Attack", "Press F or left-click to strike. The bat reaches farther than your hand. A hit has a longer recovery; a miss slows you only briefly." },
+		{ "HOTBAR", "Choose a tool", "Equip or put away the bat to switch between bat and hand attacks. The throwable chair is a separate tool." },
+		{ "SHIFT", "Sprint", "Hold Shift to run faster. Sprint drains stamina; starting a window or gap action while sprinting makes it faster." },
+		{ "SPACE", "Jump", "Jump over small obstacles. It costs stamina. Space does not vault windows; use the window prompt instead." },
+		{ "RMB", "Windows / gaps", "Right-click at Vault or Go Through to cross a window or narrow gap. You are slightly slower than the Runner." },
+		{ "RMB", "Pallets", "Right-click near a fallen pallet to break it and clear the route. The Runner can drop or vault pallets." },
+		{ "RMB", "Climb / drop", "Right-click near a climbable ladder or truss to climb; click again to drop off. Climbing drains stamina by distance." },
+		{ "STAMINA", "Manage energy", "Low stamina slows obstacle actions. At zero you cannot jump or continue climbing." },
+	},
+}
+
+local currentGuideRole = "RUNNER"
+local visibleGuideCards = {}
+local function resizeGuideCards()
+	local textWidth = math.max(90, guideScroll.AbsoluteSize.X - 118)
+	for _, entry in ipairs(visibleGuideCards) do
+		local detail = entry.detail
+		local textHeight = TextService:GetTextSize(detail.Text, detail.TextSize, detail.Font,
+			Vector2.new(textWidth, 1000)).Y
+		local cardHeight = math.max(88, 40 + textHeight)
+		entry.frame.Size = UDim2.new(1, -10, 0, cardHeight)
+		entry.badge.Position = UDim2.fromOffset(9, math.floor((cardHeight - 42) / 2))
+		detail.Size = UDim2.new(1, -108, 0, textHeight + 4)
+	end
+end
+guideScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(resizeGuideCards)
+local function showGuideRole(role)
+	currentGuideRole = role
+	visibleGuideCards = {}
+	for _, child in ipairs(guideScroll:GetChildren()) do
+		if child:IsA("Frame") then child:Destroy() end
+	end
+	local accent = role == "RUNNER" and Color3.fromRGB(35, 126, 100)
+		or Color3.fromRGB(146, 61, 65)
+	runnerTab.BackgroundColor3 = role == "RUNNER" and Color3.fromRGB(35, 126, 100)
+		or Color3.fromRGB(45, 52, 61)
+	chaserTab.BackgroundColor3 = role == "CHASER" and Color3.fromRGB(146, 61, 65)
+		or Color3.fromRGB(45, 52, 61)
+	for _, card in ipairs(guideCards[role]) do
+		table.insert(visibleGuideCards, addGuideCard(card[1], card[2], card[3], accent))
+	end
+	resizeGuideCards()
+	guideScroll.CanvasPosition = Vector2.zero
+	task.defer(function()
+		resizeGuideCards()
+		guideScroll.CanvasSize = UDim2.fromOffset(0, guideLayout.AbsoluteContentSize.Y + 8)
+	end)
+end
+runnerTab.MouseButton1Click:Connect(function() showGuideRole("RUNNER") end)
+chaserTab.MouseButton1Click:Connect(function() showGuideRole("CHASER") end)
+showGuideRole(currentGuideRole)
 
 local btnCloseModal = Instance.new("TextButton")
 btnCloseModal.Size = UDim2.fromOffset(132, 38)
@@ -976,11 +1065,11 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		tiempo1Label.TextColor3 = Color3.fromRGB(220, 220, 220)
 		tiempo2Label.TextColor3 = Color3.fromRGB(220, 220, 220)
 
-		if tiempo1 < tiempo2 then
+		if tiempo1 > tiempo2 then
 			tiempo1Label.TextColor3 = Color3.fromRGB(60, 220, 100)
 			tiempo1Label.TextSize = 28
 
-		elseif tiempo2 < tiempo1 then
+		elseif tiempo2 > tiempo1 then
 			tiempo2Label.TextColor3 = Color3.fromRGB(60, 220, 100)
 			tiempo2Label.TextSize = 28
 		end

@@ -936,11 +936,11 @@ local function mostrarResultadoFinal()
 
 	local ganador
 
-	if tiempo1 < tiempo2 then
+	if tiempo1 > tiempo2 then
 
 		ganador = jugador1
 
-	elseif tiempo2 < tiempo1 then
+	elseif tiempo2 > tiempo1 then
 
 		ganador = jugador2
 
