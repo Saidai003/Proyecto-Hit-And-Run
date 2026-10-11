@@ -1,12 +1,38 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
+local ContentProvider = game:GetService("ContentProvider")
 local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
+local catalog = require(ReplicatedStorage:WaitForChild("AudioCatalog"))
 local EventoJuego = ReplicatedStorage:WaitForChild("EventoJuego")
 
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 local connectedButtons = setmetatable({}, { __mode = "k" })
 local lastHardLanding = -math.huge
+
+-- Fetch short effects in the background so the first action does not wait for audio streaming.
+task.spawn(function()
+	local sounds = {}
+	local seen = {}
+	local function add(id)
+		if type(id) ~= "number" or id <= 0 or seen[id] then return end
+		seen[id] = true
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://" .. tostring(id)
+		table.insert(sounds, sound)
+	end
+	for name, value in pairs(catalog) do
+		if name ~= "LobbyMusic" then
+			if type(value) == "table" then
+				for _, id in ipairs(value) do add(id) end
+			else
+				add(value)
+			end
+		end
+	end
+	if #sounds > 0 then pcall(function() ContentProvider:PreloadAsync(sounds) end) end
+	for _, sound in ipairs(sounds) do sound:Destroy() end
+end)
 
 local function watchCharacter(character)
 	local humanoid = character:WaitForChild("Humanoid")

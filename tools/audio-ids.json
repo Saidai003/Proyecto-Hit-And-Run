@@ -86,5 +86,9 @@
   "PalletBreak4": {
     "assetId": "110034654223473",
     "moderationState": "Reviewing"
+  },
+  "LobbyMusic": {
+    "assetId": "77282410800010",
+    "moderationState": "Reviewing"
   }
 }

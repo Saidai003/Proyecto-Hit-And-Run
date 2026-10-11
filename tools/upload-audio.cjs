@@ -33,6 +33,7 @@ const files = [
   ['PalletBreak2', 'Heavy_pallet_breakin_#2.mp3'],
   ['PalletBreak3', 'Heavy_pallet_breakin_#3.mp3'],
   ['PalletBreak4', 'Heavy_pallet_breakin_#4.mp3'],
+  ['LobbyMusic', 'lobby_music.mp3'],
 ];
 
 const uploaded = fs.existsSync(output) ? JSON.parse(fs.readFileSync(output, 'utf8')) : {};

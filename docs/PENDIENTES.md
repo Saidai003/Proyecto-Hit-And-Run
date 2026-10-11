@@ -54,7 +54,8 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Audio
 
-- **Subidos y enlazados:** 22 efectos de `SFX/` para botones, resultados, ventana, palés, escalada, golpes, lanzamiento y caídas. Los IDs están en `AudioCatalog.luau` y `tools/audio-ids.json`; la clave no se guarda en el repositorio.
-- **Pendiente de verificación:** los 22 uploads estaban en estado `Reviewing` al terminar. Comprobar aprobación, permisos de uso en la experiencia, volumen/duplicaciones con dos clientes y que se oyen tras sincronizar Rojo y publicar.
+- **Subidos y enlazados:** 22 efectos de `SFX/` para botones, resultados, ventana, palés, escalada, golpes, lanzamiento y caídas, más `lobby_music.mp3` para el lobby. Los IDs están en `AudioCatalog.luau` y `tools/audio-ids.json`; la clave no se guarda en el repositorio.
+- **Pendiente de verificación:** el usuario confirma que los efectos se reproducen, pero con retraso. Probar volumen/duplicaciones con dos clientes y comprobar que la precarga mejora el primer uso tras sincronizar Rojo y publicar.
+- La música de lobby también quedó inicialmente en `Reviewing`. Comprobar que se oye solo mientras `LobbyPractica` es verdadero y que se desvanece al encontrar partida. Medir si la precarga reduce el retraso de los efectos; si persiste, revisar los propios archivos y los disparos desde servidor.
 - El audio de cuenta regresiva dura 11 segundos pero la cuenta actual es de 3; requiere edición o selección de una muestra diferente antes de integrarlo. Los 4 sonidos de cristal tampoco tienen todavía una acción de rotura asignada.
 - La música de persecución que ya existe en el Place debe quedar intacta. No usar `brief_metallic_hit.mp3` como pista de persecución.

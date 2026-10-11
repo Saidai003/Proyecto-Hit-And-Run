@@ -33,11 +33,14 @@ El script `tools/upload-audio.cjs` sube solo los efectos usados por el MVP a la
 biblioteca de la cuenta propietaria mediante Open Cloud y registra los IDs en
 `tools/audio-ids.json`. Requiere una clave con acceso a Assets/Write en la variable
 local `ROBLOX_API_KEY`; nunca se guarda la clave en el repositorio. Los 22
-efectos usados por el MVP se subieron y sus IDs están en el catálogo. Roblox
+efectos usados por el MVP se subieron y sus IDs están en el catálogo. La pista
+`lobby_music.mp3` también se subió y suena en el lobby con entrada/salida gradual;
+se apaga al encontrar partida. Los efectos cortos se precargan en segundo plano
+para reducir el retraso de su primera reproducción. Roblox
 los dejó inicialmente en revisión, de modo que su reproducción depende de la
 moderación y los permisos del asset. La música de persecución existente en
-Studio no se modifica. El MP3 largo `brief_metallic_hit.mp3` no se usa ni se
-sube como música. Los archivos originales de `SFX/` permanecen locales; no se
+Studio no se modifica. `brief_metallic_hit.mp3` tiene el mismo contenido que
+`lobby_music.mp3` y no se subió por separado. Los archivos originales de `SFX/` permanecen locales; no se
 publican en GitHub.
 
 ## Cambios de esta tanda

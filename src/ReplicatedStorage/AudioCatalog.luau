@@ -22,4 +22,5 @@ return {
 	FinalLose = 87755197109088, -- endgame_lose_sfx.mp3
 	WinVoice = 122310405320954, -- you_win.mp3
 	LoseVoice = 134971666801218, -- you_lose_voice.mp3
+	LobbyMusic = 77282410800010, -- lobby_music.mp3
 }
