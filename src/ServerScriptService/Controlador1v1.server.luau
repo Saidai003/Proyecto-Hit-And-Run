@@ -263,8 +263,28 @@ local function entregarBate(jugador)
 	local modelo = Workspace:FindFirstChild("Baseball Bat")
 	local mochila = jugador:FindFirstChildOfClass("Backpack")
 	local humanoide = obtenerHumanoide(jugador)
-	if not modelo or not mochila or not humanoide then
-		warn("[Bat] Missing Baseball Bat model, backpack, or humanoid")
+	if not mochila or not humanoide then
+		warn("[Bat] Missing backpack or humanoid for ", jugador.Name)
+		return
+	end
+	if not modelo then
+		warn("[Bat] Baseball Bat asset not found in Workspace; using a basic bat")
+		local herramienta = Instance.new("Tool")
+		herramienta.Name = "Baseball Bat"
+		herramienta.CanBeDropped = false
+		herramienta:SetAttribute("AttackKind", "Bat")
+		local mango = Instance.new("Part")
+		mango.Name = "Handle"
+		mango.Shape = Enum.PartType.Cylinder
+		mango.Size = Vector3.new(0.55, 3.2, 0.55)
+		mango.Color = Color3.fromRGB(153, 100, 54)
+		mango.Material = Enum.Material.Wood
+		mango.CanCollide = false
+		mango.Massless = true
+		mango.Parent = herramienta
+		herramienta.Grip = CFrame.new(0, -1.1, 0)
+		herramienta.Parent = mochila
+		humanoide:EquipTool(herramienta)
 		return
 	end
 
@@ -351,44 +371,38 @@ local function asignarRoles()
 		VELOCIDAD_PERSEGUIDOR
 	)
 
-	task.spawn(function()
-
-		for _, jugador in ipairs(Players:GetPlayers()) do
-
+	local perseguidorDaRonda = perseguidor
+	entregarBate(perseguidorDaRonda)
+	for _, jugador in ipairs({perseguido, perseguidorDaRonda}) do
+		task.spawn(function()
 			local character = jugador.Character
-
-			if character then
-
-				local humanoid =
-					character:FindFirstChildOfClass("Humanoid")
-
-				if humanoid then
-
-					local desc =
-						humanoid:GetAppliedDescription()
-						or Instance.new("HumanoidDescription")
-
-					if jugador == perseguidor then
-
-						desc.HeightScale = 1.25
-						desc.WidthScale = 1.25
-						desc.HeadScale = 1.15
-
-					else
-
-						desc.HeightScale = 1
-						desc.WidthScale = 1
-						desc.HeadScale = 1
-
-					end
-
-					humanoid:ApplyDescription(desc)
-
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if not humanoid then return end
+			local ok, err = pcall(function()
+				local desc = humanoid:GetAppliedDescription()
+					or Instance.new("HumanoidDescription")
+				if jugador == perseguidorDaRonda then
+					desc.HeightScale = 1.25
+					desc.WidthScale = 1.25
+					desc.HeadScale = 1.15
+				else
+					desc.HeightScale = 1
+					desc.WidthScale = 1
+					desc.HeadScale = 1
 				end
+				humanoid:ApplyDescription(desc)
+			end)
+			if not ok then warn("[Roles] Appearance could not be applied: ", err) end
+			if jugador == perseguidorDaRonda and perseguidor == perseguidorDaRonda
+				and jugador:GetAttribute("Rol") == "PERSEGUIDOR" then
+				local characterActual = jugador.Character
+				local mochila = jugador:FindFirstChildOfClass("Backpack")
+				local tieneBate = (characterActual and characterActual:FindFirstChild("Baseball Bat"))
+					or (mochila and mochila:FindFirstChild("Baseball Bat"))
+				if not tieneBate then entregarBate(jugador) end
 			end
-		end
-		entregarBate(perseguidor)
-	end)
+		end)
+	end
 
 	print("----------------------------------------")
 	print("RONDA " .. rondaActual)

@@ -190,6 +190,29 @@ roleLabel.Visible = false
 roleLabel.ZIndex = 20
 roleLabel.Parent = screenGui
 
+local staminaLabel = Instance.new("TextLabel")
+staminaLabel.Name = "Stamina"
+staminaLabel.Size = UDim2.new(0, 260, 0, 30)
+staminaLabel.Position = UDim2.new(0, 20, 0, 68)
+staminaLabel.BackgroundTransparency = 1
+staminaLabel.TextXAlignment = Enum.TextXAlignment.Left
+staminaLabel.TextSize = 18
+staminaLabel.Font = Enum.Font.GothamBold
+staminaLabel.Visible = false
+staminaLabel.ZIndex = 20
+staminaLabel.Parent = screenGui
+
+local function actualizarStamina()
+	local actual = jugador:GetAttribute("Stamina") or 0
+	local maximo = jugador:GetAttribute("StaminaMax") or 100
+	staminaLabel.Text = string.format("STAMINA  %d / %d", math.floor(actual), maximo)
+	staminaLabel.TextColor3 = actual < 25
+		and Color3.fromRGB(255, 120, 85) or Color3.fromRGB(120, 220, 160)
+end
+jugador:GetAttributeChangedSignal("Stamina"):Connect(actualizarStamina)
+jugador:GetAttributeChangedSignal("StaminaMax"):Connect(actualizarStamina)
+actualizarStamina()
+
 local livesLabel = Instance.new("TextLabel")
 livesLabel.Name = "Lives"
 livesLabel.Size = UDim2.new(0, 250, 0, 35)
@@ -452,6 +475,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		messageLabel.Text = "WAITING FOR OPPONENT..."
 
 		roleLabel.Visible = false
+		staminaLabel.Visible = false
 		livesLabel.Visible = false
 		roundLabel.Visible = false
 		attackButton.Visible = false
@@ -471,6 +495,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		resultPanel.Visible = false
 
 		roleLabel.Visible = true
+		staminaLabel.Visible = true
 
 		if rol == "PERSEGUIDOR" then
 			roleLabel.Text = "KILLER"
@@ -533,6 +558,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		roleLabel.Visible = false
 		livesLabel.Visible = false
 		roundLabel.Visible = false
+		staminaLabel.Visible = false
 		attackButton.Visible = false
 		messageLabel.Visible = false
 
