@@ -9,7 +9,7 @@ local sprint = {}
 local ultimoUso = {}
 local agotadoHasta = {}
 local MAX = { PERSEGUIDO = 100, PERSEGUIDOR = 120 }
-local COSTO = { Ventana = 25, Estrecho = 20, Pale = 20, Escalada = 15 }
+local COSTO = { Ventana = 25, Estrecho = 20, Pale = 20, Escalada = 15, Salto = 15 }
 local REGEN = 14
 local PAUSA_TRAS_AGOTARSE = 1.25
 
@@ -46,6 +46,7 @@ function StaminaService.Consume(jugador, accion)
 	end
 	ultimoUso[jugador] = ahora
 	local actual = stamina[jugador] or maximo(jugador)
+	if accion == "Salto" and actual < costo then return nil end
 	local lento = actual < costo
 	stamina[jugador] = math.max(0, actual - costo)
 	if stamina[jugador] == 0 then

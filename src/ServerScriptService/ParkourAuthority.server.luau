@@ -18,6 +18,15 @@ local function distanciaParte(parte, posicion)
 	return (localPos - cercano).Magnitude
 end
 
+local function tocaSuelo(character, root, humanoide)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local alcance = humanoide.HipHeight + root.Size.Y * 0.5 + 1
+	return Workspace:Raycast(root.Position, Vector3.new(0, -alcance, 0), params) ~= nil
+end
+
 remote.OnServerInvoke = function(jugador, accion, origen, destino)
 	if typeof(accion) ~= "string" then return nil end
 	local character = jugador.Character
@@ -30,9 +39,15 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 	if not (Workspace:GetAttribute("RondaEnJuego") or Workspace:GetAttribute("LobbyPractica")) then return nil end
 	if not root or not humanoide or humanoide.Health <= 0
 		or humanoide:GetAttribute("Inmovilizado") or humanoide:GetAttribute("FallStunned") then return nil end
+	if accion == "Salto" then
+		if not tocaSuelo(character, root, humanoide)
+			or humanoide:GetAttribute("ParkourEspecialActivo")
+			or humanoide:GetAttribute("EscaladaActiva") then return nil end
+		return StaminaService.Consume(jugador, accion)
+	end
 	if accion == "Escalada" then
 		if typeof(origen) ~= "Instance" or not origen:IsA("TrussPart") or not origen:IsDescendantOf(Workspace)
-			or distanciaParte(origen, root.Position) > 7.5 then return nil end
+			or distanciaParte(origen, root.Position) > 5.5 then return nil end
 		local factor = StaminaService.Consume(jugador, accion)
 		if factor then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true) end
 		return factor
@@ -46,7 +61,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		or not origen.Name:match("^" .. prefijo .. "_[12]$")
 		or not destino.Name:match("^" .. prefijo .. "_[12]$")
 		or origen.Name == destino.Name
-		or (root.Position - origen.Position).Magnitude > 8
+		or (root.Position - origen.Position).Magnitude > 6.3
 		or math.abs(root.Position.Y - origen.Position.Y) > 4.5
 		or (origen.Position - destino.Position).Magnitude > 30 then return nil end
 	return StaminaService.Consume(jugador, accion)

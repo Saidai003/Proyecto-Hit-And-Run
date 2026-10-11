@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local ContentProvider = game:GetService("ContentProvider")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9,8 +8,8 @@ local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 
 local jugadorLocal = Players.LocalPlayer
 
-local DISTANCIA_INTERACCION = 7.5
-local VELOCIDAD_APROXIMACION = 10
+local DISTANCIA_INTERACCION = 5.8
+local DISTANCIA_INICIO_ANIMACION = 1.8
 local VELOCIDAD_NARROWED_WALK = 6.5
 local VELOCIDAD_SALTO_VENTANA = 9
 
@@ -19,7 +18,6 @@ local UMBRAL_DIRECCION_CARRERA = 0.7
 
 local ALTURA_SALTO_VENTANA = 0.8
 
-local DISTANCIA_LLEGADA = 0.1
 local TIEMPO_COOLDOWN = 0.6
 
 local NARROWED_ANIM_INICIO = 0.29
@@ -38,6 +36,7 @@ local accionActiva = false
 local cooldown = false
 local escaladaActiva = false
 local trussActivo = nil
+local inicioEscalada = 0
 
 local tracksPrecargados = {}
 
@@ -325,30 +324,22 @@ end
 
 -- APROXIMACIÃN ----------------------------------------------------------
 
-local function aproximarseAlPunto(punto, direccion)
-	-- Se mantiene la altura actual del root: solo se mueve en X/Z
-	local posicionObjetivo = Vector3.new(
-		punto.Position.X,
-		rootPart.Position.Y,
-		punto.Position.Z
-	)
-
-	local distancia = (rootPart.Position - posicionObjetivo).Magnitude
-
-	if distancia <= DISTANCIA_LLEGADA then
-		return
+local function aproximarseAlPunto(punto)
+	local objetivo = Vector3.new(punto.Position.X, rootPart.Position.Y, punto.Position.Z)
+	local distancia = (rootPart.Position - objetivo).Magnitude
+	if distancia <= DISTANCIA_INICIO_ANIMACION then return true end
+	local limite = os.clock() + math.max(1, distancia / math.max(humanoide.WalkSpeed, 1) + 1)
+	while os.clock() < limite and humanoide.Parent and rootPart.Parent do
+		local restante = (Vector3.new(rootPart.Position.X, objetivo.Y, rootPart.Position.Z) - objetivo).Magnitude
+		if restante <= DISTANCIA_INICIO_ANIMACION then
+			humanoide:MoveTo(rootPart.Position)
+			return true
+		end
+		humanoide:MoveTo(objetivo)
+		RunService.Heartbeat:Wait()
 	end
-
-	local duracion = distancia / VELOCIDAD_APROXIMACION
-
-	local tween = TweenService:Create(
-		rootPart,
-		TweenInfo.new(duracion, Enum.EasingStyle.Linear),
-		{ CFrame = crearCFrameOrientado(posicionObjetivo, direccion) }
-	)
-
-	tween:Play()
-	tween.Completed:Wait()
+	humanoide:MoveTo(rootPart.Position)
+	return false
 end
 
 -- INICIO / FIN DE ACCIÃN ------------------------------------------------
@@ -418,24 +409,27 @@ end
 -- ACCIÃN GENÃRICA -------------------------------------------------------
 
 local function ejecutarAccion(puntoInicial, puntoFinal, config)
+	local multiplicador = obtenerMultiplicadorAccion(puntoInicial)
+	accionActiva = true
+	local direccion = obtenerDireccion(puntoInicial, puntoFinal)
+	if not aproximarseAlPunto(puntoInicial) then
+		accionActiva = false
+		return
+	end
 	local okReserva, factorCosto = pcall(function()
 		return SolicitarParkour:InvokeServer(config.tipo, puntoInicial, puntoFinal)
 	end)
-	if not okReserva or not factorCosto then return end
-	-- Se calcula ANTES de comenzarAccion, mientras MoveDirection aÃºn es vÃ¡lido
-	local multiplicador = obtenerMultiplicadorAccion(puntoInicial)
-
+	if not okReserva or not factorCosto then
+		accionActiva = false
+		return
+	end
 	-- Si aÃºn no estÃ¡ listo, la espera ocurre ANTES de bloquear al personaje
 	local animacion = crearAnimacion(config.animacion)
 
 	comenzarAccion()
 
-	local direccion = obtenerDireccion(puntoInicial, puntoFinal)
-
 	local ok, err = pcall(function()
 		local velocidad = config.velocidad * multiplicador / factorCosto
-
-		aproximarseAlPunto(puntoInicial, direccion)
 
 		rootPart.CFrame = crearCFrameOrientado(rootPart.Position, direccion)
 
@@ -566,7 +560,7 @@ local function distanciaTruss(objeto)
 end
 
 local function trussCercano()
-	local mejor, distancia = nil, 7.5
+	local mejor, distancia = nil, 5.5
 	for _, objeto in ipairs(workspace:GetDescendants()) do
 		if objeto:IsA("TrussPart") then
 			local d = distanciaTruss(objeto)
@@ -582,6 +576,7 @@ local function alternarEscalada()
 		escaladaActiva = false
 		trussActivo = nil
 		humanoide:SetAttribute("EscaladaActiva", false)
+		humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
 		humanoide:SetAttribute("EscaladaLenta", nil)
 		humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
 		humanoide:ChangeState(Enum.HumanoidStateType.Freefall)
@@ -595,7 +590,9 @@ local function alternarEscalada()
 	if not ok or not factor then return true end
 	escaladaActiva = true
 	trussActivo = truss
+	inicioEscalada = os.clock()
 	humanoide:SetAttribute("EscaladaActiva", true)
+	humanoide:SetAttribute("EscaladaEstado", "Escalando")
 	humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
 	humanoide:ChangeState(Enum.HumanoidStateType.Climbing)
 	humanoide:SetAttribute("EscaladaLenta", factor > 1)
@@ -604,10 +601,17 @@ end
 
 RunService.Heartbeat:Connect(function()
 	if not escaladaActiva or not humanoide or not rootPart then return end
-	if not trussActivo or not trussActivo.Parent or distanciaTruss(trussActivo) > 7 then
+	local estado = humanoide:GetState()
+	local terminoNaturalmente = os.clock() - inicioEscalada > 0.35
+		and humanoide.FloorMaterial ~= Enum.Material.Air
+		and estado ~= Enum.HumanoidStateType.Climbing
+	if not trussActivo or not trussActivo.Parent or distanciaTruss(trussActivo) > 6.5
+		or terminoNaturalmente then
 		escaladaActiva = false
+		trussActivo = nil
 		pcall(function() SolicitarParkour:InvokeServer("EscaladaFin") end)
 		humanoide:SetAttribute("EscaladaActiva", false)
+		humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
 		humanoide:SetAttribute("EscaladaLenta", nil)
 		humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
 		return
@@ -638,7 +642,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 	for _, objeto in ipairs(workspace:GetDescendants()) do
 		if objeto:IsA("BasePart")
 			and (objeto.Name == "PuntoPale_1" or objeto.Name == "PuntoPale_2")
-			and (rootPart.Position - objeto.Position).Magnitude <= 8.5
+			and (rootPart.Position - objeto.Position).Magnitude <= 6.5
 			and math.abs(rootPart.Position.Y - objeto.Position.Y) <= 4.5 then
 			local pale = objeto.Parent
 			local estado = pale and (pale:GetAttribute("EstadoPale") or "Parado")
@@ -681,6 +685,8 @@ jugadorLocal.CharacterAdded:Connect(function(char)
 	obtenerPersonaje()
 	escaladaActiva = false
 	trussActivo = nil
+	humanoide:SetAttribute("EscaladaActiva", false)
+	humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
 	humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
 
 	accionActiva = false
@@ -694,5 +700,7 @@ end)
 
 if obtenerPersonaje() then
 	humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+	humanoide:SetAttribute("EscaladaActiva", false)
+	humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
 	precargarAnimaciones()
 end

@@ -28,11 +28,25 @@ para cambios normales de scripts, basta con reiniciar el playtest.
 
 ## Cambios de esta tanda
 
+- Rango ajustado a 5.8 studs para ventanas/pasos estrechos, 6.5 para palés y
+  5.5 para escalada. La escalada muestra `Drop Off` al estar activa y vuelve a
+  `NoEscalando` al soltarla o terminar naturalmente.
+- La aproximación a una acción usa `Humanoid:MoveTo` y la velocidad actual del
+  jugador; si no puede llegar, no inicia la animación.
+- ALT ejecuta un salto de prueba que gasta 15 de stamina; Espacio sigue reservado
+  para parkour. El salto con ALT se cancela si hay menos de 15 de stamina.
+- El retrato de vidas tiene un fallback con la cabeza del personaje de Studio
+  cuando Roblox no entrega una miniatura de los jugadores simulados.
+- El aturdimiento de caída aplica un impulso y giro breve para que el personaje
+  no permanezca parado mientras está noqueado.
+- El botón `DONATE SOON` está en el lobby. Para activar la donación, crea un
+  Developer Product de 5 Robux de esta experiencia en Creator Dashboard y pon
+  su Asset ID en `src/ReplicatedStorage/DonationConfig.luau`. Sin ese ID no se
+  inicia ninguna compra. El precio real lo fija Roblox, no el script.
 - En el lobby público se puede practicar parkour y sprint como perseguido; al
-  encontrar pareja se desactiva la práctica. El salto normal continúa pendiente
-  de decisión de diseño.
-- El rango de ventanas y pasos estrechos es 7.5 studs; el de palés, 8.5.
-  Un indicador inferior muestra `Space` y la acción disponible.
+  encontrar pareja se desactiva la práctica. ALT es solo una prueba de salto;
+  la tecla definitiva continúa pendiente de decisión de diseño.
+- Un indicador inferior muestra `Space` y la acción disponible.
 - Las vidas del perseguido se muestran una sola vez con corazón, retrato circular
   del avatar y contador; el retrato dinámico utiliza la miniatura nativa de
   Roblox de 420×420 (la API no ofrece 512×512).
@@ -68,8 +82,8 @@ para cambios normales de scripts, basta con reiniciar el playtest.
    vuelven juntos al lobby original o a uno público. Roblox no admite probar
    `TeleportService` plenamente en el playtest local de Studio.
 
-El salto normal deliberadamente **no está implementado**: su control sigue como
-decisión de diseño. La guía de puntería de la silla también se mantiene por ahora.
+El salto con ALT es **experimental**: su tecla definitiva sigue como decisión de
+diseño. La guía de puntería de la silla también se mantiene por ahora.
 
 Prueba de regresión de marcadores del respaldo:
 `node tools/check-parkour-pairs.cjs`. Necesita la dependencia local en `.tools`.

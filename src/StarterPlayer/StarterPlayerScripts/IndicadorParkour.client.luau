@@ -76,10 +76,10 @@ Workspace.DescendantAdded:Connect(registrar)
 Workspace.DescendantRemoving:Connect(function(objeto) candidatos[objeto] = nil end)
 
 local function elegirAccion(posicion, rol, humanoide)
-	if humanoide:GetAttribute("EscaladaActiva") then return "Climb" end
-	local paleMasCercano, distanciaPale = nil, 8.5
-	local parqueMasCercano, distanciaParque = nil, 7.5
-	local trussMasCercano = 7.5
+	if humanoide:GetAttribute("EscaladaEstado") == "Escalando" then return "Drop Off" end
+	local paleMasCercano, distanciaPale = nil, 6.5
+	local parqueMasCercano, distanciaParque = nil, 5.8
+	local trussMasCercano = 5.5
 	for objeto in pairs(candidatos) do
 		if objeto:IsA("TrussPart") then
 			local d = distanciaSuperficie(objeto, posicion)
@@ -117,7 +117,7 @@ local function elegirAccion(posicion, rol, humanoide)
 	end
 	if paleMasCercano then return paleMasCercano end
 	if parqueMasCercano then return parqueMasCercano end
-	if trussMasCercano < 7.5 then return "Climb" end
+	if trussMasCercano < 5.5 then return "Climb" end
 	return nil
 end
 

@@ -1,6 +1,6 @@
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
@@ -15,9 +15,8 @@ local ANIM_FAST_VAULT = "rbxassetid://91247705762076"
 local ANIM_DROP = "rbxassetid://95338026656426"
 local ANIM_HIT = "rbxassetid://122984890985296"
 
-local DISTANCIA_INTERACCION = 8.5
-local DISTANCIA_LLEGADA = 0.1
-local VELOCIDAD_APROXIMACION = 10
+local DISTANCIA_INTERACCION = 6.5
+local DISTANCIA_INICIO_ANIMACION = 1.8
 local debounce = false
 
 --==================================================
@@ -105,30 +104,12 @@ end
 -- LogicaParkour1v1, aplicada al salto de pale para que no
 -- sea un movimiento brusco cuando se pulsa Space lejos del
 -- Punto exacto.
-local function aproximarseAlPuntoDelPale(puntoCercano, puntoOpuesto)
+local function aproximarseAlPuntoDelPale(puntoCercano)
 	local character = jugadorLocal.Character
-	if not character then
-		return
-	end
+	if not character then return false end
 
 	local root = character:FindFirstChild("HumanoidRootPart")
-	if not root then
-		return
-	end
-
-	-- DirecciÃ³n horizontal del salto: del Punto cercano al
-	-- Punto opuesto. Se proyecta al plano XZ para que la
-	-- rotaciÃ³n no tenga componente vertical.
-	local diferenciaHorizontal =
-		(puntoOpuesto.Position - puntoCercano.Position)
-		* Vector3.new(1, 0, 1)
-
-	local direccion
-	if diferenciaHorizontal.Magnitude > 0.01 then
-		direccion = diferenciaHorizontal.Unit
-	else
-		direccion = root.CFrame.LookVector
-	end
+	if not root then return false end
 
 	-- PosiciÃ³n objetivo: X/Z del Punto, Y actual del root
 	-- (para no levantarlo del suelo al acercarlo).
@@ -141,41 +122,22 @@ local function aproximarseAlPuntoDelPale(puntoCercano, puntoOpuesto)
 	local distancia =
 		(root.Position - posicionObjetivo).Magnitude
 
-	-- Si ya estÃ¡ lo bastante cerca, basta con reorientar.
-	if distancia <= DISTANCIA_LLEGADA then
-		root.CFrame = CFrame.lookAt(
-			root.Position,
-			root.Position + direccion
-		)
-		return
+	if distancia <= DISTANCIA_INICIO_ANIMACION then return true end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return false end
+	local limite = os.clock() + math.max(1, distancia / math.max(humanoid.WalkSpeed, 1) + 1)
+	while os.clock() < limite and root.Parent and humanoid.Parent do
+		local restante = (Vector3.new(root.Position.X, posicionObjetivo.Y, root.Position.Z) - posicionObjetivo).Magnitude
+		if restante <= DISTANCIA_INICIO_ANIMACION then
+			humanoid:MoveTo(root.Position)
+			return true
+		end
+		humanoid:MoveTo(posicionObjetivo)
+		RunService.Heartbeat:Wait()
 	end
-
-	local duracion = distancia / VELOCIDAD_APROXIMACION
-
-	local tween = TweenService:Create(
-		root,
-		TweenInfo.new(
-			duracion,
-			Enum.EasingStyle.Linear
-		),
-		{
-			CFrame = CFrame.lookAt(
-				posicionObjetivo,
-				posicionObjetivo + direccion
-			)
-		}
-	)
-
-	tween:Play()
-	tween.Completed:Wait()
-
-	-- Reorientar al llegar para que el personaje quede
-	-- mirando al pale antes de que arranque la animaciÃ³n
-	-- de vault.
-	root.CFrame = CFrame.lookAt(
-		root.Position,
-		root.Position + direccion
-	)
+	humanoid:MoveTo(root.Position)
+	return false
 end
 
 --==================================================
@@ -234,10 +196,11 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 				)
 
 				if pCercano and pOpuesto then
-					aproximarseAlPuntoDelPale(
-						pCercano,
-						pOpuesto
-					)
+					local llego = aproximarseAlPuntoDelPale(pCercano)
+					if not llego then
+						debounce = false
+						return
+					end
 				end
 
 				local esRapido = humanoid.WalkSpeed > 12

@@ -76,6 +76,7 @@ local consumoSprint = CONSUMO_SPRINT_PERSEGUIDO
 
 local sprintActivo = false
 local movimientoBloqueado = false
+local ultimoSaltoAlt = 0
 
 local fovObjetivo = FOV_NORMAL
 
@@ -198,6 +199,25 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 
 	if input.KeyCode == Enum.KeyCode.LeftShift then
 		activarSprint()
+	elseif input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
+		if movimientoBloqueado or not humanoide or humanoide.Health <= 0
+			or humanoide.FloorMaterial == Enum.Material.Air
+			or humanoide:GetAttribute("ParkourEspecialActivo")
+			or humanoide:GetAttribute("EscaladaActiva")
+			or humanoide:GetAttribute("FallStunned")
+			or os.clock() - ultimoSaltoAlt < 0.4 then return end
+		ultimoSaltoAlt = os.clock()
+		local ok, permitido = pcall(function()
+			return ReplicatedStorage:WaitForChild("SolicitarParkour1v1"):InvokeServer("Salto")
+		end)
+		if ok and permitido and humanoide and humanoide.Parent then
+			humanoide.JumpPower = 50
+			humanoide.Jump = true
+			humanoide:ChangeState(Enum.HumanoidStateType.Jumping)
+			task.delay(0.12, function()
+				if humanoide and humanoide.Parent then humanoide.JumpPower = 0 end
+			end)
+		end
 	end
 end)
 

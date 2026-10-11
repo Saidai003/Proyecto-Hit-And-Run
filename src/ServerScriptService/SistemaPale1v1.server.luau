@@ -25,7 +25,7 @@ end
 -- CONFIGURACIÃN
 --==================================================
 
-local DISTANCIA_INTERACCION = 8.5
+local DISTANCIA_INTERACCION = 6.5
 
 local TIEMPO_CAIDA = 0.3
 local ANGULO_CAIDA = 50

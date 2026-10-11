@@ -2,6 +2,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local MarketplaceService = game:GetService("MarketplaceService")
+local donationConfig = require(ReplicatedStorage:WaitForChild("DonationConfig"))
 
 local jugador = Players.LocalPlayer
 local playerGui = jugador:WaitForChild("PlayerGui")
@@ -114,6 +116,70 @@ local howCorner = Instance.new("UICorner")
 howCorner.CornerRadius = UDim.new(0, 8)
 howCorner.Parent = btnHowTo
 
+local btnDonate = Instance.new("TextButton")
+btnDonate.Name = "Donate"
+btnDonate.Size = UDim2.fromOffset(132, 38)
+btnDonate.AnchorPoint = Vector2.new(1, 0)
+btnDonate.Position = UDim2.new(1, -16, 0, 78)
+btnDonate.BackgroundColor3 = Color3.fromRGB(97, 69, 37)
+btnDonate.BorderSizePixel = 0
+btnDonate.Text = donationConfig.ProductId > 0 and "DONATE" or "DONATE SOON"
+btnDonate.TextColor3 = Color3.fromRGB(255, 244, 218)
+btnDonate.TextSize = 16
+btnDonate.Font = Enum.Font.GothamBold
+btnDonate.ZIndex = 11
+btnDonate.Parent = screenGui
+local donateCorner = Instance.new("UICorner")
+donateCorner.CornerRadius = UDim.new(0, 8)
+donateCorner.Parent = btnDonate
+
+local donateFeedback = Instance.new("TextLabel")
+donateFeedback.Name = "DonationFeedback"
+donateFeedback.Size = UDim2.fromOffset(230, 52)
+donateFeedback.AnchorPoint = Vector2.new(1, 0)
+donateFeedback.Position = UDim2.new(1, -16, 0, 122)
+donateFeedback.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
+donateFeedback.BackgroundTransparency = 0.12
+donateFeedback.TextColor3 = Color3.new(1, 1, 1)
+donateFeedback.TextWrapped = true
+donateFeedback.TextSize = 14
+donateFeedback.Font = Enum.Font.Gotham
+donateFeedback.Visible = false
+donateFeedback.ZIndex = 12
+donateFeedback.Parent = screenGui
+local feedbackCorner = Instance.new("UICorner")
+feedbackCorner.CornerRadius = UDim.new(0, 8)
+feedbackCorner.Parent = donateFeedback
+
+local function mostrarDonacion(mensaje)
+	donateFeedback.Text = mensaje
+	donateFeedback.Visible = true
+	task.delay(4, function()
+		if donateFeedback.Text == mensaje then donateFeedback.Visible = false end
+	end)
+end
+
+if donationConfig.ProductId > 0 then
+	task.spawn(function()
+		local ok, info = pcall(function()
+			return MarketplaceService:GetProductInfo(donationConfig.ProductId, Enum.InfoType.Product)
+		end)
+		if ok and info and info.PriceInRobux then
+			btnDonate.Text = "DONATE " .. tostring(info.PriceInRobux) .. " R$"
+		end
+	end)
+end
+btnDonate.MouseButton1Click:Connect(function()
+	if donationConfig.ProductId <= 0 then
+		mostrarDonacion("Donations are pending product setup. No purchase was started.")
+		return
+	end
+	local ok = pcall(function()
+		MarketplaceService:PromptProductPurchase(jugador, donationConfig.ProductId)
+	end)
+	if not ok then mostrarDonacion("Donation is unavailable right now.") end
+end)
+
 -- =========================================================
 -- MODAL HOW TO PLAY
 -- =========================================================
@@ -155,7 +221,8 @@ Play as a Runner or Killer!
 - RUNNER: Outsmart the Killer and survive until time runs out.
 - KILLER: Hunt down and eliminate the Runner using [F].
 
-[CONTROLS]: Hold Shift to sprint. Space vaults windows/pallets,
+[CONTROLS]: Hold Shift to sprint. ALT jumps (test control).
+Space vaults windows/pallets,
 squeezes through gaps, or toggles climbing near a truss.
 These actions use stamina; low stamina slows parkour.
 ]]
@@ -264,7 +331,7 @@ local runnerPortrait = Instance.new("ImageLabel")
 runnerPortrait.Name = "RunnerPortrait"
 runnerPortrait.Size = UDim2.fromOffset(33, 33)
 runnerPortrait.Position = UDim2.fromOffset(14, 11)
-runnerPortrait.BackgroundColor3 = Color3.fromRGB(85, 35, 48)
+runnerPortrait.BackgroundColor3 = Color3.fromRGB(145, 57, 74)
 runnerPortrait.BorderSizePixel = 0
 runnerPortrait.Image = ""
 runnerPortrait.ZIndex = 21
@@ -272,6 +339,58 @@ runnerPortrait.Parent = livesWidget
 local portraitCorner = Instance.new("UICorner")
 portraitCorner.CornerRadius = UDim.new(1, 0)
 portraitCorner.Parent = runnerPortrait
+
+local portraitFallback = Instance.new("TextLabel")
+portraitFallback.Name = "PortraitFallback"
+portraitFallback.Size = UDim2.fromScale(1, 1)
+portraitFallback.BackgroundTransparency = 1
+portraitFallback.Text = "?"
+portraitFallback.TextColor3 = Color3.fromRGB(255, 255, 255)
+portraitFallback.TextSize = 18
+portraitFallback.Font = Enum.Font.GothamBold
+portraitFallback.ZIndex = 22
+portraitFallback.Parent = runnerPortrait
+
+local portraitViewport = Instance.new("ViewportFrame")
+portraitViewport.Name = "StudioPortraitFallback"
+portraitViewport.Size = runnerPortrait.Size
+portraitViewport.Position = runnerPortrait.Position
+portraitViewport.BackgroundColor3 = runnerPortrait.BackgroundColor3
+portraitViewport.BorderSizePixel = 0
+portraitViewport.Ambient = Color3.fromRGB(225, 225, 225)
+portraitViewport.LightColor = Color3.fromRGB(255, 255, 255)
+portraitViewport.Visible = false
+portraitViewport.ZIndex = 23
+portraitViewport.Parent = livesWidget
+local viewportCorner = Instance.new("UICorner")
+viewportCorner.CornerRadius = UDim.new(1, 0)
+viewportCorner.Parent = portraitViewport
+local portraitWorld = Instance.new("WorldModel")
+portraitWorld.Parent = portraitViewport
+local portraitCamera = Instance.new("Camera")
+portraitCamera.CFrame = CFrame.lookAt(Vector3.new(0, 0, -3), Vector3.zero)
+portraitCamera.Parent = portraitViewport
+portraitViewport.CurrentCamera = portraitCamera
+
+local function mostrarCabezaLocal(userId)
+	local runner = Players:GetPlayerByUserId(userId)
+	local head = runner and runner.Character and runner.Character:FindFirstChild("Head")
+	if not head or not head:IsA("BasePart") then return end
+	local ok, clone = pcall(function()
+		local archivable = head.Archivable
+		head.Archivable = true
+		local copia = head:Clone()
+		head.Archivable = archivable
+		return copia
+	end)
+	if not ok or not clone then return end
+	portraitWorld:ClearAllChildren()
+	clone.Anchored = true
+	clone.CanCollide = false
+	clone.CFrame = CFrame.new()
+	clone.Parent = portraitWorld
+	portraitViewport.Visible = true
+end
 
 local livesCount = Instance.new("TextLabel")
 livesCount.Name = "Count"
@@ -293,15 +412,25 @@ local function actualizarVidas(cantidad, userId)
 	if typeof(userId) ~= "number" or portraitUserId == userId then return end
 	portraitUserId = userId
 	runnerPortrait.Image = ""
+	portraitViewport.Visible = false
+	local runner = Players:GetPlayerByUserId(userId)
+	portraitFallback.Text = runner and string.upper(string.sub(runner.DisplayName, 1, 1)) or "?"
+	portraitFallback.Visible = true
+	mostrarCabezaLocal(userId)
 	task.spawn(function()
-		for _ = 1, 4 do
+		for _ = 1, 10 do
+			if not portraitViewport.Visible then mostrarCabezaLocal(userId) end
 			local ok, contenido, listo = pcall(function()
 				return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 			end)
 			if portraitUserId ~= userId then return end
-			if ok and listo then
+			if ok and typeof(contenido) == "string" and contenido ~= "" then
 				runnerPortrait.Image = contenido
-				return
+				if listo then
+					portraitFallback.Visible = false
+					portraitViewport.Visible = false
+					return
+				end
 			end
 			task.wait(0.5)
 		end
@@ -556,6 +685,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		resultPanel.Visible = false
 
 		sideMenu.Visible = not esPartidaPrivada
+		btnDonate.Visible = not esPartidaPrivada
 		btnHowTo.Visible = true
 
 	elseif estado == "ROL" then
@@ -563,6 +693,8 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		local rol = datos[1]
 
 		sideMenu.Visible = false
+		btnDonate.Visible = false
+		donateFeedback.Visible = false
 		banner.Visible = false
 		hudPanel.Visible = true
 		modalHowTo.Visible = false
@@ -689,6 +821,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		resultPanel.Visible = false
 
 		sideMenu.Visible = not esPartidaPrivada
+		btnDonate.Visible = not esPartidaPrivada
 		banner.Visible = not esPartidaPrivada
 		btnPlay.Visible = true
 		btnHowTo.Visible = true
@@ -707,6 +840,7 @@ end)
 if esPartidaPrivada then
 	sideMenu.Visible = false
 	banner.Visible = false
+	btnDonate.Visible = false
 end
 
 local function actualizarHudLobby()

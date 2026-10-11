@@ -802,11 +802,19 @@ RunService.Heartbeat:Connect(function()
 					registroCaidas[jugador] = nil
 					local caida = registro.maxY - root.Position.Y
 					if caida >= UMBRAL_ATURDIMIENTO_CAIDA
-						and not jugador.Character:GetAttribute("KnockedOut") then
+						and not jugador.Character:GetAttribute("KnockedOut")
+						and not humanoide:GetAttribute("FallStunned") then
 						local duracion = math.clamp(0.4 + (caida - UMBRAL_ATURDIMIENTO_CAIDA) * 0.04, 0.4, 2.5)
 						humanoide:SetAttribute("FallStunned", true)
 						humanoide.PlatformStand = true
+						pcall(function() root:SetNetworkOwner(nil) end)
+						root:ApplyImpulse(root.CFrame.LookVector * root.AssemblyMass * 7)
+						root.AssemblyAngularVelocity = root.CFrame.RightVector * 6
 						task.delay(duracion, function()
+							if root.Parent then
+								root.AssemblyAngularVelocity = Vector3.zero
+								pcall(function() root:SetNetworkOwnershipAuto() end)
+							end
 							if humanoide.Parent and humanoide:GetAttribute("FallStunned") then
 								if not humanoide:GetAttribute("Inmovilizado")
 									and not jugador.Character:GetAttribute("KnockedOut") then
