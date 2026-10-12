@@ -10,10 +10,10 @@ local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local SLIDE_ANIMATION = "rbxassetid://81512224938575"
 local MAX_SPEED = 36
 local INITIAL_SPEED_MULTIPLIER = 1.25
-local FLAT_FRICTION = 20
+local FLAT_FRICTION = 12
 local SLOPE_ACCELERATION = 60
 local STOP_SPEED = 6
-local STALL_RATIO = 0.45
+local STALL_RATIO = 0.3
 
 local animation = Instance.new("Animation")
 animation.AnimationId = SLIDE_ANIMATION
@@ -62,6 +62,19 @@ local function canStandLocally()
 	return not (ceiling and ceiling.Instance.CanCollide)
 end
 
+local function groundForSlide()
+	if not character or not root then return nil end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local ground = workspace:Raycast(root.Position, Vector3.new(0, -6, 0), params)
+	if ground and ground.Distance <= 4.25 and ground.Normal.Y > 0.2 then
+		return ground
+	end
+	return nil
+end
+
 local function stopOtherAnimations()
 	if not humanoid then return end
 	local animator = humanoid:FindFirstChildOfClass("Animator")
@@ -82,7 +95,7 @@ local function obstacleAhead(distance)
 	local collider = character:FindFirstChild("SlideCollider")
 	if collider and collider:IsA("BasePart") then
 		local hit = workspace:Blockcast(collider.CFrame, collider.Size * 0.9, direction * distance, params)
-		if hit and hit.Normal:Dot(direction) < -0.45 and math.abs(hit.Normal.Y) < 0.65 then
+		if hit and hit.Normal:Dot(direction) < -0.45 and math.abs(hit.Normal.Y) < 0.25 then
 			return true
 		end
 	end
@@ -91,7 +104,7 @@ local function obstacleAhead(distance)
 		for _, drop in ipairs({ 1.3, 2.1 }) do
 			local origin = root.Position + right * side - Vector3.yAxis * drop
 			local hit = workspace:Raycast(origin, direction * distance, params)
-			if hit and hit.Normal:Dot(direction) < -0.45 and math.abs(hit.Normal.Y) < 0.65 then
+			if hit and hit.Normal:Dot(direction) < -0.45 and math.abs(hit.Normal.Y) < 0.25 then
 				return true
 			end
 		end
@@ -188,10 +201,10 @@ local function start()
 		or humanoid:GetAttribute("FallStunned")
 		or humanoid:GetAttribute("GolpeActivo")
 		or humanoid:GetAttribute("AttackRecovery")
-		or humanoid.FloorMaterial == Enum.Material.Air then return end
+		or not groundForSlide() then return end
 	local velocity = root.AssemblyLinearVelocity
 	local horizontal = Vector3.new(velocity.X, 0, velocity.Z)
-	if horizontal.Magnitude < 11 then return end
+	if velocity.Magnitude < 11 or horizontal.Magnitude < 4 then return end
 	local sprintSpeed = humanoid.WalkSpeed
 	local ok, allowed = pcall(function() return remote:InvokeServer("SlideStart") end)
 	if not ok or not allowed then return end
@@ -284,11 +297,7 @@ RunService.Heartbeat:Connect(function(dt)
 		motionOrientation.CFrame = CFrame.lookAt(Vector3.zero, direction)
 	end
 
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { character }
-	params.RespectCanCollide = true
-	local ground = workspace:Raycast(root.Position, Vector3.new(0, -5, 0), params)
+	local ground = groundForSlide()
 	if ground then
 		airborne = 0
 		local gravity = Vector3.new(0, -1, 0)
@@ -300,15 +309,16 @@ RunService.Heartbeat:Connect(function(dt)
 		airborne += dt
 	end
 
-	local actualVelocity = root.AssemblyLinearVelocity
-	local actualSpeed = Vector3.new(actualVelocity.X, 0, actualVelocity.Z).Magnitude
-	if os.clock() - started > 0.2 and actualSpeed < speed * STALL_RATIO then
+	-- Descending a ramp can convert much of the motion into vertical velocity;
+	-- count the full speed so a real descent is not mistaken for a wall stall.
+	local actualSpeed = root.AssemblyLinearVelocity.Magnitude
+	if os.clock() - started > 0.35 and actualSpeed < speed * STALL_RATIO then
 		stalledFor += dt
 	else
 		stalledFor = 0
 	end
 	local wall = obstacleAhead(math.max(0.65, speed * dt + 0.3))
-	if wall or speed <= STOP_SPEED or stalledFor > 0.12 or airborne > 0.3 then
+	if wall or speed <= STOP_SPEED or stalledFor > 0.24 or airborne > 0.65 then
 		clearMotion()
 		-- Only a wall needs an emergency stop. Ordinary deceleration should keep
 		-- its remaining velocity so standing up does not look like a hard brake.

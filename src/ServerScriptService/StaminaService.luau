@@ -59,8 +59,10 @@ function StaminaService.BeginSlide(jugador, root)
 	local ahora = os.clock()
 	local actual = stamina[jugador] or 0
 	local horizontal = root and Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z).Magnitude or 0
+	local movement = root and root.AssemblyLinearVelocity.Magnitude or 0
 	if jugador.Parent ~= Players or not sprint[jugador] or actual < COSTO_SLIDE
-		or horizontal < 11 or ahora - (ultimoSlide[jugador] or -math.huge) < 0.8 then
+		or movement < 11 or horizontal < 4
+		or ahora - (ultimoSlide[jugador] or -math.huge) < 0.8 then
 		return false
 	end
 	ultimoSlide[jugador] = ahora

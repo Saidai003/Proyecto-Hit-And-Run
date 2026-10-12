@@ -10,6 +10,15 @@ local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local slides = {}
 
+local function sueloCercanoSlide(character, root)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local suelo = Workspace:Raycast(root.Position, Vector3.new(0, -6, 0), params)
+	return suelo and suelo.Distance <= 4.25 and suelo.Normal.Y > 0.2
+end
+
 local function liberarSlide(jugador)
 	local estado = slides[jugador]
 	if not estado then return end
@@ -110,7 +119,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		if slides[jugador] or humanoide:GetAttribute("ParkourEspecialActivo")
 			or humanoide:GetAttribute("EscaladaActiva") or humanoide:GetAttribute("Sliding")
 			or humanoide:GetAttribute("GolpeActivo") or humanoide:GetAttribute("AttackRecovery")
-			or humanoide.FloorMaterial == Enum.Material.Air
+			or not sueloCercanoSlide(character, root)
 			or not StaminaService.BeginSlide(jugador, root) then return nil end
 		local colisiones = {}
 		for _, parte in ipairs(character:GetDescendants()) do
