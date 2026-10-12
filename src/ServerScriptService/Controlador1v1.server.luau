@@ -30,6 +30,7 @@ local TIEMPO_ESPERA_RIVAL = 60
 
 local CANTIDAD_RONDAS = 6
 local DURACION_ENTRE_RONDAS = 2
+local DURACION_NOQUEO_LOBBY = 2
 local TIEMPO_MAXIMO_RONDA = 120
 local TIEMPO_RESULTADO_FINAL = 5
 
@@ -722,13 +723,12 @@ local function puntoInicialDe(jugador)
 	return nil
 end
 
-local function noquearEnPuntoInicial(jugador)
+local function iniciarNoqueoPorPeligro(jugador)
 	local character = jugador.Character
 	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
-	local puntoInicial = puntoInicialDe(jugador)
-	if not character or not humanoide or not root or not puntoInicial then
-		return false
+	if not character or not humanoide or not root or humanoide.Health <= 0 then
+		return nil
 	end
 
 	local idNoqueo = (noqueosPorPeligro[jugador] or 0) + 1
@@ -742,9 +742,20 @@ local function noquearEnPuntoInicial(jugador)
 	pcall(function() root:SetNetworkOwner(nil) end)
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.AssemblyAngularVelocity = Vector3.zero
-	character:PivotTo(puntoInicial.CFrame + Vector3.new(0, 3, 0))
 
 	EventoJuego:FireClient(jugador, "CAIDA_ATURDIDO", false)
+	EventoJuego:FireClient(jugador, "BLOQUEAR_MOVIMIENTO")
+
+	return idNoqueo, character, humanoide, root
+end
+
+local function noquearEnPuntoInicial(jugador)
+	local puntoInicial = puntoInicialDe(jugador)
+	if not puntoInicial then return false end
+
+	local idNoqueo, character = iniciarNoqueoPorPeligro(jugador)
+	if not idNoqueo then return false end
+	character:PivotTo(puntoInicial.CFrame + Vector3.new(0, 3, 0))
 
 	-- La liberacion coincide con el tiempo durante el cual se muestra
 	-- el resultado de ronda. No enviamos DESBLOQUEAR aqui porque para
@@ -752,6 +763,72 @@ local function noquearEnPuntoInicial(jugador)
 	task.delay(DURACION_ENTRE_RONDAS, function()
 		if noqueosPorPeligro[jugador] ~= idNoqueo then return end
 		limpiarNoqueoPorPeligro(jugador)
+	end)
+
+	return true
+end
+
+local function cframePuntoLobby(jugador)
+	local respawn = jugador.RespawnLocation
+	if respawn and respawn:IsDescendantOf(Workspace) then
+		return respawn.CFrame
+	end
+
+	local lobbySpawn = Workspace:FindFirstChild("LobbySpawn", true)
+	if lobbySpawn then
+		if lobbySpawn:IsA("BasePart") then return lobbySpawn.CFrame end
+		if lobbySpawn:IsA("Model") then return lobbySpawn:GetPivot() end
+	end
+
+	for _, objeto in ipairs(Workspace:GetDescendants()) do
+		if objeto:IsA("SpawnLocation") and objeto.Enabled then
+			return objeto.CFrame
+		end
+	end
+	return nil
+end
+
+local function noquearYRegresarAlLobby(jugador)
+	local destino = cframePuntoLobby(jugador)
+	if not destino then
+		warn("[MakesPlayersLose] No se encontro LobbySpawn ni SpawnLocation habilitado")
+		return false
+	end
+
+	local idNoqueo = iniciarNoqueoPorPeligro(jugador)
+	if not idNoqueo then return false end
+
+	-- Pedimos la region desde el comienzo del noqueo para que esté lista
+	-- cuando el personaje vuelva al punto principal del lobby.
+	task.spawn(function()
+		pcall(function()
+			jugador:RequestStreamAroundAsync(destino.Position, DURACION_NOQUEO_LOBBY)
+		end)
+	end)
+
+	task.delay(DURACION_NOQUEO_LOBBY, function()
+		if noqueosPorPeligro[jugador] ~= idNoqueo then return end
+		local character = jugador.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local sigueEnLobby = Workspace:GetAttribute("LobbyPractica") == true
+		if sigueEnLobby and character and root then
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			local _, giroY = destino:ToOrientation()
+			character:PivotTo(CFrame.new(destino.Position + Vector3.new(0, 3, 0))
+				* CFrame.Angles(0, giroY, 0))
+		end
+
+		limpiarNoqueoPorPeligro(jugador)
+		local humanoide = character and character:FindFirstChildOfClass("Humanoid")
+		if sigueEnLobby and humanoide and humanoide.Health > 0 then
+			humanoide:ChangeState(Enum.HumanoidStateType.Running)
+		end
+		-- Si el matchmaking comenzó durante el noqueo, la cuenta regresiva
+		-- conserva su propio bloqueo y no debe ser cancelada desde aquí.
+		if sigueEnLobby then
+			EventoJuego:FireClient(jugador, "DESBLOQUEAR_MOVIMIENTO")
+		end
 	end)
 
 	return true
@@ -767,16 +844,23 @@ local function activarPeligro(parte)
 	if parte:GetAttribute("MakesPlayersLose") ~= true then return end
 
 	local function alTocar(otraParte)
-		if EstadoPartida ~= "RONDA_ACTIVA" or not ataquesHabilitados then return end
 		local jugador = jugadorDesdeParte(otraParte)
-		if (jugador ~= jugador1 and jugador ~= jugador2) or noqueosPorPeligro[jugador] then
+		if not jugador or noqueosPorPeligro[jugador] then return end
+
+		local esLobby = EstadoPartida == "ESPERANDO_JUGADORES"
+			and Workspace:GetAttribute("LobbyPractica") == true
+		if esLobby then
+			noquearYRegresarAlLobby(jugador)
 			return
 		end
+
+		if EstadoPartida ~= "RONDA_ACTIVA" or not ataquesHabilitados then return end
+		if jugador ~= jugador1 and jugador ~= jugador2 then return end
 		if not noquearEnPuntoInicial(jugador) then return end
 
 		finalizarRonda("TOUCHED_LOSS_OBJECT", jugador)
 		-- finalizarRonda libera el movimiento general antes de mostrar el
-		-- resultado; el jugador derrotado debe permanecer noqueado.
+		-- resultado; el perdedor debe conservar el bloqueo del noqueo.
 		EventoJuego:FireClient(jugador, "BLOQUEAR_MOVIMIENTO")
 	end
 
