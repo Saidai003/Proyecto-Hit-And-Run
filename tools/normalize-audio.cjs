@@ -26,6 +26,7 @@ const tracks = [
   ['SoftLanding', 'soft_landing_from_heights.mp3', -20],
   ['Pain', 'stupid_pain_complaint.mp3', -20],
   ['Climb', 'climbing_metalic_structure.mp3', -21],
+  ['Slide', 'Sliding_on_the_floor.mp3', -20],
   ['RoundWin', 'win_bass_sfx.mp3', -20],
   ['RoundLose', 'lose-bass-sfx.mp3', -20],
   ['FinalWin', 'endgame_win_sfx.mp3', -20],

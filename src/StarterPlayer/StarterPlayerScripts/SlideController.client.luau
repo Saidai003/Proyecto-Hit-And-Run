@@ -3,13 +3,15 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContentProvider = game:GetService("ContentProvider")
+local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local SLIDE_ANIMATION = "rbxassetid://81512224938575"
 local MIN_SPEED = 7
 local MAX_SPEED = 36
-local FLAT_FRICTION = 9
+local INITIAL_SPEED_MULTIPLIER = 1.25
+local FLAT_FRICTION = 7
 local SLOPE_ACCELERATION = 36
 
 local animation = Instance.new("Animation")
@@ -31,23 +33,60 @@ local airborne = 0
 local lastEndAttempt = 0
 local originalAutoRotate = true
 local originalCameraOffset = Vector3.zero
+local motionAttachment
+local motionVelocity
+local slideSound
+local animateScript
+local animateWasEnabled = true
+
+local function clearMotion()
+	if motionVelocity then motionVelocity:Destroy() motionVelocity = nil end
+	if motionAttachment then motionAttachment:Destroy() motionAttachment = nil end
+end
+
+local function canStandLocally()
+	if not character or not root then return true end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local ground = workspace:Raycast(root.Position, Vector3.new(0, -8, 0), params)
+	if not ground then return true end
+	local origin = Vector3.new(root.Position.X, ground.Position.Y + 1.2, root.Position.Z)
+	local ceiling = workspace:Raycast(origin, Vector3.new(0, 4.6, 0), params)
+	return not (ceiling and ceiling.Instance.CanCollide)
+end
+
+local function stopOtherAnimations()
+	if not humanoid then return end
+	local animator = humanoid:FindFirstChildOfClass("Animator")
+	if not animator then return end
+	for _, other in ipairs(animator:GetPlayingAnimationTracks()) do
+		if other ~= track and other.Priority.Value <= Enum.AnimationPriority.Movement.Value then
+			other:Stop(0.08)
+		end
+	end
+end
 
 local function finish(force)
 	if not active then return true end
 	if not force then
+		if not canStandLocally() then return false end
 		if os.clock() - lastEndAttempt < 0.25 then return false end
 		lastEndAttempt = os.clock()
-		local ok, allowed = pcall(function() return remote:InvokeServer("SlideEnd") end)
-		if not ok or not allowed then return false end
-	else
-		pcall(function() remote:InvokeServer("SlideEnd") end)
 	end
 	active = false
+	clearMotion()
+	if slideSound then slideSound:Stop() slideSound:Destroy() slideSound = nil end
 	if humanoid and humanoid.Parent then
 		humanoid:SetAttribute("Sliding", false)
 		humanoid.AutoRotate = originalAutoRotate
 		humanoid.CameraOffset = originalCameraOffset
+		humanoid.WalkSpeed = player:GetAttribute("Rol") == "PERSEGUIDOR" and 18 or 16
 	end
+	local finishedAnimate = animateScript
+	local finishedAnimateWasEnabled = animateWasEnabled
+	local restoreAnimateAfter = 0
 	if track and track.IsPlaying then
 		if force then
 			track:Stop(0.08)
@@ -59,13 +98,29 @@ local function finish(force)
 				finishedTrack.TimePosition = math.max(finishedTrack.TimePosition, length * 0.5)
 			end
 			finishedTrack:AdjustSpeed(1)
-			task.delay(math.max(0.15, length * 0.5 + 0.1), function()
+			restoreAnimateAfter = math.max(0.15, length * 0.5 + 0.1)
+			task.delay(restoreAnimateAfter, function()
 				if finishedTrack.IsPlaying and not active and started == finishedSlide then
 					finishedTrack:Stop(0.08)
 				end
 			end)
 		end
 	end
+	local finishedSlide = started
+	task.delay(force and 0 or restoreAnimateAfter, function()
+		if finishedAnimate and finishedAnimate.Parent and started == finishedSlide then
+			finishedAnimate.Enabled = finishedAnimateWasEnabled
+		end
+	end)
+	task.spawn(function()
+		for _ = 1, 12 do
+			local ok, allowed = pcall(function() return remote:InvokeServer("SlideEnd") end)
+			if ok and allowed then return end
+			if force then return end
+			task.wait(0.15)
+		end
+		warn("[SLIDE] El servidor no pudo confirmar el fin del slide")
+	end)
 	return true
 end
 
@@ -77,6 +132,7 @@ local function attach(newCharacter)
 	local animator = humanoid:WaitForChild("Animator")
 	local ok, loaded = pcall(function() return animator:LoadAnimation(animation) end)
 	track = ok and loaded or nil
+	animateScript = character:FindFirstChild("Animate")
 	if track then
 		track.Priority = Enum.AnimationPriority.Action4
 		track.Looped = false
@@ -99,12 +155,13 @@ local function start()
 	local velocity = root.AssemblyLinearVelocity
 	local horizontal = Vector3.new(velocity.X, 0, velocity.Z)
 	if horizontal.Magnitude < 11 then return end
+	local sprintSpeed = humanoid.WalkSpeed
 	local ok, allowed = pcall(function() return remote:InvokeServer("SlideStart") end)
 	if not ok or not allowed then return end
 	active = true
 	frozen = false
 	direction = horizontal.Unit
-	speed = math.clamp(horizontal.Magnitude, 20, MAX_SPEED)
+	speed = math.clamp(math.max(horizontal.Magnitude, sprintSpeed * INITIAL_SPEED_MULTIPLIER), 0, MAX_SPEED)
 	started = os.clock()
 	airborne = 0
 	lastEndAttempt = 0
@@ -114,9 +171,28 @@ local function start()
 	humanoid.CameraOffset = originalCameraOffset + Vector3.new(0, -1.2, 0)
 	humanoid:SetAttribute("Sliding", true)
 	humanoid.WalkSpeed = 0
+	if animateScript and animateScript:IsA("LocalScript") then
+		animateWasEnabled = animateScript.Enabled
+		animateScript.Enabled = false
+	end
+	motionAttachment = Instance.new("Attachment")
+	motionAttachment.Name = "SlideMotionAttachment"
+	motionAttachment.Parent = root
+	motionVelocity = Instance.new("LinearVelocity")
+	motionVelocity.Name = "SlideMotionVelocity"
+	motionVelocity.Attachment0 = motionAttachment
+	motionVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
+	motionVelocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+	motionVelocity.PrimaryTangentAxis = Vector3.xAxis
+	motionVelocity.SecondaryTangentAxis = Vector3.zAxis
+	motionVelocity.ForceLimitsEnabled = false
+	motionVelocity.PlaneVelocity = Vector2.new(direction.X * speed, direction.Z * speed)
+	motionVelocity.Parent = root
 	if track then
 		track:Play(0.08, 1, 1)
 	end
+	stopOtherAnimations()
+	slideSound = audio.Play("Slide", root, 0.5, false, true)
 end
 
 UserInputService.InputBegan:Connect(function(input, processed)
@@ -142,7 +218,6 @@ RunService.Heartbeat:Connect(function(dt)
 		track.TimePosition = track.Length * 0.5
 		frozen = true
 	end
-
 	local desired = humanoid.MoveDirection
 	desired = Vector3.new(desired.X, 0, desired.Z)
 	if desired.Magnitude > 0.2 and direction:Dot(desired.Unit) > -0.2 then
@@ -171,8 +246,9 @@ RunService.Heartbeat:Connect(function(dt)
 		-- Stay low and keep moving until there is enough room to stand.
 		speed = math.max(speed, MIN_SPEED)
 	end
-	local current = root.AssemblyLinearVelocity
-	root.AssemblyLinearVelocity = Vector3.new(direction.X * speed, current.Y, direction.Z * speed)
+	if motionVelocity then
+		motionVelocity.PlaneVelocity = Vector2.new(direction.X * speed, direction.Z * speed)
+	end
 	humanoid.WalkSpeed = 0
 end)
 

@@ -4,8 +4,9 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Slide
 
-- **Preparado, por probar:** mientras se corre, Ctrl izquierdo o C inicia un slide que consume 12 de stamina. La velocidad disminuye en plano y puede mantenerse/aumentar en bajada mientras continúe la pendiente. Espacio o la misma tecla lo interrumpe cuando existe espacio para levantarse.
+- **Preparado, por probar:** mientras se corre, Ctrl izquierdo o C inicia un slide que consume 12 de stamina. Comienza al 125 % de la velocidad de sprint, disminuye en plano y puede mantenerse/aumentar en bajada mientras continúe la pendiente. Espacio o la misma tecla lo interrumpe cuando existe espacio para levantarse.
 - **Preparado, por probar:** la animación `81512224938575` se congela al 50 % durante el deslizamiento y reproduce el resto al terminar. En el servidor se sustituyen temporalmente las colisiones del cuerpo por un collider invisible bajo; si hay techo bajo, el jugador continúa deslizándose lentamente hasta poder levantarse. La comprobación de golpe del Chaser sigue siendo por distancia, de modo que el slide no da inmunidad al bate.
+- **Preparado, por probar:** el audio loopeable `Sliding_on_the_floor.mp3`, nivelado a aproximadamente -20 LUFS y subido como asset `124746201934592`, se reproduce durante el slide y se destruye al finalizar. La moderación estaba en `Reviewing` inmediatamente después de la carga.
 - Probar en Studio con dos jugadores y avatares R6/R15: inicio solo al correr, túnel bajo, descenso inclinado, salto/parkour/ataque bloqueados durante el slide, agotamiento de stamina, muerte/respawn y limpieza de la colisión al terminar. La física y la altura visual dependen de la pose del asset y necesitan playtest real.
 
 ## Escalada

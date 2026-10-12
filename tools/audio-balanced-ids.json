@@ -90,5 +90,9 @@
   "LobbyMusic": {
     "assetId": "80035941185805",
     "moderationState": "Approved"
+  },
+  "Slide": {
+    "assetId": "124746201934592",
+    "moderationState": "Reviewing"
   }
 }

@@ -33,15 +33,7 @@ local function puedeLevantarse(estado)
 	if not ground then return true end
 	local desdeSuelo = Vector3.new(root.Position.X, ground.Position.Y + 1.2, root.Position.Z)
 	local techo = Workspace:Raycast(desdeSuelo, Vector3.new(0, 4.6, 0), rayParams)
-	if techo and techo.Instance.CanCollide then return false end
-	local params = OverlapParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { estado.character }
-	local caja = CFrame.new(root.Position.X, ground.Position.Y + 3, root.Position.Z) * root.CFrame.Rotation
-	for _, parte in ipairs(Workspace:GetPartBoundsInBox(caja, Vector3.new(2.2, 5.4, 2.2), params)) do
-		if parte.CanCollide then return false end
-	end
-	return true
+	return not (techo and techo.Instance.CanCollide)
 end
 
 local function crearColliderSlide(character, root)

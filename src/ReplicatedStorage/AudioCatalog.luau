@@ -15,6 +15,7 @@ return {
 	HardLanding = 110610469051014, -- hard_landing_from_great_heights.mp3
 	Pain = 113207533394822, -- stupid_pain_complaint.mp3
 	Climb = 95502315514990, -- climbing_metalic_structure.mp3
+	Slide = 124746201934592, -- Sliding_on_the_floor.mp3
 	Glass = {0, 0, 0, 0}, -- glass_shattering_aga_#1..#4.mp3
 	RoundWin = 91020084266660, -- win_bass_sfx.mp3
 	RoundLose = 73457998318933, -- lose-bass-sfx.mp3
