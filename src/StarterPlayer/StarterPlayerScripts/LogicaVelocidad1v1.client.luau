@@ -80,6 +80,8 @@ local consumoSprint = CONSUMO_SPRINT_PERSEGUIDO
 local sprintActivo = false
 local movimientoBloqueado = false
 local trackSprint = nil
+local idCargaSprint = 0
+local avisoReproduccionSprint = false
 local ultimoSalto = 0
 local solicitudSalto = 0
 local BUFFER_SALTO = 0.4
@@ -107,6 +109,8 @@ end
 local function cargarAnimacionSprint()
 	detenerAnimacionSprint(0)
 	trackSprint = nil
+	idCargaSprint += 1
+	local estaCarga = idCargaSprint
 
 	if not humanoide or not humanoide.Parent then
 		return
@@ -128,8 +132,33 @@ local function cargarAnimacionSprint()
 	end
 
 	trackSprint = resultado
-	trackSprint.Priority = Enum.AnimationPriority.Action
+	-- Action2 gana sobre las pistas predeterminadas de caminar/correr y
+	-- permanece por debajo del ataque (Action3) y parkour/pallets (Action4).
+	trackSprint.Priority = Enum.AnimationPriority.Action2
 	trackSprint.Looped = true
+	avisoReproduccionSprint = false
+
+	task.spawn(function()
+		local limite = os.clock() + 5
+		while estaCarga == idCargaSprint and trackSprint == resultado
+			and resultado.Length <= 0 and os.clock() < limite do
+			task.wait(0.1)
+		end
+		if estaCarga ~= idCargaSprint or trackSprint ~= resultado then return end
+		if resultado.Length <= 0 then
+			warn(string.format(
+				"[SPRINT] El asset %s no cargo para el rig %s. Revisa que la animacion y el avatar usen el mismo rig.",
+				ANIMACION_SPRINT_ID,
+				humanoide and humanoide.RigType.Name or "desconocido"
+			))
+		else
+			print(string.format(
+				"[SPRINT] Animacion lista (rig %s, duracion %.2fs)",
+				humanoide and humanoide.RigType.Name or "desconocido",
+				resultado.Length
+			))
+		end
+	end)
 end
 
 local function puedeReproducirAnimacionSprint()
@@ -171,7 +200,12 @@ local function actualizarAnimacionSprint()
 	end
 
 	if not trackSprint.IsPlaying then
-		trackSprint:Play(0.12, 1, 1)
+		trackSprint:Play(0.1, 1, 1)
+		trackSprint:AdjustWeight(1, 0.08)
+		if not avisoReproduccionSprint then
+			avisoReproduccionSprint = true
+			print("[SPRINT] Reproduciendo animacion de sprint")
+		end
 	end
 	trackSprint:AdjustSpeed(math.clamp(
 		humanoide.WalkSpeed / VELOCIDAD_REFERENCIA_ANIMACION_SPRINT,
