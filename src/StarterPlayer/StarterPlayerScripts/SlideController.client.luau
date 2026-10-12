@@ -8,11 +8,12 @@ local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local SLIDE_ANIMATION = "rbxassetid://81512224938575"
-local MIN_SPEED = 7
 local MAX_SPEED = 36
 local INITIAL_SPEED_MULTIPLIER = 1.25
-local FLAT_FRICTION = 7
+local FLAT_FRICTION = 17
 local SLOPE_ACCELERATION = 36
+local STOP_SPEED = 18
+local STALL_RATIO = 0.45
 
 local animation = Instance.new("Animation")
 animation.AnimationId = SLIDE_ANIMATION
@@ -30,17 +31,21 @@ local direction = Vector3.zero
 local speed = 0
 local started = 0
 local airborne = 0
+local stalledFor = 0
+local lowClearance = false
 local lastEndAttempt = 0
 local originalAutoRotate = true
 local originalCameraOffset = Vector3.zero
 local motionAttachment
 local motionVelocity
+local motionOrientation
 local slideSound
 local animateScript
 local animateWasEnabled = true
 
 local function clearMotion()
 	if motionVelocity then motionVelocity:Destroy() motionVelocity = nil end
+	if motionOrientation then motionOrientation:Destroy() motionOrientation = nil end
 	if motionAttachment then motionAttachment:Destroy() motionAttachment = nil end
 end
 
@@ -62,10 +67,42 @@ local function stopOtherAnimations()
 	local animator = humanoid:FindFirstChildOfClass("Animator")
 	if not animator then return end
 	for _, other in ipairs(animator:GetPlayingAnimationTracks()) do
-		if other ~= track and other.Priority.Value <= Enum.AnimationPriority.Movement.Value then
+		if other ~= track then
 			other:Stop(0.08)
 		end
 	end
+end
+
+local function obstacleAhead(distance)
+	if not character or not root then return false end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local collider = character:FindFirstChild("SlideCollider")
+	if collider and collider:IsA("BasePart") then
+		local hit = workspace:Blockcast(collider.CFrame, collider.Size * 0.9, direction * distance, params)
+		if hit and hit.Normal:Dot(direction) < -0.45 and math.abs(hit.Normal.Y) < 0.65 then
+			return true
+		end
+	end
+	local right = root.CFrame.RightVector
+	for _, side in ipairs({ -0.7, 0, 0.7 }) do
+		for _, drop in ipairs({ 1.3, 2.1 }) do
+			local origin = root.Position + right * side - Vector3.yAxis * drop
+			local hit = workspace:Raycast(origin, direction * distance, params)
+			if hit and hit.Normal:Dot(direction) < -0.45 and math.abs(hit.Normal.Y) < 0.65 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function stopMomentum()
+	if not root or not root.Parent then return end
+	local velocity = root.AssemblyLinearVelocity
+	root.AssemblyLinearVelocity = Vector3.new(0, velocity.Y, 0)
 end
 
 local function finish(force)
@@ -160,10 +197,12 @@ local function start()
 	if not ok or not allowed then return end
 	active = true
 	frozen = false
+	lowClearance = false
 	direction = horizontal.Unit
 	speed = math.clamp(math.max(horizontal.Magnitude, sprintSpeed * INITIAL_SPEED_MULTIPLIER), 0, MAX_SPEED)
 	started = os.clock()
 	airborne = 0
+	stalledFor = 0
 	lastEndAttempt = 0
 	originalAutoRotate = humanoid.AutoRotate
 	originalCameraOffset = humanoid.CameraOffset
@@ -178,6 +217,16 @@ local function start()
 	motionAttachment = Instance.new("Attachment")
 	motionAttachment.Name = "SlideMotionAttachment"
 	motionAttachment.Parent = root
+	motionOrientation = Instance.new("AlignOrientation")
+	motionOrientation.Name = "SlideUpright"
+	motionOrientation.Attachment0 = motionAttachment
+	motionOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	motionOrientation.RigidityEnabled = false
+	motionOrientation.Responsiveness = 15
+	motionOrientation.MaxTorque = root.AssemblyMass * 2000
+	motionOrientation.MaxAngularVelocity = 8
+	motionOrientation.CFrame = CFrame.lookAt(Vector3.zero, direction)
+	motionOrientation.Parent = root
 	motionVelocity = Instance.new("LinearVelocity")
 	motionVelocity.Name = "SlideMotionVelocity"
 	motionVelocity.Attachment0 = motionAttachment
@@ -185,7 +234,10 @@ local function start()
 	motionVelocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
 	motionVelocity.PrimaryTangentAxis = Vector3.xAxis
 	motionVelocity.SecondaryTangentAxis = Vector3.zAxis
-	motionVelocity.ForceLimitsEnabled = false
+	motionVelocity.ForceLimitsEnabled = true
+	motionVelocity.ForceLimitMode = Enum.ForceLimitMode.PerAxis
+	local maxAxisForce = root.AssemblyMass * 500
+	motionVelocity.MaxPlanarAxesForce = Vector2.new(maxAxisForce, maxAxisForce)
 	motionVelocity.PlaneVelocity = Vector2.new(direction.X * speed, direction.Z * speed)
 	motionVelocity.Parent = root
 	if track then
@@ -218,11 +270,18 @@ RunService.Heartbeat:Connect(function(dt)
 		track.TimePosition = track.Length * 0.5
 		frozen = true
 	end
+	if lowClearance then
+		if canStandLocally() then finish(false) end
+		return
+	end
 	local desired = humanoid.MoveDirection
 	desired = Vector3.new(desired.X, 0, desired.Z)
 	if desired.Magnitude > 0.2 and direction:Dot(desired.Unit) > -0.2 then
 		local steered = direction:Lerp(desired.Unit, math.min(dt * 2.2, 1))
 		if steered.Magnitude > 0 then direction = steered.Unit end
+	end
+	if motionOrientation then
+		motionOrientation.CFrame = CFrame.lookAt(Vector3.zero, direction)
 	end
 
 	local params = RaycastParams.new()
@@ -241,10 +300,22 @@ RunService.Heartbeat:Connect(function(dt)
 		airborne += dt
 	end
 
-	if speed <= MIN_SPEED or airborne > 0.3 then
+	local actualVelocity = root.AssemblyLinearVelocity
+	local actualSpeed = Vector3.new(actualVelocity.X, 0, actualVelocity.Z).Magnitude
+	if os.clock() - started > 0.2 and actualSpeed < speed * STALL_RATIO then
+		stalledFor += dt
+	else
+		stalledFor = 0
+	end
+	local wall = obstacleAhead(math.max(1.2, speed * dt * 2 + 0.4))
+	if wall or speed <= STOP_SPEED or stalledFor > 0.12 or airborne > 0.3 then
+		clearMotion()
+		stopMomentum()
 		if finish(false) then return end
-		-- Stay low and keep moving until there is enough room to stand.
-		speed = math.max(speed, MIN_SPEED)
+		-- A low ceiling may prevent standing. Let the player crawl out without slide force.
+		lowClearance = true
+		humanoid.WalkSpeed = 5
+		return
 	end
 	if motionVelocity then
 		motionVelocity.PlaneVelocity = Vector2.new(direction.X * speed, direction.Z * speed)
