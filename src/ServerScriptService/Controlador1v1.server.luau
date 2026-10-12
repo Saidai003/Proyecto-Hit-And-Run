@@ -293,6 +293,50 @@ local function limpiarNoqueoPorPeligro(jugador)
 	end
 end
 
+local function restaurarJugadorTrasPartida(jugador)
+	if not jugador or jugador.Parent ~= Players then
+		return
+	end
+
+	-- La ultima ronda puede terminar mientras este cliente conserva un
+	-- BLOQUEAR_MOVIMIENTO de un peligro, pale o cuenta regresiva. Como ya no
+	-- habra otra ronda que lo libere, el cierre de partida debe restaurarlo de
+	-- forma explicita antes de volver al lobby.
+	limpiarNoqueoPorPeligro(jugador)
+
+	local character = jugador.Character
+	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if character then
+		character:SetAttribute("HazardKnockedOut", nil)
+		character:SetAttribute("KnockedOut", nil)
+	end
+	if humanoide then
+		humanoide:SetAttribute("FallStunned", nil)
+		humanoide:SetAttribute("Inmovilizado", nil)
+		humanoide.PlatformStand = false
+		humanoide.AutoRotate = true
+		if humanoide.Health > 0 then
+			humanoide:ChangeState(Enum.HumanoidStateType.GettingUp)
+		end
+	end
+	if root then
+		root.Anchored = false
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+		pcall(function() root:SetNetworkOwnershipAuto() end)
+	end
+
+	EventoJuego:FireClient(jugador, "RESET_JUGADOR")
+	EventoJuego:FireClient(jugador, "DESBLOQUEAR_MOVIMIENTO")
+end
+
+local function restaurarJugadoresTrasPartida()
+	for _, jugador in ipairs({ jugador1, jugador2 }) do
+		restaurarJugadorTrasPartida(jugador)
+	end
+end
+
 
 --==================================================
 -- ASIGNAR ROLES
@@ -1364,6 +1408,8 @@ while true do
 	EventoJuego:FireAllClients(
 		"OCULTAR_RESULTADO"
 	)
+
+	restaurarJugadoresTrasPartida()
 
 	task.wait(1)
 

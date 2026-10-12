@@ -506,6 +506,10 @@ EventoJuego.OnClientEvent:Connect(function(estado, datos)
 
 	elseif estado == "RESET_JUGADOR" then
 
+		-- RESET_JUGADOR representa una restauracion completa (por ejemplo, al
+		-- volver al lobby). No debe conservar el flag local de un bloqueo de la
+		-- ultima ronda, incluso si su DESBLOQUEAR se perdio o llego antes.
+		movimientoBloqueado = false
 		establecerSprintActivo(false)
 		EventoSprint:FireServer(false)
 
