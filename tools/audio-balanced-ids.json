@@ -1,0 +1,94 @@
+{
+  "Click": {
+    "assetId": "93728793723925",
+    "moderationState": "Approved"
+  },
+  "DoubleClick": {
+    "assetId": "99715309174461",
+    "moderationState": "Approved"
+  },
+  "VaultWindow": {
+    "assetId": "117185605122455",
+    "moderationState": "Approved"
+  },
+  "VaultPallet": {
+    "assetId": "78564504150703",
+    "moderationState": "Approved"
+  },
+  "PalletDrop": {
+    "assetId": "100617717700247",
+    "moderationState": "Approved"
+  },
+  "PalletBreak1": {
+    "assetId": "80997695481660",
+    "moderationState": "Approved"
+  },
+  "PalletBreak2": {
+    "assetId": "138343312745438",
+    "moderationState": "Approved"
+  },
+  "PalletBreak3": {
+    "assetId": "126744806944467",
+    "moderationState": "Approved"
+  },
+  "PalletBreak4": {
+    "assetId": "97888286309233",
+    "moderationState": "Approved"
+  },
+  "HandHit": {
+    "assetId": "97981335701629",
+    "moderationState": "Approved"
+  },
+  "BatHit": {
+    "assetId": "76561735587563",
+    "moderationState": "Approved"
+  },
+  "Throw": {
+    "assetId": "80538645152284",
+    "moderationState": "Approved"
+  },
+  "HardLanding": {
+    "assetId": "110610469051014",
+    "moderationState": "Approved"
+  },
+  "SoftLanding": {
+    "assetId": "77083982555332",
+    "moderationState": "Approved"
+  },
+  "Pain": {
+    "assetId": "113207533394822",
+    "moderationState": "Approved"
+  },
+  "Climb": {
+    "assetId": "95502315514990",
+    "moderationState": "Approved"
+  },
+  "RoundWin": {
+    "assetId": "91020084266660",
+    "moderationState": "Approved"
+  },
+  "RoundLose": {
+    "assetId": "73457998318933",
+    "moderationState": "Approved"
+  },
+  "FinalWin": {
+    "assetId": "115964170487323",
+    "moderationState": "Approved"
+  },
+  "FinalLose": {
+    "assetId": "87236520062107",
+    "moderationState": "Approved"
+  },
+  "WinVoice": {
+    "assetId": "81243581592090",
+    "moderationState": "Approved"
+  },
+  "LoseVoice": {
+    "assetId": "100794866171387",
+    "moderationState": "Approved"
+  },
+  "LobbyMusic": {
+    "assetId": "80035941185805",
+    "moderationState": "Approved"
+  }
+}
