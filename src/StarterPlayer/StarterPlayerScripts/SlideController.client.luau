@@ -13,7 +13,7 @@ local INITIAL_SPEED_MULTIPLIER = 1.25
 local FLAT_FRICTION = 12
 local SLOPE_ACCELERATION = 60
 local STOP_SPEED = 6
-local STALL_RATIO = 0.3
+local STALL_SPEED = 2
 
 local animation = Instance.new("Animation")
 animation.AnimationId = SLIDE_ANIMATION
@@ -112,18 +112,15 @@ local function obstacleAhead(distance)
 	return false
 end
 
-local function stopMomentum()
-	if not root or not root.Parent then return end
-	local velocity = root.AssemblyLinearVelocity
-	root.AssemblyLinearVelocity = Vector3.new(0, velocity.Y, 0)
-end
-
 local function finish(force)
 	if not active then return true end
 	if not force then
 		if not canStandLocally() then return false end
 		if os.clock() - lastEndAttempt < 0.25 then return false end
 		lastEndAttempt = os.clock()
+	end
+	if force and RunService:IsStudio() then
+		print(string.format("[SLIDE END] interrupted elapsed=%.2f", os.clock() - started))
 	end
 	active = false
 	clearMotion()
@@ -144,6 +141,7 @@ local function finish(force)
 			local finishedTrack = track
 			local finishedSlide = started
 			local length = finishedTrack.Length
+			finishedTrack.Looped = false
 			if length > 0 then
 				finishedTrack.TimePosition = math.max(finishedTrack.TimePosition, length * 0.5)
 			end
@@ -185,7 +183,7 @@ local function attach(newCharacter)
 	animateScript = character:FindFirstChild("Animate")
 	if track then
 		track.Priority = Enum.AnimationPriority.Action4
-		track.Looped = false
+		track.Looped = true
 	else
 		warn("[SLIDE] No se pudo cargar la animacion " .. SLIDE_ANIMATION)
 	end
@@ -254,6 +252,7 @@ local function start()
 	motionVelocity.PlaneVelocity = Vector2.new(direction.X * speed, direction.Z * speed)
 	motionVelocity.Parent = root
 	if track then
+		track.Looped = true
 		track:Play(0.08, 1, 1)
 	end
 	stopOtherAnimations()
@@ -263,8 +262,14 @@ end
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed or UserInputService:GetFocusedTextBox() then return end
 	if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.C then
-		if active then finish(false) else start() end
+		if active then
+			if RunService:IsStudio() then print("[SLIDE END] manual") end
+			finish(false)
+		else
+			start()
+		end
 	elseif input.KeyCode == Enum.KeyCode.Space and active then
+		if RunService:IsStudio() then print("[SLIDE END] manual jump") end
 		finish(false)
 	end
 end)
@@ -312,17 +317,21 @@ RunService.Heartbeat:Connect(function(dt)
 	-- Descending a ramp can convert much of the motion into vertical velocity;
 	-- count the full speed so a real descent is not mistaken for a wall stall.
 	local actualSpeed = root.AssemblyLinearVelocity.Magnitude
-	if os.clock() - started > 0.35 and actualSpeed < speed * STALL_RATIO then
+	if os.clock() - started > 0.4 and actualSpeed < STALL_SPEED then
 		stalledFor += dt
 	else
 		stalledFor = 0
 	end
 	local wall = obstacleAhead(math.max(0.65, speed * dt + 0.3))
-	if wall or speed <= STOP_SPEED or stalledFor > 0.24 or airborne > 0.65 then
+	if wall or speed <= STOP_SPEED or stalledFor > 0.3 or airborne > 1.2 then
+		if RunService:IsStudio() then
+			local reason = if wall then "wall" elseif speed <= STOP_SPEED then "slow"
+				elseif stalledFor > 0.3 then "stalled" else "airborne"
+			print(string.format("[SLIDE END] %s elapsed=%.2f target=%.1f actual=%.1f airborne=%.2f",
+				reason, os.clock() - started, speed, actualSpeed, airborne))
+		end
 		clearMotion()
-		-- Only a wall needs an emergency stop. Ordinary deceleration should keep
-		-- its remaining velocity so standing up does not look like a hard brake.
-		if wall then stopMomentum() end
+		-- Dropping the mover releases the collision safely without zeroing momentum.
 		if finish(false) then return end
 		-- A low ceiling may prevent standing. Let the player crawl out without slide force.
 		lowClearance = true
