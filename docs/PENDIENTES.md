@@ -71,6 +71,7 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Audio
 
+- **Decisión de diseño abierta:** definir si durante una partida ambos jugadores deben oír la misma música o si Runner y Chaser pueden recibir pistas distintas. Evaluar la coherencia audiovisual, la identidad de cada rol y si la música diferenciada entrega información o ventajas no deseadas. Mantener el comportamiento actual hasta tomar esta decisión.
 - **Subidos y enlazados:** 22 efectos de `SFX/` para botones, resultados, ventana, palés, escalada, golpes, lanzamiento y caídas, más `lobby_music.mp3` para el lobby. Los IDs actuales están en `AudioCatalog.luau` y `tools/audio-balanced-ids.json`; `tools/audio-ids.json` conserva los IDs anteriores. La clave no se guarda en el repositorio.
 - **Pendiente de verificación:** el usuario confirma que los efectos se reproducen, pero con retraso. Probar volumen/duplicaciones con dos clientes y comprobar que la precarga mejora el primer uso tras sincronizar Rojo y publicar.
 - Comprobar que la música de lobby se oye solo mientras `LobbyPractica` es verdadero y que se desvanece al encontrar partida. Medir si la precarga y el recorte de silencio reducen el retraso de los efectos; si persiste, revisar los disparos desde servidor.
