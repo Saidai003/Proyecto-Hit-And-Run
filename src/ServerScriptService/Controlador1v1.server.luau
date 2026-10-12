@@ -66,6 +66,7 @@ local ataquesHabilitados = false
 local tiemposAcumulados = {}
 local vidas = {}
 local ultimoAtaque = {}
+local noqueosPorPeligro = {}
 
 
 --==================================================
@@ -242,6 +243,30 @@ local function transportarJugadores()
 			RoundSpawn2.CFrame
 			+ Vector3.new(0, 3, 0)
 
+	end
+end
+
+local function limpiarNoqueoPorPeligro(jugador)
+	noqueosPorPeligro[jugador] = nil
+	local character = jugador and jugador.Character
+	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not character or not character:GetAttribute("HazardKnockedOut") then
+		return
+	end
+
+	character:SetAttribute("HazardKnockedOut", nil)
+	character:SetAttribute("KnockedOut", nil)
+	if humanoide then
+		humanoide:SetAttribute("FallStunned", nil)
+		humanoide:SetAttribute("Inmovilizado", nil)
+		humanoide.PlatformStand = false
+		humanoide:ChangeState(Enum.HumanoidStateType.GettingUp)
+	end
+	if root then
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+		pcall(function() root:SetNetworkOwnershipAuto() end)
 	end
 end
 
@@ -575,6 +600,8 @@ local function iniciarRonda()
 
 	vidas[jugador1] = VIDAS_INICIALES
 	vidas[jugador2] = VIDAS_INICIALES
+	limpiarNoqueoPorPeligro(jugador1)
+	limpiarNoqueoPorPeligro(jugador2)
 
 	transportarJugadores()
 
@@ -600,7 +627,7 @@ end
 -- FINALIZAR RONDA
 --==================================================
 
-local function finalizarRonda(motivo)
+local function finalizarRonda(motivo, jugadorDerrotado)
 
 	if EstadoPartida ~= "RONDA_ACTIVA" then
 		return
@@ -630,6 +657,12 @@ local function finalizarRonda(motivo)
 		ganadorRonda = perseguidor
 	elseif motivo == "TIME_LIMIT" then
 		ganadorRonda = perseguido
+	elseif motivo == "TOUCHED_LOSS_OBJECT" and jugadorDerrotado then
+		if jugadorDerrotado == jugador1 then
+			ganadorRonda = jugador2
+		elseif jugadorDerrotado == jugador2 then
+			ganadorRonda = jugador1
+		end
 	end
 	for _, jugador in ipairs({ jugador1, jugador2 }) do
 		if jugador and jugador.Parent == Players then
@@ -653,6 +686,99 @@ local function finalizarRonda(motivo)
 
 	print("========================================")
 end
+
+
+--==================================================
+-- OBJETOS QUE HACEN PERDER LA RONDA
+--==================================================
+
+local conexionesPeligro = {}
+
+local function puntoInicialDe(jugador)
+	if jugador == jugador1 then return RoundSpawn1 end
+	if jugador == jugador2 then return RoundSpawn2 end
+	return nil
+end
+
+local function noquearEnPuntoInicial(jugador)
+	local character = jugador.Character
+	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local puntoInicial = puntoInicialDe(jugador)
+	if not character or not humanoide or not root or not puntoInicial then
+		return false
+	end
+
+	local idNoqueo = (noqueosPorPeligro[jugador] or 0) + 1
+	noqueosPorPeligro[jugador] = idNoqueo
+	character:SetAttribute("HazardKnockedOut", true)
+	character:SetAttribute("KnockedOut", true)
+	humanoide:SetAttribute("FallStunned", true)
+	humanoide:SetAttribute("Inmovilizado", true)
+	humanoide.PlatformStand = true
+
+	pcall(function() root:SetNetworkOwner(nil) end)
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
+	character:PivotTo(puntoInicial.CFrame + Vector3.new(0, 3, 0))
+
+	EventoJuego:FireClient(jugador, "CAIDA_ATURDIDO", false)
+
+	-- La liberacion coincide con el tiempo durante el cual se muestra
+	-- el resultado de ronda. No enviamos DESBLOQUEAR aqui porque para
+	-- entonces ya puede haber comenzado la cuenta regresiva siguiente.
+	task.delay(DURACION_ENTRE_RONDAS, function()
+		if noqueosPorPeligro[jugador] ~= idNoqueo then return end
+		limpiarNoqueoPorPeligro(jugador)
+	end)
+
+	return true
+end
+
+local function jugadorDesdeParte(parte)
+	if not parte or not parte:IsA("BasePart") then return nil end
+	local character = parte:FindFirstAncestorOfClass("Model")
+	return character and Players:GetPlayerFromCharacter(character) or nil
+end
+
+local function activarPeligro(parte)
+	if parte:GetAttribute("MakesPlayersLose") ~= true then return end
+
+	local function alTocar(otraParte)
+		if EstadoPartida ~= "RONDA_ACTIVA" or not ataquesHabilitados then return end
+		local jugador = jugadorDesdeParte(otraParte)
+		if (jugador ~= jugador1 and jugador ~= jugador2) or noqueosPorPeligro[jugador] then
+			return
+		end
+		if not noquearEnPuntoInicial(jugador) then return end
+
+		finalizarRonda("TOUCHED_LOSS_OBJECT", jugador)
+		-- finalizarRonda libera el movimiento general antes de mostrar el
+		-- resultado; el jugador derrotado debe permanecer noqueado.
+		EventoJuego:FireClient(jugador, "BLOQUEAR_MOVIMIENTO")
+	end
+
+	conexionesPeligro[parte] = parte.Touched:Connect(alTocar)
+end
+
+local function registrarPeligro(objeto)
+	if not objeto:IsA("BasePart") or conexionesPeligro[objeto] then return end
+	if objeto:GetAttribute("MakesPlayersLose") == true then
+		activarPeligro(objeto)
+	end
+end
+
+for _, objeto in ipairs(Workspace:GetDescendants()) do
+	registrarPeligro(objeto)
+end
+Workspace.DescendantAdded:Connect(registrarPeligro)
+Workspace.DescendantRemoving:Connect(function(objeto)
+	local conexion = conexionesPeligro[objeto]
+	if conexion then
+		conexion:Disconnect()
+		conexionesPeligro[objeto] = nil
+	end
+end)
 
 
 --==================================================
