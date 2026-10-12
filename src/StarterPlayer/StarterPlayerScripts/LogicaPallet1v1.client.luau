@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local ContentProvider = game:GetService("ContentProvider")
 
 local jugadorLocal = Players.LocalPlayer
 local EventoPale = ReplicatedStorage:WaitForChild("EventoPale1v1", 5)
@@ -18,6 +19,19 @@ local ANIM_HIT = "rbxassetid://122984890985296"
 local DISTANCIA_INTERACCION = 6.5
 local DISTANCIA_INICIO_ANIMACION = 1.8
 local debounce = false
+local animaciones = {}
+
+for _, id in ipairs({ ANIM_SLOW_VAULT, ANIM_FAST_VAULT, ANIM_DROP, ANIM_HIT }) do
+	local animacion = Instance.new("Animation")
+	animacion.AnimationId = id
+	animaciones[id] = animacion
+end
+
+task.spawn(function()
+	local lista = {}
+	for _, animacion in pairs(animaciones) do table.insert(lista, animacion) end
+	pcall(function() ContentProvider:PreloadAsync(lista) end)
+end)
 
 --==================================================
 -- FUNCIONES AUXILIARES
@@ -35,11 +49,18 @@ local function reproducirAnimacion(idAnimacion)
 		animator.Parent = humanoid
 	end
 
-	local animacion = Instance.new("Animation")
-	animacion.AnimationId = idAnimacion
-
-	local track = animator:LoadAnimation(animacion)
-	track:Play()
+	local animacion = animaciones[idAnimacion]
+	if not animacion then return nil end
+	local ok, track = pcall(function() return animator:LoadAnimation(animacion) end)
+	if not ok or not track then
+		warn("[PALET] No se pudo cargar la animacion " .. idAnimacion)
+		return nil
+	end
+	-- Las acciones del pallet deben imponerse a caminar, al bate y a otras
+	-- animaciones de movimiento mientras dura la interacción.
+	track.Priority = Enum.AnimationPriority.Action4
+	track.Looped = false
+	track:Play(0.05, 1, 1)
 	return track
 end
 

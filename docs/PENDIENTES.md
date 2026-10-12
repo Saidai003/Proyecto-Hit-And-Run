@@ -21,6 +21,12 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 - **Preparado, por probar:** reducir `JumpPower` experimental de 50 a 40; comprobar en los muros del mapa si basta para preservar los recorridos de persecución.
 - **Preparado, por probar:** Espacio pasa a ser la tecla del salto; ALT deja de saltar. Comprobar el gasto de stamina y que no se active parkour accidentalmente.
+- **Corrección preparada, por probar (2026-10-12):** el cooldown empieza únicamente cuando el servidor acepta el salto y existe un búfer de entrada de 0,4 s para no perder Espacio al pulsarlo justo antes de que cliente/servidor reconozcan el aterrizaje. La detección local usa un raycast bajo el personaje en vez de depender de un único frame de `FloorMaterial`.
+- **Corrección preparada, por probar (2026-10-12):** al llegar arriba o abajo de una escalada natural, salir antes del estado de escalada y forzar `Running` o `Freefall`. Verificar salto inmediato al coronar un `TrussPart`, una pieza marcada `climbable` y justo después de aterrizar de un salto normal.
+
+## Pallets
+
+- **Corrección preparada, por probar (2026-10-12):** precargar las cuatro animaciones de pallet y reproducirlas con prioridad `Action4`. Esto evita que la animación de romper el pallet (`122984890985296`) quede oculta por locomoción o por la pista del ataque/bate. Probar como Chaser con y sin bate equipado y confirmar que la destrucción coincide con el final de la animación.
 
 ## Donación y pantalla de compra
 

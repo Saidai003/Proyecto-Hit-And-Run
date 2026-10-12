@@ -675,7 +675,7 @@ RunService.Heartbeat:Connect(function()
 	end
 	humanoide:SetAttribute("EscaladaLenta", (jugadorLocal:GetAttribute("Stamina") or 0) < 15)
 	local terminoNaturalmente = ahora - inicioEscalada > 0.8
-		and ahora - ultimoEstadoEscalando > 0.65
+		and ahora - ultimoEstadoEscalando > 0.2
 		and humanoide.FloorMaterial ~= Enum.Material.Air
 	if not trussActivo or not trussActivo.Parent or ahora - ultimaProximidadEscalada > 0.65
 		or terminoNaturalmente then
@@ -687,6 +687,11 @@ RunService.Heartbeat:Connect(function()
 		humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
 		humanoide:SetAttribute("EscaladaLenta", nil)
 		humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+		-- Al coronar una subida Roblox puede conservar brevemente el estado
+		-- Climbing aunque ya haya suelo. Forzar la transición evita que el
+		-- primer salto después de llegar arriba se pierda.
+		humanoide:ChangeState(humanoide.FloorMaterial ~= Enum.Material.Air
+			and Enum.HumanoidStateType.Running or Enum.HumanoidStateType.Freefall)
 		return
 	end
 end)

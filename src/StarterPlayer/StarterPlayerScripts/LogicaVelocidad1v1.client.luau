@@ -77,6 +77,9 @@ local consumoSprint = CONSUMO_SPRINT_PERSEGUIDO
 local sprintActivo = false
 local movimientoBloqueado = false
 local ultimoSalto = 0
+local solicitudSalto = 0
+local BUFFER_SALTO = 0.4
+local COOLDOWN_SALTO = 0.2
 
 local function establecerSprintActivo(activo)
 	sprintActivo = activo
@@ -200,6 +203,56 @@ end
 -- INPUT
 --==================================================
 
+local function tocaSueloLocal()
+	if not character or not humanoide then return false end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then return false end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local alcance = humanoide.HipHeight + root.Size.Y * 0.5 + 1.15
+	return workspace:Raycast(root.Position, Vector3.new(0, -alcance, 0), params) ~= nil
+end
+
+local function intentarSalto()
+	if movimientoBloqueado or not humanoide or humanoide.Health <= 0
+		or humanoide:GetAttribute("Sliding")
+		or not tocaSueloLocal()
+		or humanoide:GetAttribute("ParkourEspecialActivo")
+		or humanoide:GetAttribute("EscaladaActiva")
+		or humanoide:GetAttribute("FallStunned")
+		or os.clock() - ultimoSalto < COOLDOWN_SALTO then return false end
+	local ok, permitido = pcall(function()
+		return ReplicatedStorage:WaitForChild("SolicitarParkour1v1"):InvokeServer("Salto")
+	end)
+	if not ok or not permitido or not humanoide or not humanoide.Parent then return false end
+	-- El cooldown empieza solo cuando el servidor acepta el salto. Antes, un
+	-- intento hecho en el primer frame del aterrizaje bloqueaba el siguiente.
+	ultimoSalto = os.clock()
+	humanoide.JumpPower = 40
+	humanoide.Jump = true
+	humanoide:ChangeState(Enum.HumanoidStateType.Jumping)
+	local humanoideDelSalto = humanoide
+	task.delay(0.12, function()
+		if humanoideDelSalto.Parent then humanoideDelSalto.JumpPower = 0 end
+	end)
+	return true
+end
+
+local function solicitarSaltoConBuffer()
+	solicitudSalto += 1
+	local estaSolicitud = solicitudSalto
+	local limite = os.clock() + BUFFER_SALTO
+	task.spawn(function()
+		repeat
+			if estaSolicitud ~= solicitudSalto then return end
+			if intentarSalto() then return end
+			RunService.Heartbeat:Wait()
+		until os.clock() >= limite
+	end)
+end
+
 UserInputService.InputBegan:Connect(function(input, procesado)
 
 	if procesado then
@@ -209,25 +262,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 	if input.KeyCode == Enum.KeyCode.LeftShift then
 		activarSprint()
 	elseif input.KeyCode == Enum.KeyCode.Space then
-		if movimientoBloqueado or not humanoide or humanoide.Health <= 0
-			or humanoide:GetAttribute("Sliding")
-			or humanoide.FloorMaterial == Enum.Material.Air
-			or humanoide:GetAttribute("ParkourEspecialActivo")
-			or humanoide:GetAttribute("EscaladaActiva")
-			or humanoide:GetAttribute("FallStunned")
-			or os.clock() - ultimoSalto < 0.4 then return end
-		ultimoSalto = os.clock()
-		local ok, permitido = pcall(function()
-			return ReplicatedStorage:WaitForChild("SolicitarParkour1v1"):InvokeServer("Salto")
-		end)
-		if ok and permitido and humanoide and humanoide.Parent then
-			humanoide.JumpPower = 40
-			humanoide.Jump = true
-			humanoide:ChangeState(Enum.HumanoidStateType.Jumping)
-			task.delay(0.12, function()
-				if humanoide and humanoide.Parent then humanoide.JumpPower = 0 end
-			end)
-		end
+		solicitarSaltoConBuffer()
 	end
 end)
 
@@ -369,6 +404,8 @@ jugadorLocal.CharacterAdded:Connect(function(nuevoCharacter)
 	-- local, asi que hay que liberarlo al reaparecer
 	-- o el jugador respawna congelado.
 	movimientoBloqueado = false
+	solicitudSalto += 1
+	ultimoSalto = 0
 
 	establecerSprintActivo(false)
 	EventoSprint:FireServer(false)
