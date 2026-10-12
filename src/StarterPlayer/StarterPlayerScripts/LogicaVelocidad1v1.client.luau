@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ContentProvider = game:GetService("ContentProvider")
 
 local jugadorLocal = Players.LocalPlayer
 local EventoJuego = ReplicatedStorage:WaitForChild("EventoJuego")
@@ -30,6 +31,8 @@ local RECUPERACION_STAMINA = 14
 
 local FOV_NORMAL = 70
 local FOV_SPRINT = 76
+local ANIMACION_SPRINT_ID = "rbxassetid://72846871061644"
+local VELOCIDAD_REFERENCIA_ANIMACION_SPRINT = 22
 local CAMERA_DISTANCIA = 12
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
@@ -76,13 +79,112 @@ local consumoSprint = CONSUMO_SPRINT_PERSEGUIDO
 
 local sprintActivo = false
 local movimientoBloqueado = false
+local trackSprint = nil
 local ultimoSalto = 0
 local solicitudSalto = 0
 local BUFFER_SALTO = 0.4
 local COOLDOWN_SALTO = 0.2
 
+local animacionSprint = Instance.new("Animation")
+animacionSprint.Name = "Sprint"
+animacionSprint.AnimationId = ANIMACION_SPRINT_ID
+
+task.spawn(function()
+	local ok, mensaje = pcall(function()
+		ContentProvider:PreloadAsync({ animacionSprint })
+	end)
+	if not ok then
+		warn("[SPRINT] No se pudo precargar la animacion:", mensaje)
+	end
+end)
+
+local function detenerAnimacionSprint(fadeTime)
+	if trackSprint and trackSprint.IsPlaying then
+		trackSprint:Stop(fadeTime or 0.12)
+	end
+end
+
+local function cargarAnimacionSprint()
+	detenerAnimacionSprint(0)
+	trackSprint = nil
+
+	if not humanoide or not humanoide.Parent then
+		return
+	end
+
+	local animator = humanoide:FindFirstChildOfClass("Animator")
+		or humanoide:WaitForChild("Animator", 5)
+	if not animator then
+		warn("[SPRINT] El Humanoid no tiene Animator")
+		return
+	end
+
+	local ok, resultado = pcall(function()
+		return animator:LoadAnimation(animacionSprint)
+	end)
+	if not ok then
+		warn("[SPRINT] No se pudo cargar la animacion:", resultado)
+		return
+	end
+
+	trackSprint = resultado
+	trackSprint.Priority = Enum.AnimationPriority.Action
+	trackSprint.Looped = true
+end
+
+local function puedeReproducirAnimacionSprint()
+	if not sprintActivo or movimientoBloqueado or not humanoide or humanoide.Health <= 0 then
+		return false
+	end
+
+	if humanoide.MoveDirection.Magnitude < 0.05
+		or humanoide.FloorMaterial == Enum.Material.Air
+		or humanoide:GetAttribute("ParkourEspecialActivo")
+		or humanoide:GetAttribute("EscaladaActiva")
+		or humanoide:GetAttribute("Sliding")
+		or humanoide:GetAttribute("Inmovilizado")
+		or humanoide:GetAttribute("FallStunned")
+		or humanoide:GetAttribute("GolpeActivo")
+		or humanoide:GetAttribute("AttackRecovery")
+		or humanoide:GetAttribute("AttackRecoveryLocal") then
+		return false
+	end
+
+	local estado = humanoide:GetState()
+	return estado ~= Enum.HumanoidStateType.Jumping
+		and estado ~= Enum.HumanoidStateType.Freefall
+		and estado ~= Enum.HumanoidStateType.Climbing
+		and estado ~= Enum.HumanoidStateType.Seated
+end
+
+local function actualizarAnimacionSprint()
+	if not puedeReproducirAnimacionSprint() then
+		detenerAnimacionSprint()
+		return
+	end
+
+	if not trackSprint then
+		cargarAnimacionSprint()
+	end
+	if not trackSprint then
+		return
+	end
+
+	if not trackSprint.IsPlaying then
+		trackSprint:Play(0.12, 1, 1)
+	end
+	trackSprint:AdjustSpeed(math.clamp(
+		humanoide.WalkSpeed / VELOCIDAD_REFERENCIA_ANIMACION_SPRINT,
+		0.85,
+		1.2
+	))
+end
+
 local function establecerSprintActivo(activo)
 	sprintActivo = activo
+	if not activo then
+		detenerAnimacionSprint()
+	end
 	if humanoide and humanoide.Parent then
 		humanoide:SetAttribute("SprintActivoLocal", activo)
 	end
@@ -107,6 +209,7 @@ local function obtenerPersonaje()
 
 	humanoide.UseJumpPower = true
 	humanoide.JumpPower = 0
+	cargarAnimacionSprint()
 end
 
 
@@ -285,6 +388,8 @@ RunService.Heartbeat:Connect(function(deltaTime)
 		return
 	end
 
+	actualizarAnimacionSprint()
+
 	if movimientoBloqueado then
 		return
 	end
@@ -398,6 +503,7 @@ jugadorLocal.CharacterAdded:Connect(function(nuevoCharacter)
 
 	humanoide.UseJumpPower = true
 	humanoide.JumpPower = 0
+	cargarAnimacionSprint()
 
 	-- El servidor pudo bloquear el movimiento del
 	-- personaje anterior (pale, stun). Ese flag es
