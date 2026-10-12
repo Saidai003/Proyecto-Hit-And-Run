@@ -41,6 +41,7 @@ local trussActivo = nil
 local inicioEscalada = 0
 local ultimoEstadoEscalando = 0
 local ultimaProximidadEscalada = 0
+local escaladaPersonalizada = nil
 
 local tracksPrecargados = {}
 
@@ -570,10 +571,12 @@ end
 for _, objeto in ipairs(workspace:GetDescendants()) do registrarEscalable(objeto) end
 workspace.DescendantAdded:Connect(registrarEscalable)
 workspace.DescendantRemoving:Connect(function(objeto) escalables[objeto] = nil end)
-CollectionService:GetInstanceAddedSignal("Escalable"):Connect(registrarEscalable)
-CollectionService:GetInstanceRemovedSignal("Escalable"):Connect(function(objeto)
-	if not Climbables.IsClimbable(objeto) then escalables[objeto] = nil end
-end)
+for _, tag in ipairs({ "Escalable", "climbable", "Climbable" }) do
+	CollectionService:GetInstanceAddedSignal(tag):Connect(registrarEscalable)
+	CollectionService:GetInstanceRemovedSignal(tag):Connect(function(objeto)
+		if not Climbables.IsClimbable(objeto) then escalables[objeto] = nil end
+	end)
+end
 
 local function escalableCercano(limite)
 	local mejor, distancia = nil, 5.5
@@ -587,11 +590,40 @@ local function escalableCercano(limite)
 	return mejor
 end
 
+local function limpiarEscaladaPersonalizada()
+	if not escaladaPersonalizada then return end
+	escaladaPersonalizada.velocidad:Destroy()
+	escaladaPersonalizada.attachment:Destroy()
+	if humanoide then humanoide.AutoRotate = escaladaPersonalizada.autoRotate end
+	escaladaPersonalizada = nil
+end
+
+local function iniciarEscaladaPersonalizada()
+	local attachment = Instance.new("Attachment")
+	attachment.Name = "CustomClimbAttachment"
+	attachment.Parent = rootPart
+	local velocidad = Instance.new("LinearVelocity")
+	velocidad.Name = "CustomClimbVelocity"
+	velocidad.Attachment0 = attachment
+	velocidad.RelativeTo = Enum.ActuatorRelativeTo.World
+	velocidad.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+	velocidad.ForceLimitsEnabled = false
+	velocidad.VectorVelocity = Vector3.zero
+	velocidad.Parent = rootPart
+	escaladaPersonalizada = {
+		attachment = attachment,
+		velocidad = velocidad,
+		autoRotate = humanoide.AutoRotate,
+	}
+	humanoide.AutoRotate = false
+end
+
 local function alternarEscalada()
 	if escaladaActiva then
 		pcall(function() SolicitarParkour:InvokeServer("EscaladaFin") end)
 		escaladaActiva = false
 		trussActivo = nil
+		limpiarEscaladaPersonalizada()
 		humanoide:SetAttribute("EscaladaActiva", false)
 		humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
 		humanoide:SetAttribute("EscaladaLenta", nil)
@@ -615,6 +647,7 @@ local function alternarEscalada()
 	humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
 	humanoide:ChangeState(Enum.HumanoidStateType.Climbing)
 	humanoide:SetAttribute("EscaladaLenta", factor > 1)
+	if not truss:IsA("TrussPart") then iniciarEscaladaPersonalizada() end
 	return true
 end
 
@@ -626,8 +659,16 @@ RunService.Heartbeat:Connect(function()
 	end
 	local ahora = os.clock()
 	local estado = humanoide:GetState()
-	if estado == Enum.HumanoidStateType.Climbing then ultimoEstadoEscalando = ahora end
-	local cercano = escalableCercano(6.5)
+	if estado == Enum.HumanoidStateType.Climbing or escaladaPersonalizada then ultimoEstadoEscalando = ahora end
+	if escaladaPersonalizada then
+		local subir = UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up)
+		local bajar = UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Down)
+		local direccion = UserInputService:GetFocusedTextBox() and 0 or (subir and 1 or 0) - (bajar and 1 or 0)
+		local velocidad = math.min(humanoide.WalkSpeed * 0.55, 9)
+		escaladaPersonalizada.velocidad.VectorVelocity = Vector3.new(0, direccion * velocidad, 0)
+	end
+	local cercano = escaladaPersonalizada and trussActivo or escalableCercano(6.5)
+	if cercano and (not cercano:IsDescendantOf(workspace) or distanciaEscalable(cercano) > 6.5) then cercano = nil end
 	if cercano then
 		trussActivo = cercano
 		ultimaProximidadEscalada = ahora
@@ -640,6 +681,7 @@ RunService.Heartbeat:Connect(function()
 		or terminoNaturalmente then
 		escaladaActiva = false
 		trussActivo = nil
+		limpiarEscaladaPersonalizada()
 		pcall(function() SolicitarParkour:InvokeServer("EscaladaFin") end)
 		humanoide:SetAttribute("EscaladaActiva", false)
 		humanoide:SetAttribute("EscaladaEstado", "NoEscalando")
@@ -717,6 +759,7 @@ jugadorLocal.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid")
 	char:WaitForChild("HumanoidRootPart")
 
+	limpiarEscaladaPersonalizada()
 	obtenerPersonaje()
 	escaladaActiva = false
 	trussActivo = nil

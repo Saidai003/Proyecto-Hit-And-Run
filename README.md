@@ -110,7 +110,7 @@ y `AudioCatalog.luau` ya usa los nuevos IDs; los anteriores quedaron sin uso.
   personaje al equiparla y al proyectil al lanzarla; la silla no se modifica.
   La exportación original está conservada en `tools/coffee.rbxm`; el objeto del
   Place aún se mantiene en Studio, fuera de la sincronización de Rojo.
-- El clic derecho inicia o corta la escalada de una `TrussPart` o pieza marcada `Escalable`
+- El clic derecho inicia o corta la escalada de una `TrussPart` o pieza marcada `Escalable`. También se reconoce una `BasePart` con el atributo String `climbable` = `"true"` (o `"climbable"`/`"yes"`), o con la etiqueta `climbable`. Las piezas normales marcadas usan ascenso/descenso vertical personalizado con W/S; se deben probar las superficies concretas del mapa en Studio.
   próxima. La escalada consume 5 puntos de stamina por stud vertical realmente
   recorrido, hacia arriba o abajo; al agotarse se suelta. Las piezas marcadas
   deben tener geometría que el Humanoid pueda escalar. Ventanas, estrechos,

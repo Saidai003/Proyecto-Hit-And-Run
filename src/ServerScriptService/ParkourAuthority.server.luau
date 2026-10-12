@@ -55,7 +55,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 	if accion == "Escalada" then
 		if typeof(origen) ~= "Instance" or not Climbables.IsClimbable(origen) or not origen:IsDescendantOf(Workspace)
 			or distanciaParte(origen, root.Position) > 5.5 then return nil end
-		local factor = StaminaService.BeginClimb(jugador, root)
+		local factor = StaminaService.BeginClimb(jugador, root, not origen:IsA("TrussPart"))
 		if factor then
 			humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
 			local previousSound = root:FindFirstChild("Climb")

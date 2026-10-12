@@ -39,9 +39,9 @@ function StaminaService.Reset(jugador)
 	publicar(jugador)
 end
 
-function StaminaService.BeginClimb(jugador, root)
+function StaminaService.BeginClimb(jugador, root, custom)
 	if jugador.Parent ~= Players or not root or (stamina[jugador] or 0) <= 0 then return nil end
-	climb[jugador] = { root = root, y = root.Position.Y }
+	climb[jugador] = { root = root, y = root.Position.Y, custom = custom == true }
 	jugador:SetAttribute("EscaladaSinStamina", false)
 	return (stamina[jugador] or 0) < UMBRAL_ESCALADA_LENTA and (1 / 0.7) or 1
 end
@@ -111,7 +111,10 @@ RunService.Heartbeat:Connect(function(dt)
 			else
 				local moved = math.min(math.abs(root.Position.Y - climbing.y), VELOCIDAD_ESCALADA_MAXIMA * dt)
 				climbing.y = root.Position.Y
-				if humanoide:GetState() == Enum.HumanoidStateType.Climbing and moved > 0 then
+				local controlledClimb = if climbing.custom
+					then math.abs(root.AssemblyLinearVelocity.Y) <= VELOCIDAD_ESCALADA_MAXIMA + 1
+					else humanoide:GetState() == Enum.HumanoidStateType.Climbing
+				if controlledClimb and moved > 0 then
 					actual = math.max(0, actual - moved * COSTO_ESCALADA_POR_STUD)
 					if actual == 0 then
 						climb[jugador] = nil

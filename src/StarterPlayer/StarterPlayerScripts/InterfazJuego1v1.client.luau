@@ -439,7 +439,7 @@ local guideCards = {
 		{ "SPACE", "Jump", "Jump over small obstacles. It costs stamina. Space does not vault windows; use the window prompt instead." },
 		{ "RMB", "Windows / gaps", "Right-click at Vault or Go Through to cross a window or narrow gap. You walk to its marker first if needed." },
 		{ "RMB", "Pallets", "Right-click to drop a standing pallet or vault a fallen one. A dropped pallet can delay the Chaser." },
-		{ "RMB", "Climb / drop", "Right-click near a climbable ladder or truss to climb; click again to drop off. Climbing drains stamina by distance." },
+		{ "RMB", "Climb / drop", "Right-click near a climbable surface or truss to climb; click again to drop off. Use W/S to climb marked walls. Climbing drains stamina by distance." },
 		{ "STAMINA", "Manage energy", "Low stamina slows obstacle actions. At zero you cannot jump or continue climbing. High falls can stun you." },
 	},
 	CHASER = {
@@ -451,7 +451,7 @@ local guideCards = {
 		{ "SPACE", "Jump", "Jump over small obstacles. It costs stamina. Space does not vault windows; use the window prompt instead." },
 		{ "RMB", "Windows / gaps", "Right-click at Vault or Go Through to cross a window or narrow gap. You are slightly slower than the Runner." },
 		{ "RMB", "Pallets", "Right-click near a fallen pallet to break it and clear the route. The Runner can drop or vault pallets." },
-		{ "RMB", "Climb / drop", "Right-click near a climbable ladder or truss to climb; click again to drop off. Climbing drains stamina by distance." },
+		{ "RMB", "Climb / drop", "Right-click near a climbable surface or truss to climb; click again to drop off. Use W/S to climb marked walls. Climbing drains stamina by distance." },
 		{ "STAMINA", "Manage energy", "Low stamina slows obstacle actions. At zero you cannot jump or continue climbing." },
 	},
 }
@@ -990,14 +990,18 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 	print("[INTERFAZ]: Evento recibido:", estado)
 
 	if estado == "ESPERANDO_JUGADOR" then
+		local lobbyPractica = Workspace:GetAttribute("LobbyPractica") == true and not esPartidaPrivada
 
 		messageLabel.Visible = true
 		messageLabel.Text = "WAITING FOR OPPONENT..."
-		hudPanel.Visible = false
+		hudPanel.Visible = lobbyPractica
 		banner.Visible = not esPartidaPrivada
 
-		roleLabel.Visible = false
-		staminaWidget.Visible = false
+		roleLabel.Visible = lobbyPractica
+		if lobbyPractica then
+			roleLabel.Text = jugador:GetAttribute("Rol") == "PERSEGUIDOR" and "CHASER" or "RUNNER"
+		end
+		staminaWidget.Visible = lobbyPractica
 		livesWidget.Visible = false
 		roundLabel.Visible = false
 		attackButton.Visible = false

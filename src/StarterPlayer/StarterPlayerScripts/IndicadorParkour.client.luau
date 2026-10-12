@@ -76,10 +76,12 @@ end
 for _, objeto in ipairs(Workspace:GetDescendants()) do registrar(objeto) end
 Workspace.DescendantAdded:Connect(registrar)
 Workspace.DescendantRemoving:Connect(function(objeto) candidatos[objeto] = nil end)
-CollectionService:GetInstanceAddedSignal("Escalable"):Connect(registrar)
-CollectionService:GetInstanceRemovedSignal("Escalable"):Connect(function(objeto)
-	if not Climbables.IsClimbable(objeto) then candidatos[objeto] = nil end
-end)
+for _, tag in ipairs({ "Escalable", "climbable", "Climbable" }) do
+	CollectionService:GetInstanceAddedSignal(tag):Connect(registrar)
+	CollectionService:GetInstanceRemovedSignal(tag):Connect(function(objeto)
+		if not Climbables.IsClimbable(objeto) then candidatos[objeto] = nil end
+	end)
+end
 
 local function elegirAccion(posicion, rol, humanoide)
 	if humanoide:GetAttribute("EscaladaEstado") == "Escalando" then return "Drop Off" end
