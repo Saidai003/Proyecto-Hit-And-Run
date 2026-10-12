@@ -2,6 +2,12 @@
 
 Registrados a partir de los últimos playtests del usuario. Los ajustes de código indicados abajo están preparados en Rojo; **falta verificar el comportamiento en Studio y publicado antes de darlos por cerrados**.
 
+## Slide
+
+- **Preparado, por probar:** mientras se corre, Ctrl izquierdo o C inicia un slide que consume 12 de stamina. La velocidad disminuye en plano y puede mantenerse/aumentar en bajada mientras continúe la pendiente. Espacio o la misma tecla lo interrumpe cuando existe espacio para levantarse.
+- **Preparado, por probar:** la animación `81512224938575` se congela al 50 % durante el deslizamiento y reproduce el resto al terminar. En el servidor se sustituyen temporalmente las colisiones del cuerpo por un collider invisible bajo; si hay techo bajo, el jugador continúa deslizándose lentamente hasta poder levantarse. La comprobación de golpe del Chaser sigue siendo por distancia, de modo que el slide no da inmunidad al bate.
+- Probar en Studio con dos jugadores y avatares R6/R15: inicio solo al correr, túnel bajo, descenso inclinado, salto/parkour/ataque bloqueados durante el slide, agotamiento de stamina, muerte/respawn y limpieza de la colisión al terminar. La física y la altura visual dependen de la pose del asset y necesitan playtest real.
+
 ## Escalada
 
 - **Preparado, por probar:** conservar el estado en subidas largas y entre piezas contiguas; comprobar `Drop Off` / `NoEscalando` al soltar o llegar al extremo.

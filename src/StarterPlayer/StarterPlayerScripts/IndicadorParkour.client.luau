@@ -141,7 +141,8 @@ RunService.Heartbeat:Connect(function(dt)
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if not disponible or not humanoide or not root or humanoide.Health <= 0
 		or humanoide:GetAttribute("Inmovilizado") or humanoide:GetAttribute("FallStunned")
-		or humanoide:GetAttribute("ParkourEspecialActivo") then
+		or humanoide:GetAttribute("ParkourEspecialActivo")
+		or humanoide:GetAttribute("Sliding") then
 		panel.Visible = false
 		return
 	end

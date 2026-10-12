@@ -177,7 +177,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	local tool = getEquippedTool()
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if tool and humanoid and humanoid.Health > 0 then
+	if tool and humanoid and humanoid.Health > 0 and not humanoid:GetAttribute("Sliding") then
 		savedWalkSpeed = humanoid.WalkSpeed
 		returning = false
 		isAiming = true -- RF01

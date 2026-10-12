@@ -1,12 +1,73 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local StaminaService = require(script.Parent:WaitForChild("StaminaService"))
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
 local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
+local slides = {}
+
+local function liberarSlide(jugador)
+	local estado = slides[jugador]
+	if not estado then return end
+	slides[jugador] = nil
+	StaminaService.EndSlide(jugador)
+	if estado.collider then estado.collider:Destroy() end
+	for parte, canCollide in pairs(estado.colisiones) do
+		if parte.Parent then parte.CanCollide = canCollide end
+	end
+	if estado.humanoide.Parent then estado.humanoide:SetAttribute("Sliding", false) end
+end
+
+local function puedeLevantarse(estado)
+	local root = estado.root
+	if not root.Parent then return true end
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = { estado.character }
+	rayParams.RespectCanCollide = true
+	local ground = Workspace:Raycast(root.Position, Vector3.new(0, -8, 0), rayParams)
+	if not ground then return true end
+	local desdeSuelo = Vector3.new(root.Position.X, ground.Position.Y + 1.2, root.Position.Z)
+	local techo = Workspace:Raycast(desdeSuelo, Vector3.new(0, 4.6, 0), rayParams)
+	if techo and techo.Instance.CanCollide then return false end
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { estado.character }
+	local caja = CFrame.new(root.Position.X, ground.Position.Y + 3, root.Position.Z) * root.CFrame.Rotation
+	for _, parte in ipairs(Workspace:GetPartBoundsInBox(caja, Vector3.new(2.2, 5.4, 2.2), params)) do
+		if parte.CanCollide then return false end
+	end
+	return true
+end
+
+local function crearColliderSlide(character, root)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	params.RespectCanCollide = true
+	local suelo = Workspace:Raycast(root.Position, Vector3.new(0, -8, 0), params)
+	local distancia = suelo and suelo.Distance or 3
+	local collider = Instance.new("Part")
+	collider.Name = "SlideCollider"
+	collider.Size = Vector3.new(2, 1.2, 2)
+	collider.Transparency = 1
+	collider.CanCollide = true
+	collider.CanTouch = false
+	collider.CanQuery = false
+	collider.Massless = true
+	collider.CollisionGroup = root.CollisionGroup
+	collider.CFrame = root.CFrame * CFrame.new(0, -math.max(0.8, distancia - 0.7), 0)
+	collider.Parent = character
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = collider
+	weld.Parent = collider
+	return collider
+end
 
 local nombres = { Ventana = "PuntoSalto", Estrecho = "PuntoEntrada" }
 local function distanciaParte(parte, posicion)
@@ -43,16 +104,49 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		if humanoide then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false) end
 		return true
 	end
+	if accion == "SlideEnd" then
+		local estado = slides[jugador]
+		if not estado then return true end
+		if not puedeLevantarse(estado) then return false end
+		liberarSlide(jugador)
+		return true
+	end
 	if not (Workspace:GetAttribute("RondaEnJuego") or Workspace:GetAttribute("LobbyPractica")) then return nil end
 	if not root or not humanoide or humanoide.Health <= 0
 		or humanoide:GetAttribute("Inmovilizado") or humanoide:GetAttribute("FallStunned") then return nil end
+	if accion == "SlideStart" then
+		if slides[jugador] or humanoide:GetAttribute("ParkourEspecialActivo")
+			or humanoide:GetAttribute("EscaladaActiva") or humanoide:GetAttribute("Sliding")
+			or humanoide:GetAttribute("GolpeActivo") or humanoide:GetAttribute("AttackRecovery")
+			or humanoide.FloorMaterial == Enum.Material.Air
+			or not StaminaService.BeginSlide(jugador, root) then return nil end
+		local colisiones = {}
+		for _, parte in ipairs(character:GetDescendants()) do
+			if parte:IsA("BasePart") then
+				colisiones[parte] = parte.CanCollide
+				parte.CanCollide = false
+			end
+		end
+		local collider = crearColliderSlide(character, root)
+		slides[jugador] = {
+			character = character,
+			humanoide = humanoide,
+			root = root,
+			collider = collider,
+			colisiones = colisiones,
+		}
+		humanoide:SetAttribute("Sliding", true)
+		return true
+	end
 	if accion == "Salto" then
 		if not tocaSuelo(character, root, humanoide)
 			or humanoide:GetAttribute("ParkourEspecialActivo")
-			or humanoide:GetAttribute("EscaladaActiva") then return nil end
+			or humanoide:GetAttribute("EscaladaActiva")
+			or humanoide:GetAttribute("Sliding") then return nil end
 		return StaminaService.Consume(jugador, accion)
 	end
 	if accion == "Escalada" then
+		if humanoide:GetAttribute("Sliding") then return nil end
 		if typeof(origen) ~= "Instance" or not Climbables.IsClimbable(origen) or not origen:IsDescendantOf(Workspace)
 			or distanciaParte(origen, root.Position) > 5.5 then return nil end
 		local factor = StaminaService.BeginClimb(jugador, root, not origen:IsA("TrussPart"))
@@ -65,6 +159,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		return factor
 	end
 	local prefijo = nombres[accion]
+	if humanoide:GetAttribute("Sliding") then return nil end
 	if not prefijo or typeof(origen) ~= "Instance" or typeof(destino) ~= "Instance"
 		or not origen:IsA("BasePart") or not destino:IsA("BasePart")
 		or not origen:IsDescendantOf(Workspace) or not destino:IsDescendantOf(Workspace)
@@ -82,6 +177,7 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 end
 
 local function prepararJugador(jugador)
+	jugador.CharacterRemoving:Connect(function() liberarSlide(jugador) end)
 	jugador.CharacterAdded:Connect(function(character)
 		local humanoide = character:WaitForChild("Humanoid")
 		humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
@@ -91,5 +187,20 @@ local function prepararJugador(jugador)
 		if humanoide then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false) end
 	end
 end
+Players.PlayerRemoving:Connect(liberarSlide)
+RunService.Heartbeat:Connect(function()
+	for jugador, estado in pairs(slides) do
+		if jugador.Parent ~= Players or jugador.Character ~= estado.character
+			or estado.humanoide.Health <= 0 or estado.humanoide:GetAttribute("FallStunned")
+			or estado.humanoide:GetAttribute("Inmovilizado")
+			or not (Workspace:GetAttribute("RondaEnJuego") or Workspace:GetAttribute("LobbyPractica")) then
+			liberarSlide(jugador)
+		else
+			for parte in pairs(estado.colisiones) do
+				if parte.Parent and parte.CanCollide then parte.CanCollide = false end
+			end
+		end
+	end
+end)
 Players.PlayerAdded:Connect(prepararJugador)
 for _, jugador in ipairs(Players:GetPlayers()) do prepararJugador(jugador) end

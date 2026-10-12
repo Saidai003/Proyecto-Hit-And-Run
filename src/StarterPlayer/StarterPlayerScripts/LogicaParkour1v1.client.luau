@@ -711,6 +711,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 	if not obtenerPersonaje() then
 		return
 	end
+	if humanoide:GetAttribute("Sliding") then return end
 	if escaladaActiva then
 		alternarEscalada()
 		return

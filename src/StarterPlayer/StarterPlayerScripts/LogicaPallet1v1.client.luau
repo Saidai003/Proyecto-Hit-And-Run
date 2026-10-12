@@ -161,7 +161,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 
 		if not root or not humanoid or humanoid.Health <= 0 then return end
 		if humanoid:GetAttribute("Inmovilizado") or humanoid:GetAttribute("ParkourEspecialActivo")
-			or humanoid:GetAttribute("EscaladaActiva") then return end
+			or humanoid:GetAttribute("EscaladaActiva") or humanoid:GetAttribute("Sliding") then return end
 
 		local rol = jugadorLocal:GetAttribute("Rol")
 		local pale = obtenerPaleCercano(root.Position)

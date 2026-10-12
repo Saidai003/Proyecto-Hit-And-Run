@@ -703,7 +703,8 @@ local function atacar(jugador, requestId)
 
 	if humanoideAtacante
 		and (humanoideAtacante:GetAttribute("Inmovilizado")
-			or humanoideAtacante:GetAttribute("FallStunned")) then
+			or humanoideAtacante:GetAttribute("FallStunned")
+			or humanoideAtacante:GetAttribute("Sliding")) then
 
 		return
 	end

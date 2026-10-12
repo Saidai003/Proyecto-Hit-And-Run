@@ -316,7 +316,7 @@ local function iniciarGolpe()
 	end
 
 	-- No golpear en medio de una acciÃ³n de parkour
-	if humanoide:GetAttribute("ParkourEspecialActivo") then
+	if humanoide:GetAttribute("ParkourEspecialActivo") or humanoide:GetAttribute("Sliding") then
 		return
 	end
 
@@ -348,7 +348,8 @@ local function iniciarGolpe()
 		if bloqueado
 			or not humanoide
 			or humanoide.Health <= 0
-			or humanoide:GetAttribute("ParkourEspecialActivo") then
+			or humanoide:GetAttribute("ParkourEspecialActivo")
+			or humanoide:GetAttribute("Sliding") then
 
 			cancelarGolpe()
 			return

@@ -162,6 +162,7 @@ local function activarSprint()
 	if movimientoBloqueado then
 		return
 	end
+	if humanoide and humanoide:GetAttribute("Sliding") then return end
 
 	if stamina < 15 then
 		return
@@ -209,6 +210,7 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 		activarSprint()
 	elseif input.KeyCode == Enum.KeyCode.Space then
 		if movimientoBloqueado or not humanoide or humanoide.Health <= 0
+			or humanoide:GetAttribute("Sliding")
 			or humanoide.FloorMaterial == Enum.Material.Air
 			or humanoide:GetAttribute("ParkourEspecialActivo")
 			or humanoide:GetAttribute("EscaladaActiva")
@@ -256,6 +258,9 @@ RunService.Heartbeat:Connect(function(deltaTime)
 	-- STAMINA
 
 	stamina = jugadorLocal:GetAttribute("Stamina") or stamina
+	if humanoide:GetAttribute("Sliding") and sprintActivo then
+		desactivarSprint(false)
+	end
 	if sprintActivo and stamina <= 0 then
 		desactivarSprint(false)
 	end
@@ -264,6 +269,7 @@ RunService.Heartbeat:Connect(function(deltaTime)
 	-- VELOCIDAD
 
 	if not humanoide:GetAttribute("ParkourEspecialActivo")
+		and not humanoide:GetAttribute("Sliding")
 		and not humanoide:GetAttribute("Inmovilizado")
 		and not humanoide:GetAttribute("FallStunned") then
 		local velocidad = sprintActivo and velocidadSprint or velocidadBase
