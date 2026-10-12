@@ -10,9 +10,9 @@ local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local SLIDE_ANIMATION = "rbxassetid://81512224938575"
 local MAX_SPEED = 36
 local INITIAL_SPEED_MULTIPLIER = 1.25
-local FLAT_FRICTION = 17
-local SLOPE_ACCELERATION = 36
-local STOP_SPEED = 18
+local FLAT_FRICTION = 20
+local SLOPE_ACCELERATION = 60
+local STOP_SPEED = 6
 local STALL_RATIO = 0.45
 
 local animation = Instance.new("Animation")
@@ -307,10 +307,12 @@ RunService.Heartbeat:Connect(function(dt)
 	else
 		stalledFor = 0
 	end
-	local wall = obstacleAhead(math.max(1.2, speed * dt * 2 + 0.4))
+	local wall = obstacleAhead(math.max(0.65, speed * dt + 0.3))
 	if wall or speed <= STOP_SPEED or stalledFor > 0.12 or airborne > 0.3 then
 		clearMotion()
-		stopMomentum()
+		-- Only a wall needs an emergency stop. Ordinary deceleration should keep
+		-- its remaining velocity so standing up does not look like a hard brake.
+		if wall then stopMomentum() end
 		if finish(false) then return end
 		-- A low ceiling may prevent standing. Let the player crawl out without slide force.
 		lowClearance = true
