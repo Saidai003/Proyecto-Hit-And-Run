@@ -226,6 +226,28 @@ local function transportarJugadores()
 	prepararJugador(jugador1)
 	prepararJugador(jugador2)
 
+	-- Con streaming activo, pedimos ambas regiones antes de cambiar el
+	-- CFrame. Esto reduce paredes/suelos que aparecen tarde al iniciar ronda.
+	local pendientes = 2
+	for _, destino in ipairs({
+		{ jugador = jugador1, posicion = RoundSpawn1.Position },
+		{ jugador = jugador2, posicion = RoundSpawn2.Position },
+	}) do
+		task.spawn(function()
+			local ok, mensaje = pcall(function()
+				destino.jugador:RequestStreamAroundAsync(destino.posicion, 2)
+			end)
+			if not ok then
+				warn("[Streaming] No se pudo precargar el spawn de ", destino.jugador.Name, ": ", mensaje)
+			end
+			pendientes -= 1
+		end)
+	end
+	local limiteStreaming = os.clock() + 2.2
+	while pendientes > 0 and os.clock() < limiteStreaming do
+		task.wait()
+	end
+
 	local hrp1 = obtenerHRP(jugador1)
 	local hrp2 = obtenerHRP(jugador2)
 
