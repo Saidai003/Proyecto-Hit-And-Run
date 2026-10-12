@@ -132,12 +132,11 @@ local function cargarAnimacionSprint()
 	end
 
 	trackSprint = resultado
-	-- La pista ya se cargaba y Roblox informaba IsPlaying, pero visualmente
-	-- quedaba mezclada debajo de otras pistas del personaje. Las exclusiones
-	-- de puedeReproducirAnimacionSprint detienen el sprint antes de ataque,
-	-- parkour, pale o slide, por lo que podemos darle la prioridad maxima sin
-	-- tapar esas acciones.
-	trackSprint.Priority = Enum.AnimationPriority.Action4
+	-- Action2 gana sobre las pistas predeterminadas de caminar/correr y
+	-- permanece por debajo del ataque (Action3) y parkour/pallets (Action4).
+	-- No elevarla a Action4: este asset carga, pero sobre el avatar R15 actual
+	-- aplica una pose neutra en vez de movimiento y deja al jugador rigido.
+	trackSprint.Priority = Enum.AnimationPriority.Action2
 	trackSprint.Looped = true
 	avisoReproduccionSprint = false
 
@@ -203,22 +202,8 @@ local function actualizarAnimacionSprint()
 	end
 
 	if not trackSprint.IsPlaying then
-		-- Una pista Action2/3/4 que haya quedado detenida en pose puede mantener
-		-- peso sobre el rig aunque la accion que la creo ya haya terminado.
-		-- Solo retiramos esas pistas al comenzar un sprint valido; las pistas
-		-- normales de locomocion (Movement) pueden seguir mezclando las partes
-		-- que esta animacion no modifica.
-		local animator = humanoide:FindFirstChildOfClass("Animator")
-		if animator then
-			for _, pista in ipairs(animator:GetPlayingAnimationTracks()) do
-				if pista ~= trackSprint
-					and pista.Priority.Value >= Enum.AnimationPriority.Action2.Value then
-					pista:Stop(0.08)
-				end
-			end
-		end
-		trackSprint:Play(0.08, 1, 1)
-		trackSprint:AdjustWeight(1, 0)
+		trackSprint:Play(0.1, 1, 1)
+		trackSprint:AdjustWeight(1, 0.08)
 		if not avisoReproduccionSprint then
 			avisoReproduccionSprint = true
 			print("[SPRINT] Reproduciendo animacion de sprint")
