@@ -130,6 +130,10 @@ local function finish(force)
 		humanoid.AutoRotate = originalAutoRotate
 		humanoid.CameraOffset = originalCameraOffset
 		humanoid.WalkSpeed = player:GetAttribute("Rol") == "PERSEGUIDOR" and 18 or 16
+		if humanoid.Health > 0 and humanoid:GetState() == Enum.HumanoidStateType.Physics then
+			humanoid:ChangeState(groundForSlide() and Enum.HumanoidStateType.Running
+				or Enum.HumanoidStateType.Freefall)
+		end
 	end
 	local finishedAnimate = animateScript
 	local finishedAnimateWasEnabled = animateWasEnabled
@@ -221,6 +225,7 @@ local function start()
 	humanoid.CameraOffset = originalCameraOffset + Vector3.new(0, -1.2, 0)
 	humanoid:SetAttribute("Sliding", true)
 	humanoid.WalkSpeed = 0
+	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 	if animateScript and animateScript:IsA("LocalScript") then
 		animateWasEnabled = animateScript.Enabled
 		animateScript.Enabled = false
@@ -336,6 +341,9 @@ RunService.Heartbeat:Connect(function(dt)
 		-- A low ceiling may prevent standing. Let the player crawl out without slide force.
 		lowClearance = true
 		humanoid.WalkSpeed = 5
+		if humanoid:GetState() == Enum.HumanoidStateType.Physics then
+			humanoid:ChangeState(Enum.HumanoidStateType.Running)
+		end
 		return
 	end
 	if motionVelocity then
