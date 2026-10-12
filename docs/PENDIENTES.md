@@ -14,7 +14,7 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 ## Escalada
 
 - **Preparado, por probar:** conservar el estado en subidas largas y entre piezas contiguas; comprobar `Drop Off` / `NoEscalando` al soltar o llegar al extremo.
-- **Preparado, por probar:** aceptar `TrussPart` y piezas `BasePart` marcadas con el atributo booleano o etiqueta `Escalable`, el atributo String `climbable` = `"true"` (también `"climbable"`/`"yes"`) o la etiqueta `climbable`. Las piezas normales marcadas reciben locomoción vertical personalizada (W/S), con cobro de stamina por distancia. Probar en Studio con una pared lisa, una escalera hecha de Parts, ambos roles y los extremos superior/inferior; verificar el descenso y `Drop Off`.
+- **Preparado, por probar:** aceptar `TrussPart` automáticamente y cualquier otra `BasePart` únicamente cuando tenga el atributo booleano exacto `climbable = true`. Strings, otras capitalizaciones y tags ya no cuentan como configuración válida. Las piezas marcadas reciben locomoción vertical personalizada (W/S), con cobro de stamina por distancia. Probar en Studio con una pared lisa, una escalera hecha de Parts, ambos roles y los extremos superior/inferior; verificar el descenso y `Drop Off`.
 - **Preparado, por probar:** cobrar 5 puntos de stamina por stud vertical recorrido al subir o bajar, sin tarifa inicial; a cero, soltar la escalada. Comprobar que no se cobre por caídas ajenas a la escalada.
 
 ## Salto con Espacio

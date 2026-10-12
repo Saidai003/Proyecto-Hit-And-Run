@@ -6,7 +6,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SolicitarParkour = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
-local CollectionService = game:GetService("CollectionService")
 
 local jugadorLocal = Players.LocalPlayer
 
@@ -571,13 +570,6 @@ end
 for _, objeto in ipairs(workspace:GetDescendants()) do registrarEscalable(objeto) end
 workspace.DescendantAdded:Connect(registrarEscalable)
 workspace.DescendantRemoving:Connect(function(objeto) escalables[objeto] = nil end)
-for _, tag in ipairs({ "Escalable", "climbable", "Climbable" }) do
-	CollectionService:GetInstanceAddedSignal(tag):Connect(registrarEscalable)
-	CollectionService:GetInstanceRemovedSignal(tag):Connect(function(objeto)
-		if not Climbables.IsClimbable(objeto) then escalables[objeto] = nil end
-	end)
-end
-
 local function escalableCercano(limite)
 	local mejor, distancia = nil, 5.5
 	if limite then distancia = limite end

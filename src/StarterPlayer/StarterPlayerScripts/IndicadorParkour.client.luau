@@ -4,7 +4,6 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
-local CollectionService = game:GetService("CollectionService")
 
 local jugador = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -76,13 +75,6 @@ end
 for _, objeto in ipairs(Workspace:GetDescendants()) do registrar(objeto) end
 Workspace.DescendantAdded:Connect(registrar)
 Workspace.DescendantRemoving:Connect(function(objeto) candidatos[objeto] = nil end)
-for _, tag in ipairs({ "Escalable", "climbable", "Climbable" }) do
-	CollectionService:GetInstanceAddedSignal(tag):Connect(registrar)
-	CollectionService:GetInstanceRemovedSignal(tag):Connect(function(objeto)
-		if not Climbables.IsClimbable(objeto) then candidatos[objeto] = nil end
-	end)
-end
-
 local function elegirAccion(posicion, rol, humanoide)
 	if humanoide:GetAttribute("EscaladaEstado") == "Escalando" then return "Drop Off" end
 	local paleMasCercano, distanciaPale = nil, 6.5
