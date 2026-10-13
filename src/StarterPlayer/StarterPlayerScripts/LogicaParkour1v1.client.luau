@@ -326,8 +326,11 @@ local function aproximarseAlPunto(punto)
 	local limite = os.clock() + math.max(1, distancia / math.max(humanoideAproximacion.WalkSpeed, 1) + 1)
 	local nombreControl = "ParkourApproach1v1"
 	-- Default player controls overwrite MoveTo while a movement key is held.
-	-- Apply the walk direction after those controls, without changing WalkSpeed.
-	RunService:BindToRenderStep(nombreControl, Enum.RenderPriority.Character.Value + 1, function()
+	-- Apply the walk direction at the end of the frame, without changing
+	-- WalkSpeed. Character + 1 was still early enough to be overwritten in
+	-- some approach angles while W/Shift remained held.
+	RunService:UnbindFromRenderStep(nombreControl)
+	RunService:BindToRenderStep(nombreControl, Enum.RenderPriority.Last.Value, function()
 		if not humanoideAproximacion.Parent or not rootAproximacion.Parent then return end
 		local diferencia = objetivo - Vector3.new(rootAproximacion.Position.X, objetivo.Y, rootAproximacion.Position.Z)
 		humanoideAproximacion:Move(diferencia.Magnitude > DISTANCIA_INICIO_ANIMACION

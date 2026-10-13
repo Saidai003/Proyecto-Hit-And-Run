@@ -118,13 +118,9 @@ local function obtenerPuntosDelPale(contenedor, posicionJugador)
 	end
 end
 
--- Aproxima al personaje al Punto mÃ¡s cercano del pale con
--- un tween, conservando la altura actual del root. Al
--- terminar, lo reorienta para mirar hacia el Punto
--- opuesto. Misma mecÃ¡nica que aproximarseAlPunto en
--- LogicaParkour1v1, aplicada al salto de pale para que no
--- sea un movimiento brusco cuando se pulsa clic derecho lejos del
--- Punto exacto.
+-- Aproxima al personaje al Punto mas cercano del pale caminando a su
+-- velocidad actual. La direccion se aplica al final del frame para que W o
+-- Shift mantenidos no reemplacen la aproximacion y dejen el salto en cola.
 local function aproximarseAlPuntoDelPale(puntoCercano)
 	local character = jugadorLocal.Character
 	if not character then return false end
@@ -148,17 +144,30 @@ local function aproximarseAlPuntoDelPale(puntoCercano)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return false end
 	local limite = os.clock() + math.max(1, distancia / math.max(humanoid.WalkSpeed, 1) + 1)
-	while os.clock() < limite and root.Parent and humanoid.Parent do
+	local nombreControl = "PalletApproach1v1"
+	RunService:UnbindFromRenderStep(nombreControl)
+	RunService:BindToRenderStep(nombreControl, Enum.RenderPriority.Last.Value, function()
+		if not root.Parent or not humanoid.Parent then return end
+		local diferencia = posicionObjetivo
+			- Vector3.new(root.Position.X, posicionObjetivo.Y, root.Position.Z)
+		humanoid:Move(diferencia.Magnitude > DISTANCIA_INICIO_ANIMACION
+			and diferencia.Unit or Vector3.zero, false)
+	end)
+
+	local llego = false
+	while os.clock() < limite and root.Parent and humanoid.Parent
+		and jugadorLocal.Character == character do
 		local restante = (Vector3.new(root.Position.X, posicionObjetivo.Y, root.Position.Z) - posicionObjetivo).Magnitude
 		if restante <= DISTANCIA_INICIO_ANIMACION then
-			humanoid:MoveTo(root.Position)
-			return true
+			llego = true
+			break
 		end
-		humanoid:MoveTo(posicionObjetivo)
 		RunService.Heartbeat:Wait()
 	end
-	humanoid:MoveTo(root.Position)
-	return false
+
+	RunService:UnbindFromRenderStep(nombreControl)
+	if humanoid.Parent then humanoid:Move(Vector3.zero, false) end
+	return llego
 end
 
 --==================================================
