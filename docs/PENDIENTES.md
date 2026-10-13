@@ -13,8 +13,9 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Escalada
 
+- **Corrección preparada, por probar (2026-10-13):** la escalada reconoce el atributo booleano oficial `Climbable = true` con C mayúscula tanto en una `BasePart` como en el `Model` que contiene sus piezas. Los atributos distinguen mayúsculas/minúsculas; se mantiene compatibilidad temporal con el antiguo `climbable` en minúscula. Los `TrussPart` continúan siendo escalables automáticamente.
 - **Preparado, por probar:** conservar el estado en subidas largas y entre piezas contiguas; comprobar `Drop Off` / `NoEscalando` al soltar o llegar al extremo.
-- **Preparado, por probar:** aceptar `TrussPart` automáticamente y cualquier otra `BasePart` únicamente cuando tenga el atributo booleano exacto `climbable = true`. Strings, otras capitalizaciones y tags ya no cuentan como configuración válida. Las piezas marcadas reciben locomoción vertical personalizada (W/S), con cobro de stamina por distancia. Probar en Studio con una pared lisa, una escalera hecha de Parts, ambos roles y los extremos superior/inferior; verificar el descenso y `Drop Off`.
+- **Preparado, por probar:** aceptar `TrussPart` automáticamente y cualquier otra `BasePart` marcada directamente o mediante su `Model` con `Climbable = true`. El valor debe ser booleano; strings y tags no cuentan como configuración válida. Las piezas marcadas reciben locomoción vertical personalizada (W/S), con cobro de stamina por distancia. Probar en Studio con una pared lisa, una escalera hecha de Parts, ambos roles y los extremos superior/inferior; verificar el descenso y `Drop Off`.
 - **Preparado, por probar:** cobrar 5 puntos de stamina por stud vertical recorrido al subir o bajar, sin tarifa inicial; a cero, soltar la escalada. Comprobar que no se cobre por caídas ajenas a la escalada.
 
 ## Salto con Espacio
