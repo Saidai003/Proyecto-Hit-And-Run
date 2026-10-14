@@ -18,6 +18,14 @@ Antes de la primera sincronización, guarda una copia del Place actual.
 Para reiniciar el servidor desde esta carpeta: `rojo serve default.project.json`.
 Para comprobar la estructura: `rojo build default.project.json --output check.rbxlx`.
 
+**Importante:** el mapa se guarda en el Place de Studio, no en el árbol de
+archivos de Rojo. `default.project.json` usa `$ignoreUnknownInstances: true`
+en `Workspace` y los servicios parcialmente gestionados; no cambiarlo a
+`false`, pues Rojo eliminaría los objetos del Place que no existen en disco.
+Antes de conectar Rojo a un Place nuevo, guardar una copia `.rbxl` desde
+Studio. Un `.rbxlx` creado con `rojo build` contiene solamente lo modelado en
+Rojo y **no** es un respaldo completo del mapa.
+
 Los nueve sprites de `Sprites/` se subieron como decals a la biblioteca del propietario.
 Sus IDs están en `tools/sprite-ids.json` y en
 `src/ReplicatedStorage/MobileSpriteCatalog.luau`. Los controles móviles se

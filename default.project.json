@@ -3,10 +3,10 @@
   "servePort": 34872,
   "tree": {
     "$className": "DataModel",
-    "$ignoreUnknownInstances": false,
+    "$ignoreUnknownInstances": true,
     "Workspace": {
       "$className": "Workspace",
-      "$ignoreUnknownInstances": false,
+      "$ignoreUnknownInstances": true,
       "$properties": {
         "StreamingEnabled": true,
         "StreamingMinRadius": 64,
@@ -18,7 +18,7 @@
     },
     "ReplicatedStorage": {
       "$path": "src/ReplicatedStorage",
-      "$ignoreUnknownInstances": false,
+      "$ignoreUnknownInstances": true,
       "EventoJuego": { "$className": "RemoteEvent" },
       "EventoCountdown": { "$className": "BindableEvent" },
       "EventoAtaque": { "$className": "RemoteEvent" },
@@ -31,13 +31,13 @@
     },
     "ServerScriptService": {
       "$path": "src/ServerScriptService",
-      "$ignoreUnknownInstances": false
+      "$ignoreUnknownInstances": true
     },
     "StarterPlayer": {
-      "$ignoreUnknownInstances": false,
+      "$ignoreUnknownInstances": true,
       "StarterPlayerScripts": {
         "$path": "src/StarterPlayer/StarterPlayerScripts",
-        "$ignoreUnknownInstances": false
+        "$ignoreUnknownInstances": true
       }
     }
   }

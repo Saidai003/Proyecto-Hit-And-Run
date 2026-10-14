@@ -2,6 +2,13 @@
 
 Registrados a partir de los últimos playtests del usuario. Los ajustes de código indicados abajo están preparados en Rojo; **falta verificar el comportamiento en Studio y publicado antes de darlos por cerrados**.
 
+## Seguridad de Rojo y mapa (incidente 2026-10-13)
+
+- La configuración antigua tenía `$ignoreUnknownInstances: false` en `Workspace`, aunque el mapa vive exclusivamente en el Place. Al sincronizar, Rojo eliminó el mapa de la sesión de edición. Se detuvo Rojo y el usuario recuperó visualmente el mapa con **Ctrl+Z**, sin publicar la versión vacía.
+- `default.project.json` quedó corregido con `$ignoreUnknownInstances: true` en el árbol parcialmente gestionado. No volver a usar `false` mientras el mapa y otros objetos existan solamente en Studio.
+- Antes de reconectar, conservar una copia `.rbxl` reciente desde Studio y verificar visualmente el mapa. Hay además una copia local del servidor de prueba del 12 de octubre en `Backup_DO_NOT_TOUCH/server-2026-10-12-preserved.rbxl`; es un respaldo secundario, no sustituye el Place recuperado de hoy.
+- Tras reconectar Rojo, comprobar en modo edición que siguen el mapa, `RoundSpawn1` y `RoundSpawn2` **antes de guardar o publicar**. Si desaparecen, desconectar y usar Ctrl+Z una sola vez; no publicar. El archivo de `rojo build` no incluye el mapa.
+
 ## Slide
 
 - **Preparado, por probar:** mientras se corre, Ctrl izquierdo o C inicia un slide que consume 12 de stamina. Comienza al 125 % de la velocidad de sprint, frena gradualmente en plano durante alrededor de 1,5–2 segundos y termina al perder impulso, sin anular de golpe la velocidad restante. Ahora puede iniciarse con suelo inclinado cercano aunque `FloorMaterial` fluctúe; en bajada el impulso puede mantenerse/aumentar. Espacio o la misma tecla lo interrumpe cuando existe espacio para levantarse.
