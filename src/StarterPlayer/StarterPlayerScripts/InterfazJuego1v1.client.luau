@@ -496,7 +496,7 @@ local guideCards = {
 
 if UserInputService.TouchEnabled then
 	for _, cards in pairs(guideCards) do
-		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run. Tap Jump to leap. The action button changes near windows, pallets and climbable surfaces; while sprinting it becomes Slide, and with a throwable equipped it becomes Throw. As Chaser, the generic action button attacks." })
+		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run. Tap Jump to leap. The action button changes near windows, pallets and climbable surfaces; while sprinting it becomes Slide. Equipping a throwable shows a separate Throw button: hold to aim, release to throw. As Chaser, the generic action button attacks." })
 	end
 end
 

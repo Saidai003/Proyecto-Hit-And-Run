@@ -14,20 +14,39 @@ local sprites = require(ReplicatedStorage:WaitForChild("MobileSpriteCatalog"))
 local gui = Instance.new("ScreenGui")
 gui.Name = "HitAndRunMobileControls"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.DisplayOrder = 9
+gui.DisplayOrder = 11
 gui.Parent = playerGui
 
-local function makeButton(name, image, xOffset, yOffset, size)
+local labels = {
+	SprintButton = "SPRINT",
+	JumpButton = "JUMP",
+	AnyOtherActionButton = "ACTION",
+	DropPalletButton = "DROP",
+	BreakPalletButton = "BREAK",
+	ClimbButton = "CLIMB",
+	VaultButton = "VAULT",
+	SlideButton = "SLIDE",
+	ThrowSomethingButton = "THROW",
+}
+
+local function setSprite(button, mode)
+	button.Image = sprites[mode] or ""
+	button.Fallback.Text = labels[mode] or "ACTION"
+	button.Fallback.Visible = not button.IsLoaded
+end
+
+local function makeButton(name, mode, xOffset, yOffset, size)
 	local button = Instance.new("ImageButton")
 	button.Name = name
 	button.AnchorPoint = Vector2.new(1, 1)
 	button.Position = UDim2.new(1, xOffset, 1, yOffset)
 	button.Size = UDim2.fromOffset(size, size)
-	button.BackgroundTransparency = 1
-	button.Image = image
-	button.ImageRectOffset = Vector2.new(300, 300)
-	button.ImageRectSize = Vector2.new(1448, 1448)
+	button.BackgroundColor3 = Color3.fromRGB(25, 32, 42)
+	button.BackgroundTransparency = 0.12
+	-- Estos JPG son imagenes completas, no spritesheets. Recortar por pixeles
+	-- ocultaba el arte cuando Roblox entregaba una textura reducida.
+	button.ImageRectOffset = Vector2.zero
+	button.ImageRectSize = Vector2.zero
 	button.ScaleType = Enum.ScaleType.Stretch
 	button.AutoButtonColor = false
 	button.ZIndex = 18
@@ -37,12 +56,43 @@ local function makeButton(name, image, xOffset, yOffset, size)
 	corner.Parent = button
 	local scale = Instance.new("UIScale")
 	scale.Parent = button
+	local fallback = Instance.new("TextLabel")
+	fallback.Name = "Fallback"
+	fallback.BackgroundTransparency = 1
+	fallback.Size = UDim2.fromScale(1, 1)
+	fallback.Font = Enum.Font.GothamBold
+	fallback.TextColor3 = Color3.new(1, 1, 1)
+	fallback.TextScaled = true
+	fallback.ZIndex = 19
+	fallback.Parent = button
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 5)
+	padding.PaddingRight = UDim.new(0, 5)
+	padding.Parent = fallback
+	button:GetPropertyChangedSignal("IsLoaded"):Connect(function()
+		fallback.Visible = not button.IsLoaded
+	end)
+	setSprite(button, mode)
 	return button, scale
 end
 
-local sprintButton = makeButton("Sprint", sprites.SprintButton, -14, -152, 68)
-local jumpButton = makeButton("Jump", sprites.JumpButton, -14, -12, 68)
-local actionButton, actionScale = makeButton("Action", sprites.AnyOtherActionButton, -14, -82, 68)
+local sprintButton = makeButton("Sprint", "SprintButton", -14, -152, 68)
+local jumpButton = makeButton("Jump", "JumpButton", -14, -12, 68)
+local actionButton, actionScale = makeButton("Action", "AnyOtherActionButton", -14, -82, 68)
+local throwButton = makeButton("Throw", "ThrowSomethingButton", -92, -82, 68)
+throwButton.Visible = false
+
+task.spawn(function()
+	local mainGui = playerGui:WaitForChild("PantallaPrincipal_1v1_GUI")
+	local howTo = mainGui:WaitForChild("HowToPlayModal")
+	local results = mainGui:WaitForChild("FinalResult")
+	local function updateVisibility()
+		gui.Enabled = not howTo.Visible and not results.Visible
+	end
+	howTo:GetPropertyChangedSignal("Visible"):Connect(updateVisibility)
+	results:GetPropertyChangedSignal("Visible"):Connect(updateVisibility)
+	updateVisibility()
+end)
 
 -- Roblox's standard touch thumbstick remains in use; its duplicate jump
 -- button is hidden so the player sees exactly the three game controls.
@@ -67,6 +117,12 @@ if player.Character then task.spawn(onCharacter, player.Character) end
 
 local actionMode = "AnyOtherActionButton"
 local actionGeneration = 0
+local function equippedThrowable()
+	local character = player.Character
+	local tool = character and character:FindFirstChildOfClass("Tool")
+	return tool and tool:GetAttribute("Throwable") == true
+end
+
 local function chooseMode()
 	local parkour = player:GetAttribute("ParkourAction")
 	if parkour == "Drop Pallet" then return "DropPalletButton" end
@@ -77,8 +133,6 @@ local function chooseMode()
 	end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local tool = character and character:FindFirstChildOfClass("Tool")
-	if tool and tool:GetAttribute("Throwable") == true then return "ThrowSomethingButton" end
 	if humanoid and (humanoid:GetAttribute("Sliding")
 		or (humanoid:GetAttribute("SprintActivoLocal") and humanoid.MoveDirection.Magnitude > 0.2)) then
 		return "SlideButton"
@@ -87,6 +141,7 @@ local function chooseMode()
 end
 
 local function updateAction()
+	throwButton.Visible = equippedThrowable() == true
 	local mode = chooseMode()
 	if mode == actionMode then return end
 	actionMode = mode
@@ -95,7 +150,7 @@ local function updateAction()
 	TweenService:Create(actionScale, TweenInfo.new(0.1, Enum.EasingStyle.Quad), { Scale = 0.82 }):Play()
 	task.delay(0.1, function()
 		if generation ~= actionGeneration or not actionButton.Parent then return end
-		actionButton.Image = sprites[mode]
+		setSprite(actionButton, mode)
 		TweenService:Create(actionScale, TweenInfo.new(0.16, Enum.EasingStyle.Back), { Scale = 1.08 }):Play()
 		task.delay(0.16, function()
 			if generation ~= actionGeneration or not actionButton.Parent then return end
@@ -116,6 +171,8 @@ end
 bindTouch(sprintButton, function() input.SprintStart:Fire() end,
 	function() input.SprintEnd:Fire() end)
 bindTouch(jumpButton, function() input.Jump:Fire() end, function() end)
+bindTouch(throwButton, function() input.ThrowStart:Fire() end,
+	function() input.ThrowEnd:Fire() end)
 bindTouch(actionButton, function()
 	local mode = actionMode
 	if mode == "DropPalletButton" or mode == "BreakPalletButton"
@@ -123,14 +180,11 @@ bindTouch(actionButton, function()
 		input.Action:Fire()
 	elseif mode == "SlideButton" then
 		input.Slide:Fire()
-	elseif mode == "ThrowSomethingButton" then
-		input.ThrowStart:Fire()
 	elseif player:GetAttribute("Rol") == "PERSEGUIDOR" then
 		input.AttackStart:Fire()
 	end
 	held[actionButton].mode = mode
 end, function(mode)
-	if mode == "ThrowSomethingButton" then input.ThrowEnd:Fire() end
 	if mode == "AnyOtherActionButton" then input.AttackEnd:Fire() end
 end)
 

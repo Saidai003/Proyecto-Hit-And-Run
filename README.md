@@ -15,7 +15,21 @@ Rojo de Studio al **34872** estando abierto el Place correcto. Rojo está config
 preservar instancias no representadas por archivos (mapa, silla, bate y remotos).
 Antes de la primera sincronización, guarda una copia del Place actual.
 
-Para reiniciar el servidor desde esta carpeta: `rojo serve default.project.json`.
+Para iniciar Rojo desde cualquier ubicación, abre PowerShell y ejecuta:
+
+```powershell
+Set-Location 'C:\Users\Maxim\OneDrive\Escritorio\ProyectoRobloxPrototype'
+& '.\.tools\rojo-7.7.1\rojo.exe' serve 'default.project.json'
+```
+
+Deja abierta esa ventana mientras uses Studio. Debe indicar `localhost:34872`;
+en el plugin Rojo de Studio, conecta al proyecto `GolpearYHuirMVP` en ese puerto.
+Para detener el servidor, pulsa `Ctrl+C` en PowerShell. Conectar Rojo
+sincroniza el código con el Place abierto en Studio, pero **no publica** una
+nueva versión para los jugadores; después de comprobar el mapa y los cambios,
+publica el Place desde Studio y verifica que Version History marque la nueva
+versión como `Published`.
+
 Para comprobar la estructura: `rojo build default.project.json --output check.rbxlx`.
 
 **Importante:** el mapa se guarda en el Place de Studio, no en el árbol de
@@ -29,7 +43,10 @@ Rojo y **no** es un respaldo completo del mapa.
 Los nueve sprites de `Sprites/` se subieron como decals a la biblioteca del propietario.
 Sus IDs están en `tools/sprite-ids.json` y en
 `src/ReplicatedStorage/MobileSpriteCatalog.luau`. Los controles móviles se
-activan cuando Roblox detecta pantalla táctil: Sprint, Jump y acción contextual.
+activan cuando Roblox detecta pantalla táctil: Sprint, Jump y acción contextual;
+al equipar una Tool con `Throwable = true`, aparece además un botón Throw
+independiente (mantener para apuntar y soltar para lanzar). Los sprites se
+muestran completos, sin recorte por píxeles, con texto de respaldo si no cargan.
 Rojo sincroniza scripts e IDs con Studio, pero la versión publicada solo cambia
 después de publicar el Place desde Studio.
 Ese build no incluye el mapa ni sustituye una prueba de juego.
