@@ -787,6 +787,7 @@ local posicionesPreviasPeligro = {}
 local personajesPreviosPeligro = {}
 local avisosBajoLimite = {}
 local muestrasAlturaPeligro = {}
+local alturaLimiteGlobal = nil
 
 local function puntoInicialDe(jugador)
 	if jugador == jugador1 then return RoundSpawn1 end
@@ -911,15 +912,14 @@ local function jugadorDesdeParte(parte)
 	return character and Players:GetPlayerFromCharacter(character) or nil
 end
 
-local function aplicarPeligro(parte, jugador)
-	if parte:GetAttribute("MakesPlayersLose") ~= true
-		or not jugador or noqueosPorPeligro[jugador] then return end
+local function aplicarPeligro(jugador, origen)
+	if not jugador or noqueosPorPeligro[jugador] then return end
 
 	local esLobby = EstadoPartida == "ESPERANDO_JUGADORES"
 		and Workspace:GetAttribute("LobbyPractica") == true
 	if esLobby then
 		if noquearYRegresarAlLobby(jugador) then
-			print("[MakesPlayersLose] Lobby:", jugador.Name, parte:GetFullName())
+			print("[MakesPlayersLose] Lobby:", jugador.Name, origen)
 		end
 		return
 	end
@@ -928,7 +928,7 @@ local function aplicarPeligro(parte, jugador)
 	if jugador ~= jugador1 and jugador ~= jugador2 then return end
 	if not noquearEnPuntoInicial(jugador) then return end
 
-	print("[MakesPlayersLose] Ronda:", jugador.Name, parte:GetFullName())
+	print("[MakesPlayersLose] Ronda:", jugador.Name, origen)
 	finalizarRonda("TOUCHED_LOSS_OBJECT", jugador)
 	-- finalizarRonda libera el movimiento general antes de mostrar el
 	-- resultado; el perdedor debe conservar el bloqueo del noqueo.
@@ -938,7 +938,9 @@ end
 local function activarPeligro(parte)
 	if parte:GetAttribute("MakesPlayersLose") ~= true then return end
 	conexionesPeligro[parte] = parte.Touched:Connect(function(otraParte)
-		aplicarPeligro(parte, jugadorDesdeParte(otraParte))
+		if parte:GetAttribute("MakesPlayersLose") == true then
+			aplicarPeligro(jugadorDesdeParte(otraParte), parte:GetFullName())
+		end
 	end)
 end
 
@@ -947,6 +949,8 @@ local function registrarPeligro(objeto)
 	if objeto:GetAttribute("MakesPlayersLose") == true then
 		activarPeligro(objeto)
 		if objeto.Name == "InvisibleDeathZone" then
+			-- El limite sobrevive aunque otro script retire la pieza durante Play.
+			alturaLimiteGlobal = objeto.Position.Y + objeto.Size.Y * 0.5 + 2
 			print("[MakesPlayersLose] Limite global registrado:", objeto:GetFullName(), objeto.Position.Y)
 		end
 	end
@@ -959,6 +963,9 @@ Workspace.DescendantAdded:Connect(registrarPeligro)
 Workspace.DescendantRemoving:Connect(function(objeto)
 	local conexion = conexionesPeligro[objeto]
 	if conexion then
+		if objeto.Name == "InvisibleDeathZone" then
+			warn("[MakesPlayersLose] InvisibleDeathZone salio de Workspace; se conserva su limite de caida")
+		end
 		conexion:Disconnect()
 		conexionesPeligro[objeto] = nil
 	end
@@ -993,38 +1000,34 @@ RunService.Heartbeat:Connect(function()
 
 		if root and anterior and mismoPersonaje
 			and not noqueosPorPeligro[jugador] then
+			-- El mapa puede retirar/reemplazar la pieza después del registro.
+			-- La altura autorizada al iniciar sigue siendo el limite del juego.
+			if alturaLimiteGlobal and root.Position.Y <= alturaLimiteGlobal then
+				if avisosBajoLimite[jugador] ~= character then
+					avisosBajoLimite[jugador] = character
+					print("[MakesPlayersLose] Bajo el limite:", jugador.Name,
+						math.floor(root.Position.Y), EstadoPartida,
+						Workspace:GetAttribute("LobbyPractica"))
+				end
+				aplicarPeligro(jugador, "InvisibleDeathZone")
+			else
+				avisosBajoLimite[jugador] = nil
+			end
+
 			for parte in pairs(conexionesPeligro) do
-				if parte.Parent and parte:GetAttribute("MakesPlayersLose") == true then
-					if parte.Name == "InvisibleDeathZone" then
-						-- Es el limite inferior de todo el mapa, no solo de su
-						-- rectangulo fisico. Basta estar debajo: un paso de red o
-						-- fisica puede saltarse por completo el frame del cruce.
-						local alturaLimite = parte.Position.Y + parte.Size.Y * 0.5 + 2
-						if root.Position.Y <= alturaLimite then
-							if avisosBajoLimite[jugador] ~= character then
-								avisosBajoLimite[jugador] = character
-								print("[MakesPlayersLose] Bajo el limite:", jugador.Name,
-									math.floor(root.Position.Y), EstadoPartida,
-									Workspace:GetAttribute("LobbyPractica"))
-							end
-							aplicarPeligro(parte, jugador)
+				if parte.Parent and parte.Name ~= "InvisibleDeathZone"
+					and parte:GetAttribute("MakesPlayersLose") == true then
+					local previo = parte.CFrame:PointToObjectSpace(anterior)
+					local actual = parte.CFrame:PointToObjectSpace(root.Position)
+					local mitad = parte.Size * 0.5
+					local plano = mitad.Y + 2 -- centro del HRP sobre los pies
+					if previo.Y > plano and actual.Y <= plano then
+						local fraccion = (previo.Y - plano) / (previo.Y - actual.Y)
+						local cruce = previo:Lerp(actual, fraccion)
+						if math.abs(cruce.X) <= mitad.X + 2
+							and math.abs(cruce.Z) <= mitad.Z + 2 then
+							aplicarPeligro(jugador, parte:GetFullName())
 							break
-						else
-							avisosBajoLimite[jugador] = nil
-						end
-					else
-						local previo = parte.CFrame:PointToObjectSpace(anterior)
-						local actual = parte.CFrame:PointToObjectSpace(root.Position)
-						local mitad = parte.Size * 0.5
-						local plano = mitad.Y + 2 -- centro del HRP sobre los pies
-						if previo.Y > plano and actual.Y <= plano then
-							local fraccion = (previo.Y - plano) / (previo.Y - actual.Y)
-							local cruce = previo:Lerp(actual, fraccion)
-							if math.abs(cruce.X) <= mitad.X + 2
-								and math.abs(cruce.Z) <= mitad.Z + 2 then
-								aplicarPeligro(parte, jugador)
-								break
-							end
 						end
 					end
 				end
