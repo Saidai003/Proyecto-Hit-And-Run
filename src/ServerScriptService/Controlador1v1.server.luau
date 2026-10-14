@@ -783,6 +783,8 @@ end
 --==================================================
 
 local conexionesPeligro = {}
+local posicionesPreviasPeligro = {}
+local personajesPreviosPeligro = {}
 
 local function puntoInicialDe(jugador)
 	if jugador == jugador1 then return RoundSpawn1 end
@@ -907,31 +909,35 @@ local function jugadorDesdeParte(parte)
 	return character and Players:GetPlayerFromCharacter(character) or nil
 end
 
-local function activarPeligro(parte)
-	if parte:GetAttribute("MakesPlayersLose") ~= true then return end
+local function aplicarPeligro(parte, jugador)
+	if parte:GetAttribute("MakesPlayersLose") ~= true
+		or not jugador or noqueosPorPeligro[jugador] then return end
 
-	local function alTocar(otraParte)
-		local jugador = jugadorDesdeParte(otraParte)
-		if not jugador or noqueosPorPeligro[jugador] then return end
-
-		local esLobby = EstadoPartida == "ESPERANDO_JUGADORES"
-			and Workspace:GetAttribute("LobbyPractica") == true
-		if esLobby then
-			noquearYRegresarAlLobby(jugador)
-			return
+	local esLobby = EstadoPartida == "ESPERANDO_JUGADORES"
+		and Workspace:GetAttribute("LobbyPractica") == true
+	if esLobby then
+		if noquearYRegresarAlLobby(jugador) then
+			print("[MakesPlayersLose] Lobby:", jugador.Name, parte:GetFullName())
 		end
-
-		if EstadoPartida ~= "RONDA_ACTIVA" or not ataquesHabilitados then return end
-		if jugador ~= jugador1 and jugador ~= jugador2 then return end
-		if not noquearEnPuntoInicial(jugador) then return end
-
-		finalizarRonda("TOUCHED_LOSS_OBJECT", jugador)
-		-- finalizarRonda libera el movimiento general antes de mostrar el
-		-- resultado; el perdedor debe conservar el bloqueo del noqueo.
-		EventoJuego:FireClient(jugador, "BLOQUEAR_MOVIMIENTO")
+		return
 	end
 
-	conexionesPeligro[parte] = parte.Touched:Connect(alTocar)
+	if EstadoPartida ~= "RONDA_ACTIVA" or not ataquesHabilitados then return end
+	if jugador ~= jugador1 and jugador ~= jugador2 then return end
+	if not noquearEnPuntoInicial(jugador) then return end
+
+	print("[MakesPlayersLose] Ronda:", jugador.Name, parte:GetFullName())
+	finalizarRonda("TOUCHED_LOSS_OBJECT", jugador)
+	-- finalizarRonda libera el movimiento general antes de mostrar el
+	-- resultado; el perdedor debe conservar el bloqueo del noqueo.
+	EventoJuego:FireClient(jugador, "BLOQUEAR_MOVIMIENTO")
+end
+
+local function activarPeligro(parte)
+	if parte:GetAttribute("MakesPlayersLose") ~= true then return end
+	conexionesPeligro[parte] = parte.Touched:Connect(function(otraParte)
+		aplicarPeligro(parte, jugadorDesdeParte(otraParte))
+	end)
 end
 
 local function registrarPeligro(objeto)
@@ -951,6 +957,46 @@ Workspace.DescendantRemoving:Connect(function(objeto)
 		conexion:Disconnect()
 		conexionesPeligro[objeto] = nil
 	end
+end)
+
+-- Touched puede no dispararse cuando un personaje atraviesa una zona delgada
+-- entre dos pasos de fisica. Verificamos tambien el cruce descendente del plano
+-- superior usando la posicion anterior y actual del HumanoidRootPart.
+RunService.Heartbeat:Connect(function()
+	for _, jugador in ipairs(Players:GetPlayers()) do
+		local character = jugador.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local anterior = posicionesPreviasPeligro[jugador]
+		local mismoPersonaje = personajesPreviosPeligro[jugador] == character
+		personajesPreviosPeligro[jugador] = character
+		posicionesPreviasPeligro[jugador] = root and root.Position or nil
+
+		if root and anterior and mismoPersonaje
+			and not noqueosPorPeligro[jugador] then
+			for parte in pairs(conexionesPeligro) do
+				if parte.Parent and parte:GetAttribute("MakesPlayersLose") == true then
+					local previo = parte.CFrame:PointToObjectSpace(anterior)
+					local actual = parte.CFrame:PointToObjectSpace(root.Position)
+					local mitad = parte.Size * 0.5
+					local plano = mitad.Y + 2 -- centro del HRP sobre los pies
+					if previo.Y > plano and actual.Y <= plano then
+						local tramo = previo.Y - actual.Y
+						local fraccion = (previo.Y - plano) / tramo
+						local cruce = previo:Lerp(actual, fraccion)
+						if math.abs(cruce.X) <= mitad.X + 2
+							and math.abs(cruce.Z) <= mitad.Z + 2 then
+							aplicarPeligro(parte, jugador)
+							break
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+Players.PlayerRemoving:Connect(function(jugador)
+	posicionesPreviasPeligro[jugador] = nil
+	personajesPreviosPeligro[jugador] = nil
 end)
 
 
