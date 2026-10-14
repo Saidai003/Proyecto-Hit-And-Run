@@ -32,7 +32,9 @@ local labels = {
 local function setSprite(button, mode)
 	button.Image = sprites[mode] or ""
 	button.Fallback.Text = labels[mode] or "ACTION"
-	button.Fallback.Visible = not button.IsLoaded
+	-- IsLoaded puede seguir false aunque el arte ya se vea en un dispositivo.
+	-- Nunca superponer el texto al sprite; solo mostrarlo si falta el ID.
+	button.Fallback.Visible = button.Image == ""
 end
 
 local function makeButton(name, mode)
@@ -68,56 +70,38 @@ local function makeButton(name, mode)
 	padding.PaddingLeft = UDim.new(0, 5)
 	padding.PaddingRight = UDim.new(0, 5)
 	padding.Parent = fallback
-	button:GetPropertyChangedSignal("IsLoaded"):Connect(function()
-		fallback.Visible = not button.IsLoaded
-	end)
 	setSprite(button, mode)
 	return button, scale
 end
 
 local sprintButton = makeButton("Sprint", "SprintButton")
+local sprintLockStroke = Instance.new("UIStroke")
+sprintLockStroke.Color = Color3.fromRGB(55, 235, 112)
+sprintLockStroke.Thickness = 4
+sprintLockStroke.Enabled = false
+sprintLockStroke.Parent = sprintButton
 local jumpButton = makeButton("Jump", "JumpButton")
 local actionButton, actionScale = makeButton("Action", "AnyOtherActionButton")
 local throwButton = makeButton("Throw", "ThrowSomethingButton")
 throwButton.Visible = false
-local sprintLockButton = Instance.new("TextButton")
-sprintLockButton.Name = "SprintLock"
-sprintLockButton.AnchorPoint = Vector2.new(0.5, 0.5)
-sprintLockButton.BackgroundColor3 = Color3.fromRGB(32, 39, 48)
-sprintLockButton.BackgroundTransparency = 0.05
-sprintLockButton.BorderSizePixel = 0
-sprintLockButton.AutoButtonColor = true
-sprintLockButton.Font = Enum.Font.GothamBold
-sprintLockButton.Text = "LOCK"
-sprintLockButton.TextColor3 = Color3.new(1, 1, 1)
-sprintLockButton.TextScaled = true
-sprintLockButton.ZIndex = 20
-sprintLockButton.Parent = gui
-local lockCorner = Instance.new("UICorner")
-lockCorner.CornerRadius = UDim.new(0, 8)
-lockCorner.Parent = sprintLockButton
-local lockPadding = Instance.new("UIPadding")
-lockPadding.PaddingLeft = UDim.new(0, 3)
-lockPadding.PaddingRight = UDim.new(0, 3)
-lockPadding.Parent = sprintLockButton
 
 -- Dos filas segun el esquema: Action/Sprint arriba, Throw/Jump abajo.
 -- Throw no desplaza los otros controles al equipar o soltar una herramienta.
 local function layoutButtons()
-	local camera = workspace.CurrentCamera
-	if not camera then return end
-	local viewport = camera.ViewportSize
+	-- La cámara incluye áreas fuera del GUI seguro en algunos móviles;
+	-- posicionar con el tamaño real del ScreenGui evita controles cortados.
+	local viewport = gui.AbsoluteSize
 	local width, height = viewport.X, viewport.Y
 	if width <= 0 or height <= 0 then return end
 	local size = math.clamp(math.floor(height * 0.17 + 0.5), 56, 84)
-	local topY = height * 0.56
-	local bottomY = math.max(height * 0.70, topY + size + 10)
-	bottomY = math.min(bottomY, height - size / 2 - 24)
-	topY = math.min(topY, bottomY - size - 10)
-	local sprintX = width * 0.77
-	local jumpX = width * 0.76
-	local actionX = math.min(width * 0.67, sprintX - size - 10)
-	local throwX = math.min(width * 0.625, jumpX - size - 18)
+	local topY = height * 0.50
+	local bottomY = math.max(height * 0.67, topY + size + 14)
+	bottomY = math.min(bottomY, height - size / 2 - 58)
+	topY = math.min(topY, bottomY - size - 14)
+	local sprintX = math.min(width * 0.88, width - size / 2 - 24)
+	local jumpX = math.min(width * 0.87, width - size / 2 - 24)
+	local actionX = math.min(width * 0.78, sprintX - size - 14)
+	local throwX = math.min(width * 0.71, jumpX - size - 18)
 	for button, center in pairs({
 		[sprintButton] = Vector2.new(sprintX, topY),
 		[actionButton] = Vector2.new(actionX, topY),
@@ -127,23 +111,9 @@ local function layoutButtons()
 		button.Size = UDim2.fromOffset(size, size)
 		button.Position = UDim2.fromOffset(math.floor(center.X + 0.5), math.floor(center.Y + 0.5))
 	end
-	local lockWidth = math.clamp(math.floor(size * 0.49), 32, 42)
-	sprintLockButton.Size = UDim2.fromOffset(lockWidth, math.floor(lockWidth * 0.72))
-	sprintLockButton.Position = UDim2.fromOffset(
-		math.floor(sprintX + size * 0.68), math.floor(topY - size * 0.4))
 end
-
-local viewportConnection
-local function watchViewport()
-	if viewportConnection then viewportConnection:Disconnect() end
-	local camera = workspace.CurrentCamera
-	if camera then
-		viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(layoutButtons)
-	end
-	layoutButtons()
-end
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchViewport)
-watchViewport()
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layoutButtons)
+layoutButtons()
 
 task.spawn(function()
 	local mainGui = playerGui:WaitForChild("PantallaPrincipal_1v1_GUI")
@@ -175,9 +145,8 @@ local sprintHeld = false
 local sprintLocked = false
 local sprintAttributeConnection
 local function updateSprintLock()
-	sprintLockButton.Text = sprintLocked and "ON" or "LOCK"
-	sprintLockButton.BackgroundColor3 = sprintLocked
-		and Color3.fromRGB(34, 145, 79) or Color3.fromRGB(32, 39, 48)
+	-- El borde confirma el bloqueo sin ocupar otro boton tactil.
+	sprintLockStroke.Enabled = sprintLocked
 end
 
 local function onCharacter(character)
@@ -249,6 +218,7 @@ local function bindTouch(button, began, ended)
 		held[button] = {
 			touch = touch,
 			ended = ended,
+			startPosition = Vector2.new(touch.Position.X, touch.Position.Y),
 			lastPosition = Vector2.new(touch.Position.X, touch.Position.Y),
 		}
 		began()
@@ -269,21 +239,20 @@ local function checkLockedSprint()
 end
 
 bindTouch(sprintButton, function()
+	if sprintLocked then
+		-- Un toque posterior cancela el sprint fijo, como en COD Mobile.
+		sprintLocked = false
+		sprintHeld = false
+		updateSprintLock()
+		input.SprintEnd:Fire()
+		held[sprintButton].cancelled = true
+		return
+	end
 	sprintHeld = true
 	input.SprintStart:Fire()
 end, function()
 	sprintHeld = false
 	if not sprintLocked then input.SprintEnd:Fire() end
-end)
-sprintLockButton.Activated:Connect(function()
-	sprintLocked = not sprintLocked
-	updateSprintLock()
-	if sprintLocked then
-		input.SprintStart:Fire()
-		checkLockedSprint()
-	elseif not sprintHeld then
-		input.SprintEnd:Fire()
-	end
 end)
 bindTouch(jumpButton, function() input.Jump:Fire() end, function() end)
 bindTouch(throwButton, function() input.ThrowStart:Fire() end,
@@ -306,11 +275,20 @@ end)
 -- Un dedo puede mantener la accion y deslizarse para orientar la camara.
 -- El control de camara normal de Roblox no usa los toques capturados por UI.
 UserInputService.TouchMoved:Connect(function(touch)
-	for _, state in pairs(held) do
+	for button, state in pairs(held) do
 		if state.touch == touch then
 			local position = Vector2.new(touch.Position.X, touch.Position.Y)
 			local delta = position - state.lastPosition
 			state.lastPosition = position
+			if button == sprintButton and not state.cancelled and not sprintLocked
+				and state.startPosition.Y - position.Y >= 35
+				and math.abs(state.startPosition.X - position.X) < 65 then
+				sprintLocked = true
+				updateSprintLock()
+				checkLockedSprint()
+				break
+			end
+			if state.cancelled then break end
 			if delta.Magnitude > 0.5 then input.LookDelta:Fire(delta) end
 			break
 		end

@@ -1447,6 +1447,24 @@ while true do
 	Workspace:SetAttribute("LobbyPractica", false)
 
 	if not servidorPartida and not RunService:IsStudio() then
+		-- La cuenta para cambiar de servidor pertenece al lobby, no al inicio
+		-- de la instancia privada. Ambos jugadores ven el mismo conteo.
+		for segundos = 3, 1, -1 do
+			if not jugadoresPresentes() then break end
+			EventoMatchmaking:FireClient(jugador1, "COUNTDOWN_TELEPORT", segundos)
+			EventoMatchmaking:FireClient(jugador2, "COUNTDOWN_TELEPORT", segundos)
+			task.wait(1)
+		end
+		if not jugadoresPresentes() then
+			for _, jugador in ipairs({jugador1, jugador2}) do
+				if jugador and jugador.Parent == Players then
+					EventoMatchmaking:FireClient(jugador, "ERROR")
+				end
+			end
+			jugador1 = nil
+			jugador2 = nil
+			continue
+		end
 		enviarAPartidaPrivada(jugador1, jugador2)
 		jugador1 = nil
 		jugador2 = nil
@@ -1464,20 +1482,6 @@ while true do
 	tiemposAcumulados = {}
 	vidas = {}
 	ultimoAtaque = {}
-
-	-- El desbloqueo de la ronda anterior deja al
-	-- cliente libre al inicio de la PRIMERA cuenta
-	-- atrÃ¡s. Reforzamos el BLOQUEAR desde aquÃ­ para
-	-- eliminar la carrera con el BLOQUEAR del
-	-- ControladorCountdown.
-	EventoJuego:FireAllClients(
-		"BLOQUEAR_MOVIMIENTO"
-	)
-
-	EventoCountdown:Fire()
-
-	task.wait(4)
-
 
 	--==================================================
 	-- RONDAS

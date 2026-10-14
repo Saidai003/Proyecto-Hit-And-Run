@@ -40,10 +40,17 @@ local CAMERA_RADIO_COLISION = 0.3
 local CAMERA_MARGEN_COLISION = 0.15
 local TOUCH_LOOK_SENSITIVITY = 0.0035
 local touchLookDelta = Vector2.zero
+local touchManualLook = false
+local touchYaw = 0
+local touchPitch = 0
 MobileInput.LookDelta.Event:Connect(function(delta)
 	if UserInputService.TouchEnabled and typeof(delta) == "Vector2" then
 		touchLookDelta += delta
 	end
+end)
+UserInputService.TouchStarted:Connect(function(_, processed)
+	-- Un dedo libre vuelve a usar el control nativo de cámara de Roblox.
+	if not processed then touchManualLook = false end
 end)
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
@@ -88,6 +95,7 @@ RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Valu
 	local camera = workspace.CurrentCamera
 	if not camera or camera.CameraType ~= Enum.CameraType.Custom then
 		distanciaVisualActual = nil
+		touchManualLook = false
 		return
 	end
 
@@ -101,15 +109,21 @@ RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Valu
 	end
 	local direccion = vector.Unit
 	if lookDelta.Magnitude > 0 then
-		-- La camara nativa no gira con el dedo que comenzo sobre un boton.
-		-- Aplicar solo el delta de este frame conserva su control normal y
-		-- permite apuntar mientras se mantiene Sprint/Throw/Action/Jump.
+		-- Guardar la orientación solicitada: CoreCamera puede rehacer su CFrame
+		-- al siguiente frame y deshacer un giro aplicado una sola vez.
+		if not touchManualLook then
+			local look = objetivo.LookVector
+			touchYaw = math.atan2(-look.X, -look.Z)
+			touchPitch = math.asin(math.clamp(look.Y, -1, 1))
+			touchManualLook = true
+		end
 		local dx = math.clamp(lookDelta.X, -120, 120)
 		local dy = math.clamp(lookDelta.Y, -120, 120)
-		local pitch = math.asin(math.clamp(objetivo.LookVector.Y, -1, 1))
-		local pitchDelta = math.clamp(pitch - dy * TOUCH_LOOK_SENSITIVITY, -1.25, 1.25) - pitch
-		local rotacion = CFrame.Angles(0, -dx * TOUCH_LOOK_SENSITIVITY, 0)
-			* objetivo.Rotation * CFrame.Angles(pitchDelta, 0, 0)
+		touchYaw -= dx * TOUCH_LOOK_SENSITIVITY
+		touchPitch = math.clamp(touchPitch - dy * TOUCH_LOOK_SENSITIVITY, -1.25, 1.25)
+	end
+	if touchManualLook then
+		local rotacion = CFrame.Angles(0, touchYaw, 0) * CFrame.Angles(touchPitch, 0, 0)
 		objetivo = CFrame.new(objetivo.Position) * rotacion
 		direccion = -rotacion.LookVector
 	end

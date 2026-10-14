@@ -496,7 +496,7 @@ local guideCards = {
 
 if UserInputService.TouchEnabled then
 	for _, cards in pairs(guideCards) do
-		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run, or tap LOCK next to it for continuous sprint; tap ON to turn it off. Tap Jump to leap. Drag a held button to look around. Action changes near obstacles and becomes Slide while sprinting. Equipping a throwable shows Throw: hold to aim, release to throw. As Chaser, generic Action attacks." })
+		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run, or slide that button upward to lock sprint; tap Sprint again to stop. Tap Jump to leap. Drag a held button to look around. Action changes near obstacles and becomes Slide while sprinting. Equipping a throwable shows Throw: hold to aim, release to throw. As Chaser, generic Action attacks." })
 	end
 end
 
@@ -877,6 +877,22 @@ messageLabel.Parent = screenGui
 local messageCorner = Instance.new("UICorner")
 messageCorner.CornerRadius = UDim.new(0, 10)
 messageCorner.Parent = messageLabel
+local teleportCountdownLabel = Instance.new("TextLabel")
+teleportCountdownLabel.Name = "TeleportCountdown"
+teleportCountdownLabel.Size = UDim2.fromOffset(360, 40)
+teleportCountdownLabel.AnchorPoint = Vector2.new(0.5, 0)
+teleportCountdownLabel.Position = UDim2.new(0.5, 0, 0.45, 43)
+teleportCountdownLabel.BackgroundColor3 = Color3.fromRGB(18, 24, 30)
+teleportCountdownLabel.BackgroundTransparency = 0.2
+teleportCountdownLabel.TextColor3 = Color3.fromRGB(235, 242, 250)
+teleportCountdownLabel.TextSize = 20
+teleportCountdownLabel.Font = Enum.Font.GothamBold
+teleportCountdownLabel.Visible = false
+teleportCountdownLabel.ZIndex = 20
+teleportCountdownLabel.Parent = screenGui
+local teleportCountdownCorner = Instance.new("UICorner")
+teleportCountdownCorner.CornerRadius = UDim.new(0, 8)
+teleportCountdownCorner.Parent = teleportCountdownLabel
 
 -- =========================================================
 -- RESULTADO FINAL
@@ -1009,13 +1025,14 @@ btnPlay.MouseButton1Click:Connect(function()
 	end
 end)
 
-EventoMatchmaking.OnClientEvent:Connect(function(estado)
+EventoMatchmaking.OnClientEvent:Connect(function(estado, segundos)
 	if estado == "EN_COLA" then
 		buscandoPartida = true
 		btnPlay.Text = "CANCEL SEARCH"
 		btnPlay.BackgroundColor3 = Color3.fromRGB(170, 60, 60)
 		btnPlay.Active = true
 	elseif estado == "FUERA_DE_COLA" or estado == "ERROR" then
+		teleportCountdownLabel.Visible = false
 		buscandoPartida = false
 		btnPlay.Text = "PLAY NOW!"
 		btnPlay.BackgroundColor3 = Color3.fromRGB(45, 180, 80)
@@ -1023,12 +1040,16 @@ EventoMatchmaking.OnClientEvent:Connect(function(estado)
 		messageLabel.Visible = estado == "ERROR"
 		if estado == "ERROR" then messageLabel.Text = "Could not connect. Try again." end
 	elseif estado == "ENCONTRADO" then
+		teleportCountdownLabel.Visible = false
 		buscandoPartida = false
 		btnPlay.Active = false
 		btnPlay.Text = "ENTERING MATCH..."
 		messageLabel.Text = "Opponent found!"
 		messageLabel.TextColor3 = Color3.fromRGB(140, 235, 165)
 		messageLabel.Visible = true
+	elseif estado == "COUNTDOWN_TELEPORT" then
+		teleportCountdownLabel.Text = "Entering match in " .. tostring(segundos) .. "..."
+		teleportCountdownLabel.Visible = true
 	end
 end)
 
@@ -1051,6 +1072,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 	print("[INTERFAZ]: Evento recibido:", estado)
 
 	if estado == "ESPERANDO_JUGADOR" then
+		teleportCountdownLabel.Visible = false
 		local lobbyPractica = Workspace:GetAttribute("LobbyPractica") == true and not esPartidaPrivada
 
 		messageLabel.Visible = true
@@ -1073,6 +1095,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 		btnHowTo.Visible = true
 
 	elseif estado == "ROL" then
+		teleportCountdownLabel.Visible = false
 
 		local rol = datos[1]
 
