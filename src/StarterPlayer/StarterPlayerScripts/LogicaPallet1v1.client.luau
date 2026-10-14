@@ -207,6 +207,19 @@ local function procesarAccionPale(input, procesado)
 		if rol == "PERSEGUIDO" then
 			if estado == "Parado" then
 				debounce = true
+				local puntoCercano = obtenerPuntosDelPale(pale, root.Position)
+				if not puntoCercano or not aproximarseAlPuntoDelPale(puntoCercano) then
+					debounce = false
+					return
+				end
+				-- La aproximacion tarda: el pale o el personaje pudieron cambiar
+				-- antes de llegar. No animar ni solicitar una accion obsoleta.
+				if jugadorLocal.Character ~= character or humanoid.Health <= 0
+					or not pale:IsDescendantOf(Workspace)
+					or (pale:GetAttribute("EstadoPale") or "Parado") ~= "Parado" then
+					debounce = false
+					return
+				end
 				reproducirAnimacion(ANIM_DROP)
 				EventoPale:FireServer("INTERACTUAR")
 
@@ -220,8 +233,7 @@ local function procesarAccionPale(input, procesado)
 				-- (saltar ventana, lugar estrecho): si el
 				-- jugador estÃ¡ dentro del rango de interacciÃ³n
 				-- pero no en el Punto exacto, primero lo
-				-- aproximamos al Punto mÃ¡s cercano con un
-				-- tween, lo reorientamos para mirar al pale, y
+				-- aproximamos caminando al Punto mÃ¡s cercano, y
 				-- solo entonces disparamos el FireServer. Esto
 				-- evita que el salto arranque con un cambio
 				-- brusco de posiciÃ³n.
