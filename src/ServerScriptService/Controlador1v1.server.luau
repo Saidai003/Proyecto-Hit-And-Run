@@ -944,6 +944,9 @@ local function registrarPeligro(objeto)
 	if not objeto:IsA("BasePart") or conexionesPeligro[objeto] then return end
 	if objeto:GetAttribute("MakesPlayersLose") == true then
 		activarPeligro(objeto)
+		if objeto.Name == "InvisibleDeathZone" then
+			print("[MakesPlayersLose] Limite global registrado:", objeto:GetFullName(), objeto.Position.Y)
+		end
 	end
 end
 
@@ -983,8 +986,14 @@ RunService.Heartbeat:Connect(function()
 						local tramo = previo.Y - actual.Y
 						local fraccion = (previo.Y - plano) / tramo
 						local cruce = previo:Lerp(actual, fraccion)
-						if math.abs(cruce.X) <= mitad.X + 2
-							and math.abs(cruce.Z) <= mitad.Z + 2 then
+						-- InvisibleDeathZone es el limite inferior de todo el mapa.
+						-- El escenario ya se extiende fuera de sus 600x600 studs;
+						-- caer por otro borde debe producir el mismo resultado.
+						local limiteGlobal = parte.Name == "InvisibleDeathZone"
+							and parte.CFrame.UpVector:Dot(Vector3.yAxis) > 0.95
+						local dentroDeLaPieza = math.abs(cruce.X) <= mitad.X + 2
+							and math.abs(cruce.Z) <= mitad.Z + 2
+						if limiteGlobal or dentroDeLaPieza then
 							aplicarPeligro(parte, jugador)
 							break
 						end
