@@ -36,10 +36,17 @@ local ANIMACION_SPRINT_ID = "rbxassetid://72846871061644"
 local VELOCIDAD_REFERENCIA_ANIMACION_SPRINT = 22
 local CAMERA_DISTANCIA = 12
 local CAMERA_RETORNO_TAU = 0.45
+local CAMERA_RADIO_COLISION = 0.3
+local CAMERA_MARGEN_COLISION = 0.15
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
 local camaraDePartida = false
 local distanciaVisualActual = nil
+local personajeFiltradoCamara = nil
+local parametrosColisionCamara = RaycastParams.new()
+parametrosColisionCamara.FilterType = Enum.RaycastFilterType.Exclude
+parametrosColisionCamara.RespectCanCollide = true
+parametrosColisionCamara.IgnoreWater = true
 local cursorOriginal = UserInputService.MouseIconEnabled
 
 local function configurarCamaraDePartida(activa)
@@ -83,6 +90,26 @@ RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Valu
 		distanciaVisualActual = nil
 		return
 	end
+	local direccion = vector.Unit
+	local personaje = jugadorLocal.Character
+	if personaje ~= personajeFiltradoCamara then
+		personajeFiltradoCamara = personaje
+		parametrosColisionCamara.FilterDescendantsInstances = personaje and { personaje } or {}
+	end
+	-- Roblox puede tardar un fotograma en acercar la camara mientras el jugador
+	-- retrocede contra una pared. Comprobamos el espacio libre cada fotograma.
+	local obstaculo = workspace:Spherecast(
+		foco,
+		CAMERA_RADIO_COLISION,
+		direccion * distanciaDisponible,
+		parametrosColisionCamara
+	)
+	if obstaculo then
+		distanciaDisponible = math.min(
+			distanciaDisponible,
+			math.max(0.05, obstaculo.Distance - CAMERA_MARGEN_COLISION)
+		)
+	end
 
 	if not distanciaVisualActual or distanciaDisponible <= distanciaVisualActual then
 		-- Si aparece una pared, no permitimos que la camara la atraviese.
@@ -90,9 +117,11 @@ RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Valu
 	else
 		local alfa = 1 - math.exp(-math.max(0, dt) / CAMERA_RETORNO_TAU)
 		distanciaVisualActual += (distanciaDisponible - distanciaVisualActual) * alfa
-		camera.CFrame = CFrame.new(foco + vector.Unit * distanciaVisualActual)
-			* objetivo.Rotation
 	end
+	-- Se escribe tambien al acercarse: actualizar solo la distancia almacenada
+	-- dejaba la camara visualmente quieta hasta que el personaje se detenia.
+	camera.CFrame = CFrame.new(foco + direccion * distanciaVisualActual)
+		* objetivo.Rotation
 end)
 
 UserInputService.InputChanged:Connect(function(input)
