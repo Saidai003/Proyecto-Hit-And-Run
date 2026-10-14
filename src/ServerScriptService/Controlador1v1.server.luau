@@ -5,6 +5,28 @@ local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
+-- Diagnostico temporal de publicacion: estos modulos existen en Studio y en
+-- el build de Rojo, pero el cliente publicado reporto que MobileInput faltaba.
+local function registrarModulosPublicados(etapa)
+	local mobile = ReplicatedStorage:FindFirstChild("MobileInput")
+	local sprites = ReplicatedStorage:FindFirstChild("MobileSpriteCatalog")
+	print("[DEPLOY-CHECK] server", etapa, "place", game.PlaceId,
+		"version", game.PlaceVersion, "MobileInput", mobile and mobile.ClassName or "missing",
+		"MobileSpriteCatalog", sprites and sprites.ClassName or "missing")
+end
+registrarModulosPublicados("startup")
+task.delay(15, function() registrarModulosPublicados("after-15s") end)
+ReplicatedStorage.ChildAdded:Connect(function(hijo)
+	if hijo.Name == "MobileInput" or hijo.Name == "MobileSpriteCatalog" then
+		registrarModulosPublicados("added-" .. hijo.Name)
+	end
+end)
+ReplicatedStorage.ChildRemoved:Connect(function(hijo)
+	if hijo.Name == "MobileInput" or hijo.Name == "MobileSpriteCatalog" then
+		registrarModulosPublicados("removed-" .. hijo.Name)
+	end
+end)
+
 local EventoJuego = ReplicatedStorage:WaitForChild("EventoJuego")
 local EventoCountdown = ReplicatedStorage:WaitForChild("EventoCountdown")
 local EventoAtaque = ReplicatedStorage:WaitForChild("EventoAtaque")

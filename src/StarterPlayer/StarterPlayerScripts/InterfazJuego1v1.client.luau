@@ -4,6 +4,25 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local MarketplaceService = game:GetService("MarketplaceService")
 local TextService = game:GetService("TextService")
+local function registrarModulosRecibidos(etapa)
+	local mobile = ReplicatedStorage:FindFirstChild("MobileInput")
+	local sprites = ReplicatedStorage:FindFirstChild("MobileSpriteCatalog")
+	print("[DEPLOY-CHECK] client", etapa, "MobileInput",
+		mobile and mobile.ClassName or "missing", "MobileSpriteCatalog",
+		sprites and sprites.ClassName or "missing")
+end
+registrarModulosRecibidos("startup")
+task.delay(15, function() registrarModulosRecibidos("after-15s") end)
+ReplicatedStorage.ChildAdded:Connect(function(hijo)
+	if hijo.Name == "MobileInput" or hijo.Name == "MobileSpriteCatalog" then
+		registrarModulosRecibidos("added-" .. hijo.Name)
+	end
+end)
+ReplicatedStorage.ChildRemoved:Connect(function(hijo)
+	if hijo.Name == "MobileInput" or hijo.Name == "MobileSpriteCatalog" then
+		registrarModulosRecibidos("removed-" .. hijo.Name)
+	end
+end)
 local donationConfig = require(ReplicatedStorage:WaitForChild("DonationConfig"))
 
 local jugador = Players.LocalPlayer
