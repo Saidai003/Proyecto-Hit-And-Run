@@ -43,7 +43,10 @@ Rojo y **no** es un respaldo completo del mapa.
 Los nueve sprites de `Sprites/` se subieron como assets Image a la biblioteca del propietario.
 Sus IDs actuales están en `tools/sprite-image-ids.json` y en
 `src/ReplicatedStorage/MobileSpriteCatalog.luau`. Los controles móviles se
-activan cuando Roblox detecta pantalla táctil: Sprint, Jump y acción contextual;
+activan cuando Roblox detecta pantalla táctil: Action/Sprint en la fila superior
+y Throw/Jump en la inferior. El pequeño botón LOCK junto a Sprint deja el
+sprint fijo hasta pulsar ON o hasta que la stamina o el estado lo interrumpan;
+mantener pulsado Sprint sigue funcionando de forma momentánea. La acción es contextual;
 al equipar una Tool con `Throwable = true`, aparece además un botón Throw
 independiente (mantener para apuntar y soltar para lanzar). Los sprites se
 muestran completos, sin recorte por píxeles, con texto de respaldo si no cargan.

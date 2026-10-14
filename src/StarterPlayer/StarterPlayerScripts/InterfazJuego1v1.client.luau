@@ -496,7 +496,7 @@ local guideCards = {
 
 if UserInputService.TouchEnabled then
 	for _, cards in pairs(guideCards) do
-		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run. Tap Jump to leap. Drag a held button to look around. The action button changes near obstacles and becomes Slide while sprinting. Equipping a throwable shows a separate Throw button: hold to aim, release to throw. As Chaser, the generic action button attacks." })
+		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run, or tap LOCK next to it for continuous sprint; tap ON to turn it off. Tap Jump to leap. Drag a held button to look around. Action changes near obstacles and becomes Slide while sprinting. Equipping a throwable shows Throw: hold to aim, release to throw. As Chaser, generic Action attacks." })
 	end
 end
 
@@ -576,11 +576,6 @@ if UserInputService.TouchEnabled then
 	local hudScale = Instance.new("UIScale")
 	hudScale.Scale = 0.68
 	hudScale.Parent = hudPanel
-	local function positionMobileHud()
-		hudPanel.Position = UDim2.fromOffset(12, sideMenu.Visible and 192 or 78)
-	end
-	sideMenu:GetPropertyChangedSignal("Visible"):Connect(positionMobileHud)
-	positionMobileHud()
 end
 local hudCorner = Instance.new("UICorner")
 hudCorner.CornerRadius = UDim.new(0, 12)
@@ -687,7 +682,16 @@ local function ajustarTamanoHud()
 	local altura = livesWidget.Visible and 144 or 94
 	local ancho = enLobby and 240 or 312
 	hudPanel.Size = UDim2.fromOffset(ancho, altura)
-	hudPanel.Position = UDim2.new(0, 16, 1, -(altura + (enLobby and 96 or 16)))
+	if UserInputService.TouchEnabled then
+		-- Debajo de Donate en lobby, pero por encima del thumbstick nativo.
+		local camera = Workspace.CurrentCamera
+		local viewHeight = camera and camera.ViewportSize.Y or 360
+		local top = math.max(enLobby and 186 or 88,
+			viewHeight - altura * 0.68 - 160)
+		hudPanel.Position = UDim2.fromOffset(12, math.floor(top))
+	else
+		hudPanel.Position = UDim2.new(0, 16, 1, -(altura + (enLobby and 96 or 16)))
+	end
 	roleLabel.Size = UDim2.fromOffset(ancho - 24, 34)
 	staminaWidget.Size = UDim2.fromOffset(ancho - 24, 38)
 end
