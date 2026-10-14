@@ -118,11 +118,13 @@ layoutButtons()
 task.spawn(function()
 	local mainGui = playerGui:WaitForChild("PantallaPrincipal_1v1_GUI")
 	local howTo = mainGui:WaitForChild("HowToPlayModal")
+	local donation = mainGui:WaitForChild("DonationConfirmation")
 	local results = mainGui:WaitForChild("FinalResult")
 	local function updateVisibility()
-		gui.Enabled = not howTo.Visible and not results.Visible
+		gui.Enabled = not howTo.Visible and not donation.Visible and not results.Visible
 	end
 	howTo:GetPropertyChangedSignal("Visible"):Connect(updateVisibility)
+	donation:GetPropertyChangedSignal("Visible"):Connect(updateVisibility)
 	results:GetPropertyChangedSignal("Visible"):Connect(updateVisibility)
 	updateVisibility()
 end)
