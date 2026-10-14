@@ -1022,6 +1022,9 @@ EventoMatchmaking.OnClientEvent:Connect(function(estado)
 		buscandoPartida = false
 		btnPlay.Active = false
 		btnPlay.Text = "ENTERING MATCH..."
+		messageLabel.Text = "Opponent found!"
+		messageLabel.TextColor3 = Color3.fromRGB(140, 235, 165)
+		messageLabel.Visible = true
 	end
 end)
 
