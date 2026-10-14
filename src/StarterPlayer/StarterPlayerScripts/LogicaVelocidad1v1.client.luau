@@ -35,13 +35,16 @@ local FOV_SPRINT = 76
 local ANIMACION_SPRINT_ID = "rbxassetid://72846871061644"
 local VELOCIDAD_REFERENCIA_ANIMACION_SPRINT = 22
 local CAMERA_DISTANCIA = 12
+local CAMERA_RETORNO_TAU = 0.85
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
 local camaraDePartida = false
+local distanciaVisualActual = nil
 local cursorOriginal = UserInputService.MouseIconEnabled
 
 local function configurarCamaraDePartida(activa)
 	camaraDePartida = activa
+	distanciaVisualActual = nil
 	if activa then
 		jugadorLocal.CameraMinZoomDistance = CAMERA_DISTANCIA
 		jugadorLocal.CameraMaxZoomDistance = CAMERA_DISTANCIA
@@ -58,6 +61,38 @@ RunService:BindToRenderStep("MatchFreeLook", Enum.RenderPriority.Camera.Value + 
 	if camaraDePartida and not UserInputService.TouchEnabled then
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 		UserInputService.MouseIconEnabled = false
+	end
+end)
+
+-- La camara predeterminada se acerca inmediatamente a las paredes. Al salir
+-- de un espacio estrecho, suavizamos solo el regreso a la distancia ideal.
+-- Se aplica despues de la camara de Roblox y del offset de apuntar la silla.
+RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Value + 2, function(dt)
+	if not camaraDePartida then return end
+
+	local camera = workspace.CurrentCamera
+	if not camera or camera.CameraType ~= Enum.CameraType.Custom then
+		distanciaVisualActual = nil
+		return
+	end
+
+	local objetivo = camera.CFrame
+	local foco = camera.Focus.Position
+	local vector = objetivo.Position - foco
+	local distanciaDisponible = vector.Magnitude
+	if distanciaDisponible < 0.05 then
+		distanciaVisualActual = nil
+		return
+	end
+
+	if not distanciaVisualActual or distanciaDisponible <= distanciaVisualActual then
+		-- Si aparece una pared, no permitimos que la camara la atraviese.
+		distanciaVisualActual = distanciaDisponible
+	else
+		local alfa = 1 - math.exp(-math.max(0, dt) / CAMERA_RETORNO_TAU)
+		distanciaVisualActual += (distanciaDisponible - distanciaVisualActual) * alfa
+		camera.CFrame = CFrame.new(foco + vector.Unit * distanciaVisualActual)
+			* objetivo.Rotation
 	end
 end)
 

@@ -786,6 +786,7 @@ local conexionesPeligro = {}
 local posicionesPreviasPeligro = {}
 local personajesPreviosPeligro = {}
 local avisosBajoLimite = {}
+local muestrasAlturaPeligro = {}
 
 local function puntoInicialDe(jugador)
 	if jugador == jugador1 then return RoundSpawn1 end
@@ -974,6 +975,21 @@ RunService.Heartbeat:Connect(function()
 		local mismoPersonaje = personajesPreviosPeligro[jugador] == character
 		personajesPreviosPeligro[jugador] = character
 		posicionesPreviasPeligro[jugador] = root and root.Position or nil
+		if root then
+			-- Diagnostico temporal: confirma la altura que realmente ve el
+			-- servidor. Solo escribe al aparecer o por cada 30 studs de caida.
+			local muestra = muestrasAlturaPeligro[jugador]
+			local altura = root.Position.Y
+			if not muestra or muestra.character ~= character
+				or altura <= muestra.altura - 30 or altura > muestra.altura + 20 then
+				muestrasAlturaPeligro[jugador] = {character = character, altura = altura}
+				local zona = Workspace:FindFirstChild("InvisibleDeathZone", true)
+				print("[MakesPlayersLose] Altura servidor:", jugador.Name,
+					math.floor(altura), "zona registrada:",
+					zona ~= nil and conexionesPeligro[zona] ~= nil,
+					"lobby:", Workspace:GetAttribute("LobbyPractica"))
+			end
+		end
 
 		if root and anterior and mismoPersonaje
 			and not noqueosPorPeligro[jugador] then
@@ -1020,6 +1036,7 @@ Players.PlayerRemoving:Connect(function(jugador)
 	posicionesPreviasPeligro[jugador] = nil
 	personajesPreviosPeligro[jugador] = nil
 	avisosBajoLimite[jugador] = nil
+	muestrasAlturaPeligro[jugador] = nil
 end)
 
 
