@@ -9,6 +9,7 @@ local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
 local remote = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local slides = {}
+local escaladas = {}
 
 local function sueloCercanoSlide(character, root)
 	local params = RaycastParams.new()
@@ -97,6 +98,18 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	local humanoide = character and character:FindFirstChildOfClass("Humanoid")
 	if accion == "EscaladaFin" then
+		local escalable = escaladas[jugador]
+		escaladas[jugador] = nil
+		if root and humanoide and escalable and escalable.Parent then
+			local bordeSuperior = escalable.Position.Y + escalable.Size.Y * 0.5
+			local cercaDeCima = root.Position.Y >= bordeSuperior - 2.5
+			local cercaDelEscalable = distanciaParte(escalable, root.Position) <= 7
+			if cercaDeCima and cercaDelEscalable then
+				-- Una ventana corta permite saltar al coronar aunque FloorMaterial
+				-- tarde un frame en actualizarse. Solo vale tras una escalada real.
+				humanoide:SetAttribute("ClimbJumpGraceUntil", Workspace:GetServerTimeNow() + 0.75)
+			end
+		end
 		StaminaService.EndClimb(jugador)
 		if root then
 			local climbSound = root:FindFirstChild("Climb")
@@ -140,10 +153,12 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 		return true
 	end
 	if accion == "Salto" then
-		if not tocaSuelo(character, root, humanoide)
+		local graciaEscalada = (humanoide:GetAttribute("ClimbJumpGraceUntil") or 0) >= Workspace:GetServerTimeNow()
+		if not tocaSuelo(character, root, humanoide) and not graciaEscalada
 			or humanoide:GetAttribute("ParkourEspecialActivo")
 			or humanoide:GetAttribute("EscaladaActiva")
 			or humanoide:GetAttribute("Sliding") then return nil end
+		humanoide:SetAttribute("ClimbJumpGraceUntil", nil)
 		return StaminaService.Consume(jugador, accion)
 	end
 	if accion == "Escalada" then
@@ -152,6 +167,8 @@ remote.OnServerInvoke = function(jugador, accion, origen, destino)
 			or distanciaParte(origen, root.Position) > 5.5 then return nil end
 		local factor = StaminaService.BeginClimb(jugador, root, not origen:IsA("TrussPart"))
 		if factor then
+			escaladas[jugador] = origen
+			humanoide:SetAttribute("ClimbJumpGraceUntil", nil)
 			humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
 			local previousSound = root:FindFirstChild("Climb")
 			if previousSound and previousSound:IsA("Sound") then previousSound:Destroy() end
@@ -188,7 +205,10 @@ local function prepararJugador(jugador)
 		if humanoide then humanoide:SetStateEnabled(Enum.HumanoidStateType.Climbing, false) end
 	end
 end
-Players.PlayerRemoving:Connect(liberarSlide)
+Players.PlayerRemoving:Connect(function(jugador)
+	liberarSlide(jugador)
+	escaladas[jugador] = nil
+end)
 RunService.Heartbeat:Connect(function()
 	for jugador, estado in pairs(slides) do
 		if jugador.Parent ~= Players or jugador.Character ~= estado.character

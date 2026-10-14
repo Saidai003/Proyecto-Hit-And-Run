@@ -3,6 +3,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContentProvider = game:GetService("ContentProvider")
+local MobileInput = require(ReplicatedStorage:WaitForChild("MobileInput"))
 
 local jugadorLocal = Players.LocalPlayer
 local EventoJuego = ReplicatedStorage:WaitForChild("EventoJuego")
@@ -54,7 +55,7 @@ local function configurarCamaraDePartida(activa)
 end
 
 RunService:BindToRenderStep("MatchFreeLook", Enum.RenderPriority.Camera.Value + 1, function()
-	if camaraDePartida then
+	if camaraDePartida and not UserInputService.TouchEnabled then
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 		UserInputService.MouseIconEnabled = false
 	end
@@ -357,7 +358,7 @@ end
 local function intentarSalto()
 	if movimientoBloqueado or not humanoide or humanoide.Health <= 0
 		or humanoide:GetAttribute("Sliding")
-		or not tocaSueloLocal()
+		or (not tocaSueloLocal() and os.clock() > (humanoide:GetAttribute("ClimbJumpGraceLocalUntil") or 0))
 		or humanoide:GetAttribute("ParkourEspecialActivo")
 		or humanoide:GetAttribute("EscaladaActiva")
 		or humanoide:GetAttribute("FallStunned")
@@ -369,6 +370,7 @@ local function intentarSalto()
 	-- El cooldown empieza solo cuando el servidor acepta el salto. Antes, un
 	-- intento hecho en el primer frame del aterrizaje bloqueaba el siguiente.
 	ultimoSalto = os.clock()
+	humanoide:SetAttribute("ClimbJumpGraceLocalUntil", nil)
 	humanoide.JumpPower = 40
 	humanoide.Jump = true
 	humanoide:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -391,6 +393,10 @@ local function solicitarSaltoConBuffer()
 		until os.clock() >= limite
 	end)
 end
+
+MobileInput.SprintStart.Event:Connect(activarSprint)
+MobileInput.SprintEnd.Event:Connect(desactivarSprint)
+MobileInput.Jump.Event:Connect(solicitarSaltoConBuffer)
 
 UserInputService.InputBegan:Connect(function(input, procesado)
 
@@ -552,6 +558,7 @@ jugadorLocal.CharacterAdded:Connect(function(nuevoCharacter)
 	movimientoBloqueado = false
 	solicitudSalto += 1
 	ultimoSalto = 0
+	humanoide:SetAttribute("ClimbJumpGraceLocalUntil", nil)
 
 	establecerSprintActivo(false)
 	EventoSprint:FireServer(false)

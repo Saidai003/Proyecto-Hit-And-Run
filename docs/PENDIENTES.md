@@ -13,6 +13,7 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Escalada
 
+- **Corrección preparada, por probar (2026-10-13):** al salir de una escalada cerca del borde superior, cliente y servidor conceden una ventana única de 0,75 s para saltar incluso si el detector de suelo de Roblox aún no se actualizó. La ventana se consume al saltar y no se concede por soltar la escalada a mitad de altura. Verificar en Truss y piezas con `Climbable = true` sin mover al personaje tras coronar.
 - **Corrección preparada, por probar (2026-10-13):** la escalada reconoce el atributo booleano oficial `Climbable = true` con C mayúscula tanto en una `BasePart` como en el `Model` que contiene sus piezas. Los atributos distinguen mayúsculas/minúsculas; se mantiene compatibilidad temporal con el antiguo `climbable` en minúscula. Los `TrussPart` continúan siendo escalables automáticamente.
 - **Preparado, por probar:** conservar el estado en subidas largas y entre piezas contiguas; comprobar `Drop Off` / `NoEscalando` al soltar o llegar al extremo.
 - **Preparado, por probar:** aceptar `TrussPart` automáticamente y cualquier otra `BasePart` marcada directamente o mediante su `Model` con `Climbable = true`. El valor debe ser booleano; strings y tags no cuentan como configuración válida. Las piezas marcadas reciben locomoción vertical personalizada (W/S), con cobro de stamina por distancia. Probar en Studio con una pared lisa, una escalera hecha de Parts, ambos roles y los extremos superior/inferior; verificar el descenso y `Drop Off`.
@@ -31,6 +32,7 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Donación y pantalla de compra
 
+- **Nuevo reporte, por verificar en Creator Dashboard (2026-10-13):** en la versión publicada el usuario vio una exigencia de **160 Robux** pese a haber configurado **100 Robux**. El botón consulta `GetProductInfoAsync` y no fija ese monto: anotar por separado el precio mostrado por el botón, el precio del producto en el aviso nativo y cualquier paquete de Robux ofrecido cuando falta saldo. No cambiar el ID ni cobrar hasta confirmar el precio base/regional del producto `3717856374`.
 - **Explicación probable, pendiente de confirmar con la cuenta del usuario:** el producto `Donation` aparece con precio regional de **75 Robux** frente al precio base de 100, y, con saldo de **0 Robux**, Roblox ofrece comprar un paquete de **500 Robux**. El **400 Robux tachado** parece corresponder a la oferta del paquete, no al precio del producto; la captura no basta para confirmarlo.
 - Verificar en Creator Dashboard el precio regional del Developer Product `3717856374` y confirmar que el botón del lobby muestra 75 Robux para esa cuenta. La UI consulta `GetProductInfoAsync`; no tiene codificados 75, 500 ni 400.
 - **Preparado, por probar:** mostrar una confirmación propia antes del aviso nativo que distingue el precio de la donación del paquete de Robux y aclara que no hay recompensa. El juego no puede modificar el diseño ni los paquetes de Robux del aviso de Roblox. No se cambió el precio ni se iniciaron compras.
@@ -44,6 +46,9 @@ Registrados a partir de los últimos playtests del usuario. Los ajustes de códi
 
 ## Nueva tanda de ajustes
 
+- **Animación pendiente del usuario (2026-10-13):** al fallar un golpe con el bate, este queda vertical en lugar de apuntar hacia delante. El usuario preparará nuevas animaciones de ataque; sustituir la pose provisional al recibir sus IDs y verificar acierto, fallo y recuperación.
+- **Preparado, por probar en móvil (2026-10-13):** tres botones táctiles permanentes (Sprint, Jump y acción contextual) usan los nueve sprites subidos de `Sprites/`. Acción muestra Vault, pallet, climb/drop, slide, throwable o icono genérico; la transición encoge y expande el icono. Verificar toque sostenido, múltiples dedos, cámara y joystick, R6/R15 y pantallas pequeñas; confirmar que la acción genérica ataca para Chaser y que el botón de salto nativo queda oculto.
+- **Preparado, por probar publicado con dos cuentas (2026-10-13):** al finalizar o al salir el rival, el retorno ya no apunta al `originJobId` (puede haberse cerrado): se solicita un lobby público nuevo, se detecta `TeleportInitFailed` y se reintenta. Si los reintentos fallan, la instancia se convierte en lobby de práctica con Play habilitado. Quien permanece gana por abandono. Repetir el caso de desconexión a mitad de partida y comprobar que no aparece el error 771 ni queda inmóvil el superviviente.
 - **Preparado, por probar:** reducir la altura del panel oscuro de stamina en el lobby, sin quitar información de las rondas.
 - **Preparado, por probar:** sustituir el contador principal de stamina por una barra con valor numérico; comprobar Runner (100), Chaser (120), agotamiento y regeneración, tanto en lobby como junto a las vidas durante una ronda.
 - **Preparado, por probar:** ubicar el botón de donación fuera de la lista de jugadores y del indicador central de parkour: abajo a la derecha en pantallas anchas y arriba a la izquierda en pantallas estrechas.

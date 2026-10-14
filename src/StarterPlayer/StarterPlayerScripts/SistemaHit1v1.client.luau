@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MobileInput = require(ReplicatedStorage:WaitForChild("MobileInput"))
 local UserInputService = game:GetService("UserInputService")
 local ContentProvider = game:GetService("ContentProvider")
 local TweenService = game:GetService("TweenService")
@@ -439,6 +440,14 @@ UserInputService.InputEnded:Connect(function(input)
 	if esInputGolpe(input) then
 		presionando = false
 	end
+end)
+
+MobileInput.AttackStart.Event:Connect(function()
+	presionando = true
+	iniciarGolpe()
+end)
+MobileInput.AttackEnd.Event:Connect(function()
+	presionando = false
 end)
 
 --==================================================

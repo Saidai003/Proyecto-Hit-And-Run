@@ -1,5 +1,6 @@
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MobileInput = require(ReplicatedStorage:WaitForChild("MobileInput"))
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -173,7 +174,7 @@ end
 --==================================================
 -- DETECCIÃN DE TECLADO
 --==================================================
-UserInputService.InputBegan:Connect(function(input, procesado)
+local function procesarAccionPale(input, procesado)
 	if procesado and input.UserInputType ~= Enum.UserInputType.MouseButton2 then return end
 	if UserInputService:GetFocusedTextBox() ~= nil then return end
 	local interfaz = jugadorLocal.PlayerGui:FindFirstChild("PantallaPrincipal_1v1_GUI")
@@ -274,4 +275,8 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 			end
 		end
 	end
+end
+UserInputService.InputBegan:Connect(procesarAccionPale)
+MobileInput.Action.Event:Connect(function()
+	procesarAccionPale({ UserInputType = Enum.UserInputType.MouseButton2 }, false)
 end)

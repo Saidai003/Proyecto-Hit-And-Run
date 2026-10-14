@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MobileInput = require(ReplicatedStorage:WaitForChild("MobileInput"))
 local ContentProvider = game:GetService("ContentProvider")
 local audio = require(ReplicatedStorage:WaitForChild("AudioPlayback"))
 
@@ -264,20 +265,25 @@ local function start()
 	slideSound = audio.Play("Slide", root, 0.5, false, true)
 end
 
+local function alternarSlide()
+	if active then
+		if RunService:IsStudio() then print("[SLIDE END] manual") end
+		finish(false)
+	else
+		start()
+	end
+end
+
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed or UserInputService:GetFocusedTextBox() then return end
 	if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.C then
-		if active then
-			if RunService:IsStudio() then print("[SLIDE END] manual") end
-			finish(false)
-		else
-			start()
-		end
+		alternarSlide()
 	elseif input.KeyCode == Enum.KeyCode.Space and active then
 		if RunService:IsStudio() then print("[SLIDE END] manual jump") end
 		finish(false)
 	end
 end)
+MobileInput.Slide.Event:Connect(alternarSlide)
 
 RunService.Heartbeat:Connect(function(dt)
 	if not active then return end

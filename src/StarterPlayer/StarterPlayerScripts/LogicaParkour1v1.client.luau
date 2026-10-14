@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SolicitarParkour = ReplicatedStorage:WaitForChild("SolicitarParkour1v1")
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
+local MobileInput = require(ReplicatedStorage:WaitForChild("MobileInput"))
 
 local jugadorLocal = Players.LocalPlayer
 
@@ -613,8 +614,18 @@ local function iniciarEscaladaPersonalizada()
 	humanoide.AutoRotate = false
 end
 
+local function prepararSaltoTrasCoronar(escalable)
+	if not escalable or not rootPart or not humanoide then return end
+	local bordeSuperior = escalable.Position.Y + escalable.Size.Y * 0.5
+	if rootPart.Position.Y >= bordeSuperior - 2.5
+		and distanciaEscalable(escalable) <= 7 then
+		humanoide:SetAttribute("ClimbJumpGraceLocalUntil", os.clock() + 0.75)
+	end
+end
+
 local function alternarEscalada()
 	if escaladaActiva then
+		prepararSaltoTrasCoronar(trussActivo)
 		pcall(function() SolicitarParkour:InvokeServer("EscaladaFin") end)
 		escaladaActiva = false
 		trussActivo = nil
@@ -659,6 +670,15 @@ RunService.Heartbeat:Connect(function()
 		local subir = UserInputService:IsKeyDown(Enum.KeyCode.W) or UserInputService:IsKeyDown(Enum.KeyCode.Up)
 		local bajar = UserInputService:IsKeyDown(Enum.KeyCode.S) or UserInputService:IsKeyDown(Enum.KeyCode.Down)
 		local direccion = UserInputService:GetFocusedTextBox() and 0 or (subir and 1 or 0) - (bajar and 1 or 0)
+		if UserInputService.TouchEnabled and direccion == 0 then
+			local camera = workspace.CurrentCamera
+			local frente = camera and Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+			local movimiento = humanoide.MoveDirection
+			if frente and frente.Magnitude > 0.1 and movimiento.Magnitude > 0.15 then
+				local entrada = movimiento:Dot(frente.Unit)
+				if math.abs(entrada) > 0.2 then direccion = math.sign(entrada) end
+			end
+		end
 		local velocidad = math.min(humanoide.WalkSpeed * 0.55, 9)
 		escaladaPersonalizada.velocidad.VectorVelocity = Vector3.new(0, direccion * velocidad, 0)
 	end
@@ -672,8 +692,12 @@ RunService.Heartbeat:Connect(function()
 	local terminoNaturalmente = ahora - inicioEscalada > 0.8
 		and ahora - ultimoEstadoEscalando > 0.2
 		and humanoide.FloorMaterial ~= Enum.Material.Air
+	local coronoEscalada = trussActivo and trussActivo.Parent
+		and rootPart.Position.Y >= trussActivo.Position.Y + trussActivo.Size.Y * 0.5 + 1.5
+		and humanoide.FloorMaterial ~= Enum.Material.Air
 	if not trussActivo or not trussActivo.Parent or ahora - ultimaProximidadEscalada > 0.65
-		or terminoNaturalmente then
+		or terminoNaturalmente or coronoEscalada then
+		prepararSaltoTrasCoronar(trussActivo)
 		escaladaActiva = false
 		trussActivo = nil
 		limpiarEscaladaPersonalizada()
@@ -691,18 +715,11 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
-UserInputService.InputBegan:Connect(function(input, procesado)
-	if procesado and input.UserInputType ~= Enum.UserInputType.MouseButton2 then
-		return
-	end
+local function ejecutarInputAccion()
 	if UserInputService:GetFocusedTextBox() then return end
 	local interfaz = jugadorLocal.PlayerGui:FindFirstChild("PantallaPrincipal_1v1_GUI")
 	if interfaz and ((interfaz:FindFirstChild("HowToPlayModal") and interfaz.HowToPlayModal.Visible)
 		or (interfaz:FindFirstChild("DonationConfirmation") and interfaz.DonationConfirmation.Visible)) then return end
-
-	if input.UserInputType ~= Enum.UserInputType.MouseButton2 then
-		return
-	end
 
 	if accionActiva or cooldown then
 		return
@@ -754,7 +771,14 @@ UserInputService.InputBegan:Connect(function(input, procesado)
 		end
 	end
 	alternarEscalada()
+end
+
+UserInputService.InputBegan:Connect(function(input, procesado)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		ejecutarInputAccion()
+	end
 end)
+MobileInput.Action.Event:Connect(ejecutarInputAccion)
 
 jugadorLocal.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid")

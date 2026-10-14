@@ -24,7 +24,7 @@ local RoundSpawn2 = Workspace:WaitForChild("RoundSpawn2")
 -- CONFIGURACIÃN
 --==================================================
 
-local ES_SERVIDOR_PARTIDA = game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0
+local servidorPartida = game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0
 local datosPartida = nil
 local TIEMPO_ESPERA_RIVAL = 60
 
@@ -68,6 +68,8 @@ local tiemposAcumulados = {}
 local vidas = {}
 local ultimoAtaque = {}
 local noqueosPorPeligro = {}
+local retornoFallido = false
+local retornoEnCurso = false
 
 
 --==================================================
@@ -159,31 +161,45 @@ end
 --==================================================
 
 local function volverAlLobby(listaJugadores)
-
-	if RunService:IsStudio() or not ES_SERVIDOR_PARTIDA or #listaJugadores == 0 then
+	if RunService:IsStudio() or not servidorPartida or #listaJugadores == 0 then
 		return false
 	end
-
-	local opciones = Instance.new("TeleportOptions")
-	local origen = datosPartida and datosPartida.originJobId
-	if typeof(origen) == "string" and origen ~= "" then
-		opciones.ServerInstanceId = origen
+	-- El servidor público original puede haberse cerrado al salir ambos
+	-- jugadores. Sin ServerInstanceId, Roblox elige un lobby público activo.
+	retornoEnCurso = true
+	for intento = 1, 3 do
+		local presentes = Players:GetPlayers()
+		if #presentes == 0 then
+			retornoEnCurso = false
+			return true
+		end
+		retornoFallido = false
+		local ok, err = pcall(function()
+			TeleportService:TeleportAsync(game.PlaceId, presentes)
+		end)
+		if not ok then
+			warn("[Partida] Return teleport attempt ", intento, " failed: ", err)
+		else
+			local limite = os.clock() + 12
+			while os.clock() < limite and #Players:GetPlayers() > 0 and not retornoFallido do
+				task.wait(0.2)
+			end
+			if #Players:GetPlayers() == 0 then
+				retornoEnCurso = false
+				return true
+			end
+		end
+		task.wait(1.5)
 	end
-
-	local ok, err = pcall(function()
-		TeleportService:TeleportAsync(game.PlaceId, listaJugadores, opciones)
-	end)
-	if ok then return true end
-
-	warn("[Partida] Lobby original unavailable; using a public lobby: ", err)
-	local fallbackOk, fallbackErr = pcall(function()
-		TeleportService:TeleportAsync(game.PlaceId, listaJugadores)
-	end)
-	if not fallbackOk then
-		warn("[Partida] Could not return to lobby: ", fallbackErr)
-		EventoJuego:FireAllClients("ERROR_LOBBY", "Could not return to the lobby. Please try again.")
-	end
-	return fallbackOk
+	retornoEnCurso = false
+	servidorPartida = false
+	-- Si Roblox no permite salir, esta instancia pasa a ser un lobby de
+	-- práctica funcional. El siguiente ciclo habilita el emparejamiento.
+	Workspace:SetAttribute("LobbyPractica", true)
+	EventoJuego:FireAllClients("ESPERANDO_JUGADOR")
+	EventoMatchmaking:FireAllClients("FUERA_DE_COLA")
+	EventoJuego:FireAllClients("ERROR_LOBBY", "Connection unavailable. Staying in this practice lobby; you can try Play again.")
+	return false
 end
 
 local function enviarAPartidaPrivada(primero, segundo)
@@ -213,7 +229,11 @@ end
 TeleportService.TeleportInitFailed:Connect(function(jugador, resultado, mensaje)
 	if jugador.Parent == Players then
 		warn("[Teleport] ", jugador.Name, resultado, mensaje)
-		EventoMatchmaking:FireClient(jugador, "ERROR")
+		if retornoEnCurso then
+			retornoFallido = true
+		else
+			EventoMatchmaking:FireClient(jugador, "ERROR")
+		end
 	end
 end)
 
@@ -568,7 +588,7 @@ end
 --==================================================
 
 EventoMatchmaking.OnServerEvent:Connect(function(jugador, accion)
-	if ES_SERVIDOR_PARTIDA and not RunService:IsStudio() then return end
+	if servidorPartida and not RunService:IsStudio() then return end
 	if accion == "BUSCAR" or accion == "BUSCAR_PARTIDA" then
 		agregarALaCola(jugador)
 	elseif accion == "CANCELAR" then
@@ -586,8 +606,8 @@ end)
 local function esperarJugadores()
 
 	EstadoPartida = "ESPERANDO_JUGADORES"
-	Workspace:SetAttribute("LobbyPractica", not ES_SERVIDOR_PARTIDA or RunService:IsStudio())
-	if ES_SERVIDOR_PARTIDA and not RunService:IsStudio() then
+	Workspace:SetAttribute("LobbyPractica", not servidorPartida or RunService:IsStudio())
+	if servidorPartida and not RunService:IsStudio() then
 		local limite = os.clock() + TIEMPO_ESPERA_RIVAL
 		while os.clock() < limite do
 			for _, jugador in ipairs(Players:GetPlayers()) do
@@ -724,6 +744,9 @@ local function finalizarRonda(motivo, jugadorDerrotado)
 		ganadorRonda = perseguidor
 	elseif motivo == "TIME_LIMIT" then
 		ganadorRonda = perseguido
+	elseif motivo == "PLAYER_LEFT" then
+		ganadorRonda = jugador1 and jugador1.Parent == Players and jugador1
+			or jugador2 and jugador2.Parent == Players and jugador2
 	elseif motivo == "TOUCHED_LOSS_OBJECT" and jugadorDerrotado then
 		if jugadorDerrotado == jugador1 then
 			ganadorRonda = jugador2
@@ -1213,7 +1236,11 @@ local function mostrarResultadoFinal()
 
 	local ganador
 
-	if tiempo1 > tiempo2 then
+	if jugador1.Parent ~= Players and jugador2.Parent == Players then
+		ganador = jugador2
+	elseif jugador2.Parent ~= Players and jugador1.Parent == Players then
+		ganador = jugador1
+	elseif tiempo1 > tiempo2 then
 
 		ganador = jugador1
 
@@ -1325,7 +1352,7 @@ while true do
 	end
 	Workspace:SetAttribute("LobbyPractica", false)
 
-	if not ES_SERVIDOR_PARTIDA and not RunService:IsStudio() then
+	if not servidorPartida and not RunService:IsStudio() then
 		enviarAPartidaPrivada(jugador1, jugador2)
 		jugador1 = nil
 		jugador2 = nil

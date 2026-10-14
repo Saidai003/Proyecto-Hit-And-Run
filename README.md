@@ -17,6 +17,13 @@ Antes de la primera sincronización, guarda una copia del Place actual.
 
 Para reiniciar el servidor desde esta carpeta: `rojo serve default.project.json`.
 Para comprobar la estructura: `rojo build default.project.json --output check.rbxlx`.
+
+Los nueve sprites de `Sprites/` se subieron como decals a la biblioteca del propietario.
+Sus IDs están en `tools/sprite-ids.json` y en
+`src/ReplicatedStorage/MobileSpriteCatalog.luau`. Los controles móviles se
+activan cuando Roblox detecta pantalla táctil: Sprint, Jump y acción contextual.
+Rojo sincroniza scripts e IDs con Studio, pero la versión publicada solo cambia
+después de publicar el Place desde Studio.
 Ese build no incluye el mapa ni sustituye una prueba de juego.
 Los eventos (`RemoteEvent`, `EventoCountdown` como `BindableEvent`) y
 `SolicitarParkour1v1` ahora están declarados en

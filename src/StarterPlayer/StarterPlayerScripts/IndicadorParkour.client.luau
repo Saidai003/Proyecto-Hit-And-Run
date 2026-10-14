@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local ParkourPairs = require(ReplicatedStorage:WaitForChild("ParkourPairs"))
 local Climbables = require(ReplicatedStorage:WaitForChild("Climbables"))
@@ -136,10 +137,12 @@ RunService.Heartbeat:Connect(function(dt)
 		or humanoide:GetAttribute("ParkourEspecialActivo")
 		or humanoide:GetAttribute("Sliding") then
 		panel.Visible = false
+		jugador:SetAttribute("ParkourAction", nil)
 		return
 	end
 	local mensaje = elegirAccion(root.Position, jugador:GetAttribute("Rol"), humanoide)
-	panel.Visible = mensaje ~= nil
+	jugador:SetAttribute("ParkourAction", mensaje)
+	panel.Visible = mensaje ~= nil and not UserInputService.TouchEnabled
 	if mensaje then action.Text = mensaje end
 	panel.Position = UDim2.new(0.5, 0, 1, Workspace:GetAttribute("LobbyPractica") and -105 or -34)
 end)

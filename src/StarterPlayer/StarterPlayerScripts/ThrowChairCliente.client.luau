@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MobileInput = require(ReplicatedStorage:WaitForChild("MobileInput"))
 
 local throwEvent = ReplicatedStorage:WaitForChild("ThrowChairEvent", 10)
 if not throwEvent then
@@ -169,9 +170,7 @@ RunService:BindToRenderStep("ThrowChairCameraOffset", Enum.RenderPriority.Camera
 	end
 end)
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+local function empezarAiming()
 	if isAiming then return end
 
 	local tool = getEquippedTool()
@@ -182,10 +181,10 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		returning = false
 		isAiming = true -- RF01
 	end
-end)
+end
 
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 and isAiming then
+local function terminarAiming()
+	if isAiming then
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		local direction = camera.CFrame.LookVector
@@ -196,5 +195,14 @@ UserInputService.InputEnded:Connect(function(input)
 		throwEvent:FireServer(direction)
 		stopAiming()
 	end
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if not gameProcessed and input.UserInputType == Enum.UserInputType.MouseButton1 then empezarAiming() end
 end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then terminarAiming() end
+end)
+MobileInput.ThrowStart.Event:Connect(empezarAiming)
+MobileInput.ThrowEnd.Event:Connect(terminarAiming)
 

@@ -117,6 +117,18 @@ local howCorner = Instance.new("UICorner")
 howCorner.CornerRadius = UDim.new(0, 8)
 howCorner.Parent = btnHowTo
 
+if UserInputService.TouchEnabled then
+	sideMenu.AnchorPoint = Vector2.zero
+	sideMenu.Position = UDim2.fromOffset(12, 70)
+	sideMenu.Size = UDim2.fromOffset(220, 58)
+	btnPlay.Position = UDim2.fromOffset(8, 7)
+	btnPlay.Size = UDim2.fromOffset(98, 44)
+	btnPlay.TextSize = 16
+	btnHowTo.Position = UDim2.fromOffset(114, 7)
+	btnHowTo.Size = UDim2.fromOffset(98, 44)
+	btnHowTo.TextSize = 13
+end
+
 local btnDonate = Instance.new("TextButton")
 btnDonate.Name = "Donate"
 btnDonate.Size = UDim2.fromOffset(132, 38)
@@ -156,7 +168,12 @@ feedbackCorner.Parent = donateFeedback
 local donationViewportConnection
 local function positionDonation()
 	local camera = Workspace.CurrentCamera
-	if camera and camera.ViewportSize.X >= 850 then
+	if UserInputService.TouchEnabled then
+		btnDonate.AnchorPoint = Vector2.zero
+		btnDonate.Position = UDim2.fromOffset(16, 138)
+		donateFeedback.AnchorPoint = Vector2.zero
+		donateFeedback.Position = UDim2.fromOffset(16, 182)
+	elseif camera and camera.ViewportSize.X >= 850 then
 		btnDonate.AnchorPoint = Vector2.new(1, 1)
 		btnDonate.Position = UDim2.new(1, -16, 1, -24)
 		donateFeedback.AnchorPoint = Vector2.new(1, 1)
@@ -458,6 +475,12 @@ local guideCards = {
 	},
 }
 
+if UserInputService.TouchEnabled then
+	for _, cards in pairs(guideCards) do
+		table.insert(cards, 3, { "TOUCH", "Mobile controls", "Hold Sprint to run. Tap Jump to leap. The action button changes near windows, pallets and climbable surfaces; while sprinting it becomes Slide, and with a throwable equipped it becomes Throw. As Chaser, the generic action button attacks." })
+	end
+end
+
 local currentGuideRole = "RUNNER"
 local visibleGuideCards = {}
 local function resizeGuideCards()
@@ -530,6 +553,16 @@ hudPanel.BorderSizePixel = 0
 hudPanel.Visible = false
 hudPanel.ZIndex = 19
 hudPanel.Parent = screenGui
+if UserInputService.TouchEnabled then
+	local hudScale = Instance.new("UIScale")
+	hudScale.Scale = 0.68
+	hudScale.Parent = hudPanel
+	local function positionMobileHud()
+		hudPanel.Position = UDim2.fromOffset(12, sideMenu.Visible and 192 or 78)
+	end
+	sideMenu:GetPropertyChangedSignal("Visible"):Connect(positionMobileHud)
+	positionMobileHud()
+end
 local hudCorner = Instance.new("UICorner")
 hudCorner.CornerRadius = UDim.new(0, 12)
 hudCorner.Parent = hudPanel
@@ -1032,7 +1065,7 @@ EventoJuego.OnClientEvent:Connect(function(estado, ...)
 
 		if rol == "PERSEGUIDOR" then
 			roleLabel.Text = "CHASER"
-			attackButton.Visible = true
+			attackButton.Visible = not UserInputService.TouchEnabled
 		else
 			roleLabel.Text = "RUNNER"
 			attackButton.Visible = false
@@ -1179,6 +1212,15 @@ if esPartidaPrivada then
 end
 
 local function actualizarHudLobby()
+	if Workspace:GetAttribute("LobbyPractica") == true then
+		local veniaDePartidaPrivada = esPartidaPrivada
+		esPartidaPrivada = false
+		if veniaDePartidaPrivada then
+			sideMenu.Visible = true
+			btnDonate.Visible = true
+			banner.Visible = true
+		end
+	end
 	if Workspace:GetAttribute("LobbyPractica") == true and sideMenu.Visible then
 		hudPanel.Visible = true
 		roleLabel.Visible = true
