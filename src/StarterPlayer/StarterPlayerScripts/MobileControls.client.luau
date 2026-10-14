@@ -163,7 +163,11 @@ local held = {}
 local function bindTouch(button, began, ended)
 	button.InputBegan:Connect(function(touch)
 		if touch.UserInputType ~= Enum.UserInputType.Touch or held[button] then return end
-		held[button] = { touch = touch, ended = ended }
+		held[button] = {
+			touch = touch,
+			ended = ended,
+			lastPosition = Vector2.new(touch.Position.X, touch.Position.Y),
+		}
 		began()
 	end)
 end
@@ -186,6 +190,20 @@ bindTouch(actionButton, function()
 	held[actionButton].mode = mode
 end, function(mode)
 	if mode == "AnyOtherActionButton" then input.AttackEnd:Fire() end
+end)
+
+-- Un dedo puede mantener la accion y deslizarse para orientar la camara.
+-- El control de camara normal de Roblox no usa los toques capturados por UI.
+UserInputService.TouchMoved:Connect(function(touch)
+	for _, state in pairs(held) do
+		if state.touch == touch then
+			local position = Vector2.new(touch.Position.X, touch.Position.Y)
+			local delta = position - state.lastPosition
+			state.lastPosition = position
+			if delta.Magnitude > 0.5 then input.LookDelta:Fire(delta) end
+			break
+		end
+	end
 end)
 
 UserInputService.InputEnded:Connect(function(touch)

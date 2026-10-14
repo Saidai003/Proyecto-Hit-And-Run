@@ -38,6 +38,13 @@ local CAMERA_DISTANCIA = 11.5
 local CAMERA_RETORNO_TAU = 0.45
 local CAMERA_RADIO_COLISION = 0.3
 local CAMERA_MARGEN_COLISION = 0.15
+local TOUCH_LOOK_SENSITIVITY = 0.0035
+local touchLookDelta = Vector2.zero
+MobileInput.LookDelta.Event:Connect(function(delta)
+	if UserInputService.TouchEnabled and typeof(delta) == "Vector2" then
+		touchLookDelta += delta
+	end
+end)
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
 local camaraDePartida = false
@@ -76,6 +83,8 @@ end)
 -- Tambien funciona en lobby, sin cambiar su zoom ni su control de raton.
 -- Se aplica despues de la camara de Roblox y del offset de apuntar la silla.
 RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Value + 2, function(dt)
+	local lookDelta = touchLookDelta
+	touchLookDelta = Vector2.zero
 	local camera = workspace.CurrentCamera
 	if not camera or camera.CameraType ~= Enum.CameraType.Custom then
 		distanciaVisualActual = nil
@@ -91,6 +100,19 @@ RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Valu
 		return
 	end
 	local direccion = vector.Unit
+	if lookDelta.Magnitude > 0 then
+		-- La camara nativa no gira con el dedo que comenzo sobre un boton.
+		-- Aplicar solo el delta de este frame conserva su control normal y
+		-- permite apuntar mientras se mantiene Sprint/Throw/Action/Jump.
+		local dx = math.clamp(lookDelta.X, -120, 120)
+		local dy = math.clamp(lookDelta.Y, -120, 120)
+		local pitch = math.asin(math.clamp(objetivo.LookVector.Y, -1, 1))
+		local pitchDelta = math.clamp(pitch - dy * TOUCH_LOOK_SENSITIVITY, -1.25, 1.25) - pitch
+		local rotacion = CFrame.Angles(0, -dx * TOUCH_LOOK_SENSITIVITY, 0)
+			* objetivo.Rotation * CFrame.Angles(pitchDelta, 0, 0)
+		objetivo = CFrame.new(objetivo.Position) * rotacion
+		direccion = -rotacion.LookVector
+	end
 	local personaje = jugadorLocal.Character
 	if personaje ~= personajeFiltradoCamara then
 		personajeFiltradoCamara = personaje

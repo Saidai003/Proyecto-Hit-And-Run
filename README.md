@@ -40,13 +40,16 @@ Antes de conectar Rojo a un Place nuevo, guardar una copia `.rbxl` desde
 Studio. Un `.rbxlx` creado con `rojo build` contiene solamente lo modelado en
 Rojo y **no** es un respaldo completo del mapa.
 
-Los nueve sprites de `Sprites/` se subieron como decals a la biblioteca del propietario.
-Sus IDs están en `tools/sprite-ids.json` y en
+Los nueve sprites de `Sprites/` se subieron como assets Image a la biblioteca del propietario.
+Sus IDs actuales están en `tools/sprite-image-ids.json` y en
 `src/ReplicatedStorage/MobileSpriteCatalog.luau`. Los controles móviles se
 activan cuando Roblox detecta pantalla táctil: Sprint, Jump y acción contextual;
 al equipar una Tool con `Throwable = true`, aparece además un botón Throw
 independiente (mantener para apuntar y soltar para lanzar). Los sprites se
 muestran completos, sin recorte por píxeles, con texto de respaldo si no cargan.
+Al mantener y arrastrar un botón se puede girar la cámara; la zona libre de
+pantalla conserva el control de cámara predeterminado de Roblox. Los IDs viejos
+de tipo Decal quedan registrados en `tools/sprite-ids.json` como historial.
 Rojo sincroniza scripts e IDs con Studio, pero la versión publicada solo cambia
 después de publicar el Place desde Studio.
 Ese build no incluye el mapa ni sustituye una prueba de juego.

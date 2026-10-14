@@ -1,0 +1,38 @@
+{
+  "AnyOtherActionButton": {
+    "assetId": "101772100483828",
+    "moderationState": "Approved"
+  },
+  "BreakPalletButton": {
+    "assetId": "112387441904831",
+    "moderationState": "Approved"
+  },
+  "ClimbButton": {
+    "assetId": "120107749799092",
+    "moderationState": "Approved"
+  },
+  "DropPalletButton": {
+    "assetId": "138979017205552",
+    "moderationState": "Approved"
+  },
+  "JumpButton": {
+    "assetId": "129604872561894",
+    "moderationState": "Approved"
+  },
+  "SlideButton": {
+    "assetId": "104023185413878",
+    "moderationState": "Approved"
+  },
+  "SprintButton": {
+    "assetId": "87316021999902",
+    "moderationState": "Approved"
+  },
+  "ThrowSomethingButton": {
+    "assetId": "131350655126631",
+    "moderationState": "Approved"
+  },
+  "VaultButton": {
+    "assetId": "90037481162952",
+    "moderationState": "Approved"
+  }
+}

@@ -11,6 +11,7 @@ return {
 	Slide = signal(),
 	ThrowStart = signal(),
 	ThrowEnd = signal(),
+	LookDelta = signal(),
 	AttackStart = signal(),
 	AttackEnd = signal(),
 }

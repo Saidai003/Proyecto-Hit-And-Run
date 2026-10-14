@@ -8,7 +8,9 @@ if (!apiKey) throw new Error('ROBLOX_API_KEY is not set');
 if (!/^\d+$/.test(userId)) throw new Error('ROBLOX_USER_ID must be numeric');
 
 const sourceDir = path.resolve(__dirname, '..', 'Sprites');
-const output = path.join(__dirname, 'sprite-ids.json');
+// Keep the original sprite-ids.json (Decal uploads) as a recoverable record.
+// UI ImageButtons use direct Image assets to avoid depending on Decal resolution.
+const output = path.join(__dirname, 'sprite-image-ids.json');
 const files = [
   'AnyOtherActionButton', 'BreakPalletButton', 'ClimbButton',
   'DropPalletButton', 'JumpButton', 'SlideButton', 'SprintButton',
@@ -31,7 +33,7 @@ async function upload(name) {
   const file = fs.readFileSync(path.join(sourceDir, fileName));
   const form = new FormData();
   form.append('request', JSON.stringify({
-    assetType: 'Decal',
+    assetType: 'Image',
     displayName: `Hit and Run - ${name}`,
     description: 'Mobile control art for Hit and Run',
     creationContext: { creator: { userId } },
