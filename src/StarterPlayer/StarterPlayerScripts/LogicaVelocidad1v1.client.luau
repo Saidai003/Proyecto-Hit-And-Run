@@ -35,7 +35,7 @@ local FOV_SPRINT = 76
 local ANIMACION_SPRINT_ID = "rbxassetid://72846871061644"
 local VELOCIDAD_REFERENCIA_ANIMACION_SPRINT = 22
 local CAMERA_DISTANCIA = 12
-local CAMERA_RETORNO_TAU = 0.85
+local CAMERA_RETORNO_TAU = 0.45
 local zoomMinOriginal = jugadorLocal.CameraMinZoomDistance
 local zoomMaxOriginal = jugadorLocal.CameraMaxZoomDistance
 local camaraDePartida = false
@@ -65,11 +65,10 @@ RunService:BindToRenderStep("MatchFreeLook", Enum.RenderPriority.Camera.Value + 
 end)
 
 -- La camara predeterminada se acerca inmediatamente a las paredes. Al salir
--- de un espacio estrecho, suavizamos solo el regreso a la distancia ideal.
+-- de un espacio estrecho, suavizamos solo el regreso a la distancia libre.
+-- Tambien funciona en lobby, sin cambiar su zoom ni su control de raton.
 -- Se aplica despues de la camara de Roblox y del offset de apuntar la silla.
 RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Value + 2, function(dt)
-	if not camaraDePartida then return end
-
 	local camera = workspace.CurrentCamera
 	if not camera or camera.CameraType ~= Enum.CameraType.Custom then
 		distanciaVisualActual = nil
@@ -93,6 +92,13 @@ RunService:BindToRenderStep("MatchCameraReturn", Enum.RenderPriority.Camera.Valu
 		distanciaVisualActual += (distanciaDisponible - distanciaVisualActual) * alfa
 		camera.CFrame = CFrame.new(foco + vector.Unit * distanciaVisualActual)
 			* objetivo.Rotation
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseWheel then
+		-- En lobby, el zoom manual debe responder inmediatamente.
+		distanciaVisualActual = nil
 	end
 end)
 
