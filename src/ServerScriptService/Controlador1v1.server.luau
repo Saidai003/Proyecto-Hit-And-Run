@@ -785,6 +785,7 @@ end
 local conexionesPeligro = {}
 local posicionesPreviasPeligro = {}
 local personajesPreviosPeligro = {}
+local avisosBajoLimite = {}
 
 local function puntoInicialDe(jugador)
 	if jugador == jugador1 then return RoundSpawn1 end
@@ -978,24 +979,36 @@ RunService.Heartbeat:Connect(function()
 			and not noqueosPorPeligro[jugador] then
 			for parte in pairs(conexionesPeligro) do
 				if parte.Parent and parte:GetAttribute("MakesPlayersLose") == true then
-					local previo = parte.CFrame:PointToObjectSpace(anterior)
-					local actual = parte.CFrame:PointToObjectSpace(root.Position)
-					local mitad = parte.Size * 0.5
-					local plano = mitad.Y + 2 -- centro del HRP sobre los pies
-					if previo.Y > plano and actual.Y <= plano then
-						local tramo = previo.Y - actual.Y
-						local fraccion = (previo.Y - plano) / tramo
-						local cruce = previo:Lerp(actual, fraccion)
-						-- InvisibleDeathZone es el limite inferior de todo el mapa.
-						-- El escenario ya se extiende fuera de sus 600x600 studs;
-						-- caer por otro borde debe producir el mismo resultado.
-						local limiteGlobal = parte.Name == "InvisibleDeathZone"
-							and parte.CFrame.UpVector:Dot(Vector3.yAxis) > 0.95
-						local dentroDeLaPieza = math.abs(cruce.X) <= mitad.X + 2
-							and math.abs(cruce.Z) <= mitad.Z + 2
-						if limiteGlobal or dentroDeLaPieza then
+					if parte.Name == "InvisibleDeathZone" then
+						-- Es el limite inferior de todo el mapa, no solo de su
+						-- rectangulo fisico. Basta estar debajo: un paso de red o
+						-- fisica puede saltarse por completo el frame del cruce.
+						local alturaLimite = parte.Position.Y + parte.Size.Y * 0.5 + 2
+						if root.Position.Y <= alturaLimite then
+							if avisosBajoLimite[jugador] ~= character then
+								avisosBajoLimite[jugador] = character
+								print("[MakesPlayersLose] Bajo el limite:", jugador.Name,
+									math.floor(root.Position.Y), EstadoPartida,
+									Workspace:GetAttribute("LobbyPractica"))
+							end
 							aplicarPeligro(parte, jugador)
 							break
+						else
+							avisosBajoLimite[jugador] = nil
+						end
+					else
+						local previo = parte.CFrame:PointToObjectSpace(anterior)
+						local actual = parte.CFrame:PointToObjectSpace(root.Position)
+						local mitad = parte.Size * 0.5
+						local plano = mitad.Y + 2 -- centro del HRP sobre los pies
+						if previo.Y > plano and actual.Y <= plano then
+							local fraccion = (previo.Y - plano) / (previo.Y - actual.Y)
+							local cruce = previo:Lerp(actual, fraccion)
+							if math.abs(cruce.X) <= mitad.X + 2
+								and math.abs(cruce.Z) <= mitad.Z + 2 then
+								aplicarPeligro(parte, jugador)
+								break
+							end
 						end
 					end
 				end
@@ -1006,6 +1019,7 @@ end)
 Players.PlayerRemoving:Connect(function(jugador)
 	posicionesPreviasPeligro[jugador] = nil
 	personajesPreviosPeligro[jugador] = nil
+	avisosBajoLimite[jugador] = nil
 end)
 
 
